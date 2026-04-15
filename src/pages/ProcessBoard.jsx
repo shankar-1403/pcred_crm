@@ -5,10 +5,11 @@ import { useAuth } from '../context/AuthContext'
 import { useLeads } from '../hooks/useLeads'
 import { usePartners } from '../hooks/usePartners'
 import { useUsers } from '../hooks/useUsers'
-import { assignedUids } from '../lib/leads'
+import { assignedUids, leadReferredToUser } from '../lib/leads'
 import { useProducts } from '../hooks/useProducts'
 import { useStatuses } from '../hooks/useStatuses'
 import LeadDetailsModal from '../components/LeadDetailsModal'
+import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
 import { downloadCsv, inDateRange } from '../lib/csv'
 
@@ -47,7 +48,9 @@ export default function ProcessBoard() {
     if (!user) return []
     return leads.filter((l) => {
       const uids = assignedUids(l.assignedTo)
-      return uids.includes(user.uid)
+      return (
+        uids.includes(user.uid) || leadReferredToUser(l, user.uid)
+      )
     })
   }, [leads, user])
 
@@ -212,7 +215,7 @@ export default function ProcessBoard() {
   }
 
   return (
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-white">Assigned to {currentUserName}</h1>
@@ -271,8 +274,7 @@ export default function ProcessBoard() {
           </div>
         </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/40">
-        <div className="overflow-x-auto">
+      <div className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
           <table className="w-full min-w-[1440px] table-auto text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
@@ -355,7 +357,6 @@ export default function ProcessBoard() {
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {viewLead && (
@@ -370,7 +371,10 @@ export default function ProcessBoard() {
       {editLeadId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl sm:p-6">
-            <h2 className="text-lg font-semibold text-white">Edit lead</h2>
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-lg font-semibold text-white">Edit lead</h2>
+              <ModalCloseButton onClick={() => setEditLeadId(null)} />
+            </div>
             <form onSubmit={saveEdit} className="mt-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300">Partner</label>

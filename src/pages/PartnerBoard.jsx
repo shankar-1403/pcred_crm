@@ -7,13 +7,21 @@ import { useUsers } from '../hooks/useUsers'
 import { useProducts } from '../hooks/useProducts'
 import { usePartners } from '../hooks/usePartners'
 import { useStatuses } from '../hooks/useStatuses'
-import { assignedUids, toAssignedMap } from '../lib/leads'
+import { assignedUids, normalizedReferredByUid, toAssignedMap } from '../lib/leads'
+import {
+  assignableProcessUsers,
+  assignableSalesUsers,
+  labelAssignableProcessUser,
+} from '../lib/assignees'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import LeadDetailsModal from '../components/LeadDetailsModal'
+import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
 
 const emptyForm = {
   title: '',
+  viaEnabled: false,
+  viaName: '',
   company: '',
   clientName: '',
   location: '',
@@ -22,6 +30,7 @@ const emptyForm = {
   leadDate: '',
   description: '',
   status: '',
+  updatedStatusDate: '',
   productId: '',
   totalAmount: '',
   bankPayoutPercent: '',
@@ -32,13 +41,14 @@ const emptyForm = {
 export default function PartnerBoard() {
   const { user, profile } = useAuth()
   const { leads, loading } = useLeads()
-  const { usersById, processUsers, error: usersError } = useUsers()
-  const { products, loading: productsLoading, error: productsError } = useProducts()
+  const { usersById, processUsers, salesUsers, error: usersError } = useUsers()
+  const { products, loading: productsLoading, error: productsError } =
+    useProducts()
   const { partners } = usePartners()
   const { statuses } = useStatuses()
 
   const partnerId = String(profile?.partnerId ?? '').trim()
-  const partnerName = useMemo(() => {
+  const partnerOrgName = useMemo(() => {
     if (!partnerId) return ''
     return partners.find((p) => p.id === partnerId)?.name || ''
   }, [partners, partnerId])
@@ -46,8 +56,12 @@ export default function PartnerBoard() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(emptyForm)
+  const [assignmentMode, setAssignmentMode] = useState('process')
   const [selectedAssignees, setSelectedAssignees] = useState([])
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false)
+  const [selectedSalesAssignees, setSelectedSalesAssignees] = useState([])
+  const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] =
+    useState(false)
   const [saving, setSaving] = useState(false)
   const [leadSearch, setLeadSearch] = useState('')
   const [viewLead, setViewLead] = useState(null)
@@ -58,6 +72,16 @@ export default function PartnerBoard() {
     if (!partnerId) return []
     return leads.filter((l) => String(l.partnerId ?? '').trim() === partnerId)
   }, [leads, partnerId])
+
+  const processAssignees = useMemo(
+    () => assignableProcessUsers(processUsers, user?.uid, usersById),
+    [processUsers, user?.uid, usersById],
+  )
+
+  const salesAssignees = useMemo(
+    () => assignableSalesUsers(salesUsers, user?.uid, usersById),
+    [salesUsers, user?.uid, usersById],
+  )
 
   const filteredMyLeads = useMemo(() => {
     const term = leadSearch.trim().toLowerCase()
@@ -101,6 +125,17 @@ export default function PartnerBoard() {
       .join(', ')
   }
 
+  function salesNames(salesAssignedTo) {
+    const assignees = assignedUids(salesAssignedTo)
+    if (!assignees.length) return '—'
+    return assignees
+      .map((uid) => {
+        const u = usersById[uid]
+        return u?.displayName || u?.email || uid.slice(0, 8)
+      })
+      .join(', ')
+  }
+
   function productNameFor(productId) {
     if (!productId) return '—'
     const product = products.find((p) => p.id === productId)
@@ -110,8 +145,11 @@ export default function PartnerBoard() {
   function openNew() {
     setEditingId(null)
     setForm(emptyForm)
+    setAssignmentMode('process')
     setSelectedAssignees([])
     setAssigneeDropdownOpen(false)
+    setSelectedSalesAssignees([])
+    setSalesAssigneeDropdownOpen(false)
     setModalOpen(true)
   }
 
@@ -119,6 +157,8 @@ export default function PartnerBoard() {
     setEditingId(lead.id)
     setForm({
       title: lead.title ?? '',
+      viaEnabled: Boolean(String(lead.viaName ?? '').trim()),
+      viaName: lead.viaName ?? '',
       company: lead.company ?? '',
       clientName: lead.clientName ?? '',
       location: lead.location ?? '',
@@ -127,19 +167,37 @@ export default function PartnerBoard() {
       leadDate: lead.leadDate ?? '',
       description: lead.description ?? '',
       status: lead.status ?? '',
+      updatedStatusDate: lead.updatedStatusDate ?? '',
       productId: lead.productId ?? '',
       totalAmount: lead.totalAmount ?? '',
       bankPayoutPercent: lead.bankPayoutPercent ?? '',
       mandateSigned: Boolean(lead.mandateSigned),
       mandatePayoutPercent: lead.mandatePayoutPercent ?? '',
     })
-    setSelectedAssignees(assignedUids(lead.assignedTo))
+    const processUids = assignedUids(lead.assignedTo)
+    const salesUids = assignedUids(lead.salesAssignedTo)
+    if (salesUids.length && !processUids.length) {
+      setAssignmentMode('sales')
+      setSelectedSalesAssignees(salesUids)
+      setSelectedAssignees([])
+    } else {
+      setAssignmentMode('process')
+      setSelectedAssignees(processUids)
+      setSelectedSalesAssignees([])
+    }
     setAssigneeDropdownOpen(false)
+    setSalesAssigneeDropdownOpen(false)
     setModalOpen(true)
   }
 
   function toggleAssignee(uid) {
     setSelectedAssignees((prev) =>
+      prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid],
+    )
+  }
+
+  function toggleSalesAssignee(uid) {
+    setSelectedSalesAssignees((prev) =>
       prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid],
     )
   }
@@ -151,6 +209,9 @@ export default function PartnerBoard() {
     try {
       const existingLead =
         editingId != null ? leads.find((l) => l.id === editingId) : null
+      const partnerRow = partners.find((p) => p.id === partnerId)
+      const referredSnap = normalizedReferredByUid(partnerRow)
+
       const baseAmount = Number.parseFloat(form.totalAmount || 0) || 0
       const bankPercent = Number.parseFloat(form.bankPayoutPercent || 0) || 0
       const mandatePercent =
@@ -162,6 +223,7 @@ export default function PartnerBoard() {
 
       const payload = {
         title: form.title.trim(),
+        viaName: form.viaEnabled ? form.viaName.trim() : '',
         company: form.company.trim(),
         clientName: form.clientName.trim(),
         location: form.location.trim(),
@@ -170,8 +232,16 @@ export default function PartnerBoard() {
         leadDate: form.leadDate || '',
         description: form.description.trim(),
         status: form.status,
+        updatedStatusDate: form.updatedStatusDate || '',
         createdBy: existingLead?.createdBy ?? user.uid,
-        assignedTo: toAssignedMap(selectedAssignees),
+        assignedTo:
+          assignmentMode === 'process'
+            ? toAssignedMap(selectedAssignees)
+            : null,
+        salesAssignedTo:
+          assignmentMode === 'sales'
+            ? toAssignedMap(selectedSalesAssignees)
+            : null,
         productId: form.productId || null,
         totalAmount: form.totalAmount || '',
         bankPayoutPercent: form.bankPayoutPercent || '',
@@ -183,7 +253,8 @@ export default function PartnerBoard() {
         mandatePayoutAmount: Number(mandatePayoutAmount.toFixed(2)),
         updatedAt: Date.now(),
         partnerId,
-        partnerName: partnerName || '',
+        partnerName: partnerOrgName || '',
+        referredByUid: referredSnap || null,
       }
       if (editingId) {
         await update(ref(db, `leads/${editingId}`), payload)
@@ -198,37 +269,6 @@ export default function PartnerBoard() {
     } finally {
       setSaving(false)
     }
-  }
-
-
-  function exportCsv() {
-    const rows = filteredMyLeads
-      .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
-      .map((lead) => [
-        lead.company || '',
-        lead.clientName || '',
-        lead.location || '',
-        productNameFor(lead.productId),
-        lead.status || '',
-        processNames(lead.assignedTo),
-        formatAmountForCsv(lead.totalAmount),
-        lead.leadDate || '',
-      ])
-
-    downloadCsv(
-      'partner-leads.csv',
-      [
-        'Company',
-        'Client Name',
-        'Location',
-        'Product',
-        'Status',
-        'Processed By',
-        'Required Amount',
-        'Lead Date',
-      ],
-      rows,
-    )
   }
 
   if (loading) {
@@ -248,12 +288,65 @@ export default function PartnerBoard() {
     )
   }
 
+  const baseAmount = Number.parseFloat(form.totalAmount || 0) || 0
+  const bankPercent = Number.parseFloat(form.bankPayoutPercent || 0) || 0
+  const mandatePercent = Number.parseFloat(form.mandatePayoutPercent || 0) || 0
+  const bankAmount = (baseAmount * bankPercent) / 100
+  const mandateAmount = form.mandateSigned ? (baseAmount * mandatePercent) / 100 : 0
+  const totalRevenue = bankAmount + mandateAmount
+
+  function exportCsv() {
+    const rows = filteredMyLeads
+      .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
+      .map((lead) => [
+        lead.viaName || '',
+        lead.company || '',
+        lead.clientName || '',
+        lead.location || '',
+        productNameFor(lead.productId),
+        lead.status || '',
+        processNames(lead.assignedTo),
+        salesNames(lead.salesAssignedTo),
+        lead.leadDate || '',
+        formatAmountForCsv(lead.totalAmount),
+        lead.bankPayoutPercent || '',
+        formatAmountForCsv(lead.bankPayoutAmount),
+        lead.mandateSigned ? 'Yes' : 'No',
+        lead.mandatePayoutPercent || '',
+        formatAmountForCsv(lead.mandatePayoutAmount),
+      ])
+
+    downloadCsv(
+      'partner-leads.csv',
+      [
+        'Via',
+        'Company',
+        'Client Name',
+        'Location',
+        'Product',
+        'Status',
+        'Processed By',
+        'Sales',
+        'Lead Date',
+        'Required Amount',
+        'Bank Payout %',
+        'Bank Payout Amount',
+        'Mandate Signed',
+        'Mandate Payout %',
+        'Mandate Payout Amount',
+      ],
+      rows,
+    )
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white">My leads</h1>
-          <p className="mt-1 text-sm text-slate-400">Create leads and assign one or more process teammates.</p>
+          <p className="mt-1 text-sm text-slate-400">
+            Create leads, set revenue details, and assign process or sales teammates.
+          </p>
         </div>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end sm:gap-4">
           <div className="w-full sm:w-[260px]">
@@ -314,17 +407,18 @@ export default function PartnerBoard() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/40">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] table-auto text-left text-xs sm:text-sm">
+      <div className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+          <table className="w-max min-w-full text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Company</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Client name</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Via</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Location</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Product</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Status</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Processed by</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Sales</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap text-right">Required Amount</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Date</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Updated status date</th>
@@ -334,29 +428,49 @@ export default function PartnerBoard() {
             <tbody className="divide-y divide-slate-800">
               {filteredMyLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={12} className="px-4 py-10 text-center text-slate-500">
                     You have no leads yet. Click New lead to add one.
                   </td>
                 </tr>
               ) : (
                 filteredMyLeads.map((lead) => (
                   <tr key={lead.id} className="text-slate-300">
-                    <td className="px-4 py-1 text-slate-400">{lead.company || '—'}</td>
-                    <td className="px-4 py-1 text-slate-400">{lead.clientName || '—'}</td>
-                    <td className="px-4 py-1 text-slate-400">{lead.location || '—'}</td>
-                    <td className="px-4 py-1 text-slate-400">{productNameFor(lead.productId)}</td>
-                    <td className="px-4 py-1">
-                      <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                      {lead.company || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                      {lead.clientName || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                      {lead.viaName || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">{lead.location || '—'}</td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                      {productNameFor(lead.productId)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1">
+                      <span className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
                         {statusLabelByValue.get(lead.status) ||
                           lead.status}
                       </span>
                     </td>
-                    <td className="px-4 py-1 text-xs text-slate-400">{processNames(lead.assignedTo)}</td>
-                    <td className="px-4 py-1 text-slate-400 text-right">₹ {Number(lead?.totalAmount).toLocaleString('en-IN') || 0}</td>
-                    <td className="px-4 py-1 text-xs text-slate-500">{lead.leadDate || '—'}</td>
-                    <td className="px-4 py-1 text-xs text-slate-500">{lead.updatedStatusDate || '—'}</td>
-                    <td className="px-4 py-1">
-                      <div className="flex flex-wrap items-center gap-2">
+                    <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-400">
+                      {processNames(lead.assignedTo)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-400">
+                      {salesNames(lead.salesAssignedTo)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-right text-slate-400">
+                      ₹ {Number(lead?.totalAmount).toLocaleString('en-IN') || 0}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-500">
+                      {lead.leadDate || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-500">
+                      {lead.updatedStatusDate || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1">
+                      <div className="flex flex-nowrap items-center gap-2">
                         <button
                           type="button"
                           onClick={() => openEdit(lead)}
@@ -380,14 +494,13 @@ export default function PartnerBoard() {
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {viewLead && (
         <LeadDetailsModal
           lead={viewLead}
           usersById={usersById}
-          showPartner={false}
+          showPartner
           onClose={() => setViewLead(null)}
         />
       )}
@@ -400,14 +513,54 @@ export default function PartnerBoard() {
             aria-modal="true"
             aria-labelledby="lead-modal-title-partner"
           >
-            <h2
-              id="lead-modal-title-partner"
-              className="text-lg font-semibold text-white"
-            >
-              {editingId ? 'Edit lead' : 'New lead'}
-            </h2>
+            <div className="flex items-start justify-between gap-3">
+              <h2
+                id="lead-modal-title-partner"
+                className="text-lg font-semibold text-white"
+              >
+                {editingId ? 'Edit lead' : 'New lead'}
+              </h2>
+              <ModalCloseButton onClick={() => setModalOpen(false)} />
+            </div>
 
             <form onSubmit={saveLead} className="mt-6 space-y-4">
+              <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-3">
+                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={form.viaEnabled}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        viaEnabled: e.target.checked,
+                        ...(e.target.checked ? {} : { viaName: '' }),
+                      }))
+                    }
+                    className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                  />
+                  <span>Via</span>
+                </label>
+                {form.viaEnabled && (
+                  <div>
+                    <label
+                      htmlFor="partner-lead-via-name"
+                      className="block text-xs font-medium text-slate-400"
+                    >
+                      Name
+                    </label>
+                    <input
+                      id="partner-lead-via-name"
+                      type="text"
+                      value={form.viaName}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, viaName: e.target.value }))
+                      }
+                      placeholder="Referrer or channel name"
+                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                    />
+                  </div>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300">
                   Company
@@ -441,6 +594,32 @@ export default function PartnerBoard() {
                   onChange={(e) =>
                     setForm((f) => ({ ...f, location: e.target.value }))
                   }
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300">
+                  Bank Name
+                </label>
+                <input
+                  value={form.bankName}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, bankName: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300">
+                  One pager link
+                </label>
+                <input
+                  type="url"
+                  value={form.onePagerLink}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, onePagerLink: e.target.value }))
+                  }
+                  placeholder="https://..."
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 />
               </div>
@@ -488,6 +667,19 @@ export default function PartnerBoard() {
                   ))}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300">
+                  Updated status date
+                </label>
+                <input
+                  type="date"
+                  value={form.updatedStatusDate}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, updatedStatusDate: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-300">
@@ -532,10 +724,156 @@ export default function PartnerBoard() {
                 />
                 <AmountInWordsHint value={form.totalAmount} />
               </div>
+              {!editingId && (
+              <section className="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4">
+                <h3 className="text-sm font-semibold text-blue-300">
+                  Revenue Details
+                </h3>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300">
+                      Bank Payout Percent (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={form.bankPayoutPercent}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, bankPayoutPercent: e.target.value }))
+                      }
+                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300">
+                      Amount (₹)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={bankAmount.toFixed(2)}
+                      readOnly
+                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <p className="text-xs font-medium text-slate-300">Mandate Signed</p>
+                  <div className="mt-2 flex items-center gap-5 text-sm text-slate-300">
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="mandateSignedPartner"
+                        checked={form.mandateSigned === true}
+                        onChange={() => setForm((f) => ({ ...f, mandateSigned: true }))}
+                      />
+                      Yes
+                    </label>
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="mandateSignedPartner"
+                        checked={form.mandateSigned === false}
+                        onChange={() => setForm((f) => ({ ...f, mandateSigned: false }))}
+                      />
+                      No
+                    </label>
+                  </div>
+                </div>
+
+                {form.mandateSigned && (
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-300">
+                        Mandate Payout Percent (%)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={form.mandatePayoutPercent}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            mandatePayoutPercent: e.target.value,
+                          }))
+                        }
+                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-300">
+                        Amount (₹)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={mandateAmount.toFixed(2)}
+                        readOnly
+                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-white"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 rounded-lg border border-emerald-700/50 bg-emerald-950/20 px-3 py-3 text-sm text-emerald-200">
+                  <div className="flex justify-between">
+                    <span>Bank Payout Amount:</span>
+                    <span>₹{bankAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="mt-1 flex justify-between">
+                    <span>Mandate Amount:</span>
+                    <span>₹{mandateAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="mt-2 flex justify-between font-semibold">
+                    <span>Total Revenue:</span>
+                    <span>₹{totalRevenue.toFixed(2)}</span>
+                  </div>
+                </div>
+              </section>
+              )}
+
+              {!editingId && (
               <div>
                 <p className="text-sm font-medium text-slate-300">
-                  Processed by (multi-select)
+                  Assign to
                 </p>
+                <div className="mt-2 flex rounded-lg border border-slate-700 p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAssignmentMode('process')
+                      setSelectedSalesAssignees([])
+                      setSalesAssigneeDropdownOpen(false)
+                    }}
+                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      assignmentMode === 'process'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Process
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAssignmentMode('sales')
+                      setSelectedAssignees([])
+                      setAssigneeDropdownOpen(false)
+                    }}
+                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      assignmentMode === 'sales'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Sales
+                  </button>
+                </div>
                 {usersError && (
                   <p className="mt-2 rounded-lg border border-amber-800/70 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
                     Could not read users from Realtime Database
@@ -543,47 +881,108 @@ export default function PartnerBoard() {
                     authenticated read on <code>/users</code>.
                   </p>
                 )}
-                <div className="relative mt-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      processUsers.length > 0 &&
-                      setAssigneeDropdownOpen((v) => !v)
-                    }
-                    className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-sm text-white disabled:opacity-60"
-                    disabled={processUsers.length === 0}
-                  >
-                    <span className="truncate">
-                      {processUsers.length === 0
-                        ? 'No process users found'
-                        : selectedAssignees.length === 0
-                          ? 'Select process users'
-                          : `${selectedAssignees.length} selected`}
-                    </span>
-                    <span className="text-slate-400">
-                      {assigneeDropdownOpen ? '▲' : '▼'}
-                    </span>
-                  </button>
-                  {assigneeDropdownOpen && processUsers.length > 0 && (
-                    <div className="absolute bottom-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl">
-                      {processUsers.map((u) => (
-                        <label
-                          key={u.uid}
-                          className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedAssignees.includes(u.uid)}
-                            onChange={() => toggleAssignee(u.uid)}
-                            className="rounded border-slate-600 bg-slate-950 text-blue-600"
-                          />
-                          <span>{u.displayName || u.email}</span>
-                        </label>
-                      ))}
+                {assignmentMode === 'process' ? (
+                  <>
+                    <p className="mt-3 text-xs font-medium text-slate-400">
+                      Process team (multi-select)
+                    </p>
+                    <div className="relative mt-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          processAssignees.length > 0 &&
+                          setAssigneeDropdownOpen((v) => !v)
+                        }
+                        className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-sm text-white disabled:opacity-60"
+                        disabled={processAssignees.length === 0}
+                      >
+                        <span className="truncate">
+                          {processAssignees.length === 0
+                            ? 'No process users found'
+                            : selectedAssignees.length === 0
+                              ? 'Select process users'
+                              : `${selectedAssignees.length} selected`}
+                        </span>
+                        <span className="text-slate-400">
+                          {assigneeDropdownOpen ? '▲' : '▼'}
+                        </span>
+                      </button>
+                      {assigneeDropdownOpen && processAssignees.length > 0 && (
+                        <div className="absolute bottom-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl">
+                          {processAssignees.map((u) => (
+                            <label
+                              key={u.uid}
+                              className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedAssignees.includes(u.uid)}
+                                onChange={() => toggleAssignee(u.uid)}
+                                className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                              />
+                              <span>{labelAssignableProcessUser(u)}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-3 text-xs font-medium text-slate-400">
+                      Sales team (multi-select)
+                    </p>
+                    <div className="relative mt-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          salesAssignees.length > 0 &&
+                          setSalesAssigneeDropdownOpen((v) => !v)
+                        }
+                        className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-sm text-white disabled:opacity-60"
+                        disabled={salesAssignees.length === 0}
+                      >
+                        <span className="truncate">
+                          {salesAssignees.length === 0
+                            ? 'No sales users found'
+                            : selectedSalesAssignees.length === 0
+                              ? 'Select sales users'
+                              : `${selectedSalesAssignees.length} selected`}
+                        </span>
+                        <span className="text-slate-400">
+                          {salesAssigneeDropdownOpen ? '▲' : '▼'}
+                        </span>
+                      </button>
+                      {salesAssigneeDropdownOpen &&
+                        salesAssignees.length > 0 && (
+                          <div className="absolute bottom-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl">
+                            {salesAssignees.map((u) => (
+                              <label
+                                key={u.uid}
+                                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSalesAssignees.includes(
+                                    u.uid,
+                                  )}
+                                  onChange={() =>
+                                    toggleSalesAssignee(u.uid)
+                                  }
+                                  className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                                />
+                                <span>
+                                  {labelAssignableProcessUser(u)}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+                  </>
+                )}
               </div>
+              )}
 
               <div className="flex justify-end gap-2 pt-2">
                 <button

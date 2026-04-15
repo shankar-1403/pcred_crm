@@ -83,7 +83,7 @@ export default function AdminStatuses() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-white">Status master</h1>
         <p className="mt-1 text-sm text-slate-400">
@@ -136,8 +136,7 @@ export default function AdminStatuses() {
         </form>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/40">
-        <div className="overflow-x-auto">
+      <section className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
           <table className="w-full min-w-[760px] table-auto text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
@@ -187,7 +186,6 @@ export default function AdminStatuses() {
               )}
             </tbody>
           </table>
-        </div>
       </section>
     </div>
   )

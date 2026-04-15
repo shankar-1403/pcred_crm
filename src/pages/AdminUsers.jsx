@@ -2,17 +2,26 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { push, ref, remove, set, update } from 'firebase/database'
 import { httpsCallable } from 'firebase/functions'
+import ModalCloseButton from '../components/ModalCloseButton'
 import { ROLE_LABELS, ROLES } from '../constants'
 import { useAuth } from '../context/AuthContext'
 import { useUsers } from '../hooks/useUsers'
 import { db, functions } from '../lib/firebase'
 
-const creatableRoles = [
+/** Team roles assignable from User management (partner accounts are created from Partner master). */
+const teamRoleOptionsCreate = [
   ROLES.MANAGEMENT,
   ROLES.SALES,
   ROLES.PROCESS,
-  ROLES.PARTNER,
 ]
+
+function teamRoleOptionsForEdit(currentRole) {
+  const r = String(currentRole ?? '').trim().toLowerCase()
+  if (r === ROLES.PARTNER) {
+    return [...teamRoleOptionsCreate, ROLES.PARTNER]
+  }
+  return teamRoleOptionsCreate
+}
 
 export default function AdminUsers() {
   const { createUserByAdmin, user, profile } = useAuth()
@@ -55,33 +64,16 @@ export default function AdminUsers() {
       )
       return
     }
-    const r = String(role).trim().toLowerCase()
     const emailTrim = email.trim()
     const displayTrim = displayName.trim()
-    const partnerRecordName =
-      displayTrim || emailTrim.split('@')[0] || 'Partner'
     setSubmitting(true)
-    let newPartnerId = null
     try {
-      if (r === ROLES.PARTNER) {
-        const partnerRef = push(ref(db, 'partners'))
-        newPartnerId = partnerRef.key
-        await set(partnerRef, {
-          name: partnerRecordName,
-          createdAt: Date.now(),
-          createdByAdminUid: user?.uid ?? null,
-        })
-      }
-      const extra =
-        r === ROLES.PARTNER && newPartnerId
-          ? { partnerId: newPartnerId }
-          : {}
       const uid = await createUserByAdmin(
         emailTrim,
         password,
         displayTrim,
         role,
-        extra,
+        {},
       )
       setMessage(`User created successfully. UID: ${uid}`)
       setEmail('')
@@ -89,9 +81,6 @@ export default function AdminUsers() {
       setDisplayName('')
       setRole(ROLES.SALES)
     } catch (err) {
-      if (newPartnerId) {
-        await remove(ref(db, `partners/${newPartnerId}`)).catch(() => {})
-      }
       setError(err?.message || 'Could not create user')
     } finally {
       setSubmitting(false)
@@ -227,16 +216,19 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-white">User management</h1>
         <p className="mt-1 text-sm text-slate-400">
           Admin creates user accounts and assigns the team role.
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Same form for every team: sales, process, management, or partner. Partner
-          accounts get the partner dashboard; a Partner master row is created
-          automatically from display name (or email) and linked to that login.
+          Create sales, process, or management team members here. Partner logins
+          are created from{' '}
+          <Link to="/admin/partners" className="text-blue-300 hover:underline">
+            Partner master
+          </Link>{' '}
+          together with their organization record.
         </p>
       </div>
 
@@ -298,7 +290,7 @@ export default function AdminUsers() {
               onChange={(e) => setRole(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
             >
-              {creatableRoles.map((r) => (
+              {teamRoleOptionsCreate.map((r) => (
                 <option key={r} value={r}>
                   {ROLE_LABELS[r]}
                 </option>
@@ -319,8 +311,7 @@ export default function AdminUsers() {
         </form>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/40">
-        <div className="overflow-x-auto">
+      <section className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
           <table className="w-full min-w-[780px] table-auto text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
@@ -389,7 +380,6 @@ export default function AdminUsers() {
               )}
             </tbody>
           </table>
-        </div>
       </section>
 
       {editingUid && (
@@ -402,13 +392,7 @@ export default function AdminUsers() {
                   UID: <code className="font-mono text-slate-300">{editingUid}</code>
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setEditingUid('')}
-                className="rounded-lg border border-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-800"
-              >
-                Close
-              </button>
+              <ModalCloseButton onClick={() => setEditingUid('')} />
             </div>
 
             <form onSubmit={saveEdit} className="mt-6 space-y-4">
@@ -437,7 +421,7 @@ export default function AdminUsers() {
                   }
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 >
-                  {creatableRoles.map((r) => (
+                  {teamRoleOptionsForEdit(editForm.role).map((r) => (
                     <option key={r} value={r}>
                       {ROLE_LABELS[r]}
                     </option>

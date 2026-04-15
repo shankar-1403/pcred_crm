@@ -178,7 +178,7 @@ export default function Layout() {
           </div>
         </div>
       )}
-      <main className="mx-auto max-w-[1400px] px-3 pb-5 pt-24 sm:px-4 sm:pb-8 sm:pt-28">
+      <main className="mx-auto min-w-0 max-w-[1400px] px-3 pb-5 pt-24 sm:px-4 sm:pb-8 sm:pt-28">
         <Outlet />
       </main>
     </div>

@@ -16,6 +16,7 @@ import {
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import { db } from '../lib/firebase'
 import LeadDetailsModal from '../components/LeadDetailsModal'
+import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
 import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect'
 
@@ -409,6 +410,32 @@ export default function ManagementBoard() {
     )
   }
 
+  function closeLeadModal() {
+    setLeadModalOpen(false)
+    setAssigneeDropdownOpen(false)
+    setSalesAssigneeDropdownOpen(false)
+    setAssignmentMode('process')
+    setLeadForm({
+      partnerId: '',
+      company: '',
+      clientName: '',
+      location: '',
+      bankName: '',
+      onePagerLink: '',
+      description: '',
+      status: '',
+      updatedStatusDate: '',
+      productId: '',
+      leadDate: '',
+      totalAmount: '',
+      bankPayoutPercent: '',
+      mandateSigned: false,
+      mandatePayoutPercent: '',
+    })
+    setSelectedAssignees([])
+    setSelectedSalesAssignees([])
+  }
+
   if (loading) {
     return <p className="text-slate-400">Loading leads…</p>
   }
@@ -434,7 +461,7 @@ export default function ManagementBoard() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <div className="flex flex-col gap-4">
         <div className="flex justify-between">
           <div>
@@ -617,8 +644,7 @@ export default function ManagementBoard() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/40">
-        <div className="overflow-x-auto">
+      <div className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
           <table className="min-w-max w-full text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
@@ -734,7 +760,6 @@ export default function ManagementBoard() {
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {viewLead && (
@@ -748,7 +773,10 @@ export default function ManagementBoard() {
       {partnerModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
-            <h2 className="text-lg font-semibold text-white">Add partner</h2>
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-lg font-semibold text-white">Add partner</h2>
+              <ModalCloseButton onClick={() => setPartnerModalOpen(false)} />
+            </div>
             <form onSubmit={savePartner} className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300">
@@ -785,7 +813,10 @@ export default function ManagementBoard() {
       {leadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl sm:p-6">
-            <h2 className="text-lg font-semibold text-white">New lead</h2>
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-lg font-semibold text-white">New lead</h2>
+              <ModalCloseButton onClick={closeLeadModal} />
+            </div>
             <form onSubmit={saveLeadByManagement} className="mt-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300">Partner</label>
@@ -1198,31 +1229,7 @@ export default function ManagementBoard() {
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    setLeadModalOpen(false)
-                    setAssigneeDropdownOpen(false)
-                    setSalesAssigneeDropdownOpen(false)
-                    setAssignmentMode('process')
-                    setLeadForm({
-                      partnerId: '',
-                      company: '',
-                      clientName: '',
-                      location: '',
-                      bankName: '',
-                      onePagerLink: '',
-                      description: '',
-                      status: '',
-                      updatedStatusDate: '',
-                      productId: '',
-                      leadDate: '',
-                      totalAmount: '',
-                      bankPayoutPercent: '',
-                      mandateSigned: false,
-                      mandatePayoutPercent: '',
-                    })
-                    setSelectedAssignees([])
-                    setSelectedSalesAssignees([])
-                  }}
+                  onClick={closeLeadModal}
                   className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
                 >
                   Cancel

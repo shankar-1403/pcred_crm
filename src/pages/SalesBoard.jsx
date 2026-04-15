@@ -5,8 +5,9 @@ import { useAuth } from '../context/AuthContext'
 import { useLeads } from '../hooks/useLeads'
 import { useUsers } from '../hooks/useUsers'
 import { useProducts } from '../hooks/useProducts'
+import { usePartners } from '../hooks/usePartners'
 import { useStatuses } from '../hooks/useStatuses'
-import { assignedUids, toAssignedMap } from '../lib/leads'
+import { assignedUids, leadReferredToUser, toAssignedMap } from '../lib/leads'
 import {
   assignableProcessUsers,
   assignableSalesUsers,
@@ -14,6 +15,7 @@ import {
 } from '../lib/assignees'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import LeadDetailsModal from '../components/LeadDetailsModal'
+import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
 
 const emptyForm = {
@@ -41,6 +43,7 @@ export default function SalesBoard() {
   const { leads, loading } = useLeads()
   const { usersById, processUsers, salesUsers, error: usersError } = useUsers()
   const { products, loading: productsLoading, error: productsError } = useProducts()
+  const { partners } = usePartners()
   const { statuses } = useStatuses()
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -59,7 +62,11 @@ export default function SalesBoard() {
   const [toDate, setToDate] = useState('')
 
   const myLeads = useMemo(
-    () => leads.filter((l) => l.createdBy === user?.uid),
+    () =>
+      leads.filter(
+        (l) =>
+          l.createdBy === user?.uid || leadReferredToUser(l, user?.uid),
+      ),
     [leads, user?.uid],
   )
 
@@ -130,6 +137,13 @@ export default function SalesBoard() {
     if (!productId) return '—'
     const product = products.find((p) => p.id === productId)
     return product?.name || productId
+  }
+
+  function partnerNameFor(partnerId, fallbackName = '') {
+    if (fallbackName) return fallbackName
+    if (!partnerId) return '—'
+    const p = partners.find((item) => item.id === partnerId)
+    return p?.name || partnerId
   }
 
   function openNew() {
@@ -268,6 +282,7 @@ export default function SalesBoard() {
     const rows = filteredMyLeads
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
       .map((lead) => [
+        partnerNameFor(lead.partnerId, lead.partnerName),
         lead.viaName || '',
         lead.company || '',
         lead.clientName || '',
@@ -288,6 +303,7 @@ export default function SalesBoard() {
     downloadCsv(
       'sales-leads.csv',
       [
+        'Partner',
         'Via',
         'Company',
         'Client Name',
@@ -309,7 +325,7 @@ export default function SalesBoard() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white">My leads</h1>
@@ -376,12 +392,12 @@ export default function SalesBoard() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/40">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1240px] table-auto text-left text-xs sm:text-sm">
+      <div className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+          <table className="w-max min-w-full text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Company</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Partner</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Client name</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Via</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Location</th>
@@ -398,31 +414,52 @@ export default function SalesBoard() {
             <tbody className="divide-y divide-slate-800">
               {filteredMyLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={13} className="px-4 py-10 text-center text-slate-500">
                     You have no leads yet. Click New lead to add one.
                   </td>
                 </tr>
               ) : (
                 filteredMyLeads.map((lead) => (
                   <tr key={lead.id} className="text-slate-300">
-                    <td className="px-4 py-1 text-slate-400">{lead.company || '—'}</td>
-                    <td className="px-4 py-1 text-slate-400">{lead.clientName || '—'}</td>
-                    <td className="px-4 py-1 text-slate-400">{lead.viaName || '—'}</td>
-                    <td className="px-4 py-1 text-slate-400">{lead.location || '—'}</td>
-                    <td className="px-4 py-1 text-slate-400">{productNameFor(lead.productId)}</td>
-                    <td className="px-4 py-1">
-                      <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                      {lead.company || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                      {partnerNameFor(lead.partnerId, lead.partnerName)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                      {lead.clientName || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                      {lead.viaName || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">{lead.location || '—'}</td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                      {productNameFor(lead.productId)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1">
+                      <span className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
                         {statusLabelByValue.get(lead.status) ||
                           lead.status}
                       </span>
                     </td>
-                    <td className="px-4 py-1 text-xs text-slate-400">{processNames(lead.assignedTo)}</td>
-                    <td className="px-4 py-1 text-xs text-slate-400">{salesNames(lead.salesAssignedTo)}</td>
-                    <td className="px-4 py-1 text-slate-400 text-right">₹ {Number(lead?.totalAmount).toLocaleString('en-IN') || 0}</td>
-                    <td className="px-4 py-1 text-xs text-slate-500">{lead.leadDate || '—'}</td>
-                    <td className="px-4 py-1 text-xs text-slate-500">{lead.updatedStatusDate || '—'}</td>
-                    <td className="px-4 py-1">
-                      <div className="flex flex-wrap items-center gap-2">
+                    <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-400">
+                      {processNames(lead.assignedTo)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-400">
+                      {salesNames(lead.salesAssignedTo)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-right text-slate-400">
+                      ₹ {Number(lead?.totalAmount).toLocaleString('en-IN') || 0}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-500">
+                      {lead.leadDate || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-500">
+                      {lead.updatedStatusDate || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1">
+                      <div className="flex flex-nowrap items-center gap-2">
                         <button
                           type="button"
                           onClick={() => openEdit(lead)}
@@ -446,14 +483,13 @@ export default function SalesBoard() {
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {viewLead && (
         <LeadDetailsModal
           lead={viewLead}
           usersById={usersById}
-          showPartner={false}
+          showPartner={Boolean(viewLead.partnerId || viewLead.partnerName)}
           onClose={() => setViewLead(null)}
         />
       )}
@@ -466,53 +502,54 @@ export default function SalesBoard() {
             aria-modal="true"
             aria-labelledby="lead-modal-title"
           >
-            <h2
-              id="lead-modal-title"
-              className="text-lg font-semibold text-white"
-            >
-              {editingId ? 'Edit lead' : 'New lead'}
-            </h2>
+            <div className="flex items-start justify-between gap-3">
+              <h2
+                id="lead-modal-title"
+                className="text-lg font-semibold text-white"
+              >
+                {editingId ? 'Edit lead' : 'New lead'}
+              </h2>
+              <ModalCloseButton onClick={() => setModalOpen(false)} />
+            </div>
 
             <form onSubmit={saveLead} className="mt-6 space-y-4">
-              {!editingId && (
-                <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-3">
-                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
+              <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-3">
+                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={form.viaEnabled}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        viaEnabled: e.target.checked,
+                        ...(e.target.checked ? {} : { viaName: '' }),
+                      }))
+                    }
+                    className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                  />
+                  <span>Via</span>
+                </label>
+                {form.viaEnabled && (
+                  <div>
+                    <label
+                      htmlFor="sales-lead-via-name"
+                      className="block text-xs font-medium text-slate-400"
+                    >
+                      Name
+                    </label>
                     <input
-                      type="checkbox"
-                      checked={form.viaEnabled}
+                      id="sales-lead-via-name"
+                      type="text"
+                      value={form.viaName}
                       onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          viaEnabled: e.target.checked,
-                          ...(e.target.checked ? {} : { viaName: '' }),
-                        }))
+                        setForm((f) => ({ ...f, viaName: e.target.value }))
                       }
-                      className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                      placeholder="Referrer or channel name"
+                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                     />
-                    <span>Via</span>
-                  </label>
-                  {form.viaEnabled && (
-                    <div>
-                      <label
-                        htmlFor="sales-lead-via-name"
-                        className="block text-xs font-medium text-slate-400"
-                      >
-                        Name
-                      </label>
-                      <input
-                        id="sales-lead-via-name"
-                        type="text"
-                        value={form.viaName}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, viaName: e.target.value }))
-                        }
-                        placeholder="Referrer or channel name"
-                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300">
                   Company

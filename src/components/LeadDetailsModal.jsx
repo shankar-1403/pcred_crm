@@ -1,3 +1,4 @@
+import ModalCloseButton from './ModalCloseButton'
 import { ROLES } from '../constants'
 import { useAuth } from '../context/AuthContext'
 import { usePartners } from '../hooks/usePartners'
@@ -52,14 +53,7 @@ export default function LeadDetailsModal({
       <div className="mx-auto my-6 w-full max-w-5xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3 sm:px-6 sm:py-4">
           <h2 className="text-lg font-semibold text-white">Lead Details</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md px-2 py-1 text-2xl leading-none text-slate-400 hover:bg-slate-800 hover:text-white"
-            aria-label="Close"
-          >
-            ×
-          </button>
+          <ModalCloseButton onClick={onClose} />
         </div>
 
         <div className="max-h-[80vh] overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
