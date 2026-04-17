@@ -3,7 +3,7 @@ import { ref, serverTimestamp, update } from 'firebase/database'
 import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import { useLeads } from '../hooks/useLeads'
-import { usePartners } from '../hooks/usePartners'
+import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
 import { useUsers } from '../hooks/useUsers'
 import { assignedUids, leadReferredToUser } from '../lib/leads'
 import { useProducts } from '../hooks/useProducts'
@@ -12,12 +12,14 @@ import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
 import { downloadCsv, inDateRange } from '../lib/csv'
+import TablePagination from '../components/TablePagination'
+import { usePagination } from '../hooks/usePagination'
 
 export default function ProcessBoard() {
   const { user } = useAuth()
   const { products, loading: productsLoading, error: productsError } = useProducts()
   const { statuses } = useStatuses()
-  const { partners } = usePartners()
+  const { eliteAmbassador } = useEliteAmbassador()
   const { leads, loading } = useLeads()
   const { usersById } = useUsers()
   const [leadSearch, setLeadSearch] = useState('')
@@ -26,8 +28,8 @@ export default function ProcessBoard() {
   const [toDate, setToDate] = useState('')
   const [editLeadId, setEditLeadId] = useState(null)
   const [editForm, setEditForm] = useState({
-    partnerId: '',
-    partnerName: '',
+    eliteAmbassadorId: '',
+    eliteAmbassadorName: '',
     company: '',
     clientName: '',
     location: '',
@@ -68,11 +70,21 @@ export default function ProcessBoard() {
     return list
   }, [assignedToMe, leadSearch, fromDate, toDate])
 
+  const {
+    page: tablePage,
+    setPage: setTablePage,
+    pageSize: tablePageSize,
+    setPageSize: setTablePageSize,
+    total: tableTotal,
+    totalPages: tableTotalPages,
+    pageItems: tablePageItems,
+  } = usePagination(filteredAssignedToMe)
+
   function openEdit(lead) {
     setEditLeadId(lead.id)
     setEditForm({
-      partnerId: lead.partnerId ?? '',
-      partnerName: lead.partnerName ?? '',
+      eliteAmbassadorId: lead.eliteAmbassadorId ?? '',
+      eliteAmbassadorName: lead.eliteAmbassadorName ?? '',
       company: lead.company ?? '',
       clientName: lead.clientName ?? '',
       location: lead.location ?? '',
@@ -104,8 +116,8 @@ export default function ProcessBoard() {
         : 0
 
       await update(ref(db, `leads/${editLeadId}`), {
-        partnerId: editForm.partnerId || null,
-        partnerName: editForm.partnerName || '',
+        eliteAmbassadorId: editForm.eliteAmbassadorId || null,
+        eliteAmbassadorName: editForm.eliteAmbassadorName || '',
         company: editForm.company.trim(),
         clientName: editForm.clientName.trim(),
         location: editForm.location.trim(),
@@ -131,11 +143,11 @@ export default function ProcessBoard() {
     }
   }
 
-  function partnerNameFor(partnerId, fallbackName = '') {
+  function eliteAmbassadorNameFor(orgId, fallbackName = '') {
     if (fallbackName) return fallbackName
-    if (!partnerId) return '—'
-    const p = partners.find((item) => item.id === partnerId)
-    return p?.name || partnerId
+    if (!orgId) return '—'
+    const p = eliteAmbassador.find((item) => item.id === orgId)
+    return p?.name || orgId
   }
 
   const currentUserName = user?.uid
@@ -180,7 +192,7 @@ export default function ProcessBoard() {
     const rows = filteredAssignedToMe
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
       .map((lead) => [
-        partnerNameFor(lead.partnerId, lead.partnerName),
+        eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
         lead.company || '',
         lead.clientName || '',
         lead.location || '',
@@ -198,7 +210,7 @@ export default function ProcessBoard() {
     downloadCsv(
       'process-leads.csv',
       [
-        'Partner',
+        'Elite ambassador',
         'Company',
         'Client Name',
         'Location',
@@ -274,11 +286,12 @@ export default function ProcessBoard() {
           </div>
         </div>
 
-      <div className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+      <div className="max-w-full min-w-0 rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+        <div className="overflow-x-auto">
           <table className="w-full min-w-[1440px] table-auto text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
-                <th className="px-4 py-2 font-medium whitespace-nowrap">Partner</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Elite ambassador</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Company</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Client name</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Location</th>
@@ -299,10 +312,13 @@ export default function ProcessBoard() {
                   </td>
                 </tr>
               ) : (
-                filteredAssignedToMe.map((lead) => (
+                tablePageItems.map((lead) => (
                   <tr key={lead.id} className="text-slate-300">
                     <td className="px-4 py-1 text-slate-400">
-                      {partnerNameFor(lead.partnerId, lead.partnerName)}
+                      {eliteAmbassadorNameFor(
+                        lead.eliteAmbassadorId,
+                        lead.eliteAmbassadorName,
+                      )}
                     </td>
                     <td className="px-4 py-1 text-slate-400">{lead.company || '—'}</td>
                     <td className="px-4 py-1 text-slate-400">{lead.clientName || '—'}</td>
@@ -357,13 +373,27 @@ export default function ProcessBoard() {
               )}
             </tbody>
           </table>
+        </div>
+        <TablePagination
+          page={tablePage}
+          totalPages={tableTotalPages}
+          totalItems={tableTotal}
+          pageSize={tablePageSize}
+          onPageChange={setTablePage}
+          onPageSizeChange={setTablePageSize}
+        />
       </div>
 
       {viewLead && (
         <LeadDetailsModal
           lead={viewLead}
           usersById={usersById}
-          showPartner={Boolean(viewLead.partnerId || viewLead.partnerName)}
+          showPartner={Boolean(
+            viewLead.eliteAmbassadorId ||
+              viewLead.eliteAmbassadorName ||
+              viewLead.ambassadorId ||
+              viewLead.ambassadorName,
+          )}
           onClose={() => setViewLead(null)}
         />
       )}
@@ -377,9 +407,14 @@ export default function ProcessBoard() {
             </div>
             <form onSubmit={saveEdit} className="mt-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300">Partner</label>
+                <label className="block text-sm font-medium text-slate-300">
+                  Elite ambassador
+                </label>
                 <input
-                  value={partnerNameFor(editForm.partnerId, editForm.partnerName)}
+                  value={eliteAmbassadorNameFor(
+                    editForm.eliteAmbassadorId,
+                    editForm.eliteAmbassadorName,
+                  )}
                   readOnly
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-white"
                 />

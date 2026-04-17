@@ -9,9 +9,11 @@ import SalesBoard from './pages/SalesBoard'
 import ProcessBoard from './pages/ProcessBoard'
 import AdminUsers from './pages/AdminUsers'
 import AdminProducts from './pages/AdminProducts'
-import AdminPartners from './pages/AdminPartners'
+import AdminEliteAmbassador from './pages/AdminEliteAmbassador'
+import AdminAmbassador from './pages/AdminAmbassador'
 import AdminStatuses from './pages/AdminStatuses'
-import PartnerBoard from './pages/PartnerBoard'
+import EliteAmbassadorBoard from './pages/EliteAmbassadorBoard'
+import AmbassadorBoard from './pages/AmbassadorBoard'
 import { ROLES } from './constants'
 
 export default function App() {
@@ -46,10 +48,18 @@ export default function App() {
               }
             />
             <Route
-              path="admin/partners"
+              path="admin/elite-ambassador"
               element={
                 <ProtectedRoute roles={[ROLES.ADMIN]}>
-                  <AdminPartners />
+                  <AdminEliteAmbassador />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/ambassador"
+              element={
+                <ProtectedRoute roles={[ROLES.ADMIN]}>
+                  <AdminAmbassador />
                 </ProtectedRoute>
               }
             />
@@ -86,13 +96,22 @@ export default function App() {
               }
             />
             <Route
-              path="partner"
+              path="elite-ambassador"
               element={
-                <ProtectedRoute roles={[ROLES.PARTNER]}>
-                  <PartnerBoard />
+                <ProtectedRoute roles={[ROLES.ELITE_AMBASSADOR]}>
+                  <EliteAmbassadorBoard />
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="ambassador"
+              element={
+                <ProtectedRoute roles={[ROLES.AMBASSADOR]}>
+                  <AmbassadorBoard />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="partner" element={<Navigate to="/elite-ambassador" replace />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

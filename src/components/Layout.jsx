@@ -63,8 +63,17 @@ export default function Layout() {
                 </NavLink>
               )}
               {role === ROLES.ADMIN && (
-                <NavLink to="/admin/partners" className={linkClass} onClick={closeMenu}>
-                  Partner master
+                <NavLink
+                  to="/admin/elite-ambassador"
+                  className={linkClass}
+                  onClick={closeMenu}
+                >
+                  Elite ambassador master
+                </NavLink>
+              )}
+              {role === ROLES.ADMIN && (
+                <NavLink to="/admin/ambassador" className={linkClass} onClick={closeMenu}>
+                  Ambassador master
                 </NavLink>
               )}
               {role === ROLES.ADMIN && (
@@ -87,9 +96,18 @@ export default function Layout() {
                   Assigned leads
                 </NavLink>
               )}
-              {role === ROLES.PARTNER && (
-                <NavLink to="/partner" className={linkClass} onClick={closeMenu}>
-                  Partner dashboard
+              {role === ROLES.ELITE_AMBASSADOR && (
+                <NavLink
+                  to="/elite-ambassador"
+                  className={linkClass}
+                  onClick={closeMenu}
+                >
+                  Elite ambassador dashboard
+                </NavLink>
+              )}
+              {role === ROLES.AMBASSADOR && (
+                <NavLink to="/ambassador" className={linkClass} onClick={closeMenu}>
+                  Ambassador dashboard
                 </NavLink>
               )}
             </nav>
@@ -130,8 +148,17 @@ export default function Layout() {
                 </NavLink>
               )}
               {role === ROLES.ADMIN && (
-                <NavLink to="/admin/partners" className={linkClass} onClick={closeMenu}>
-                  Partner master
+                <NavLink
+                  to="/admin/elite-ambassador"
+                  className={linkClass}
+                  onClick={closeMenu}
+                >
+                  Elite ambassador master
+                </NavLink>
+              )}
+              {role === ROLES.ADMIN && (
+                <NavLink to="/admin/ambassador" className={linkClass} onClick={closeMenu}>
+                  Ambassador master
                 </NavLink>
               )}
               {role === ROLES.ADMIN && (
@@ -154,9 +181,18 @@ export default function Layout() {
                   Assigned leads
                 </NavLink>
               )}
-              {role === ROLES.PARTNER && (
-                <NavLink to="/partner" className={linkClass} onClick={closeMenu}>
-                  Partner dashboard
+              {role === ROLES.ELITE_AMBASSADOR && (
+                <NavLink
+                  to="/elite-ambassador"
+                  className={linkClass}
+                  onClick={closeMenu}
+                >
+                  Elite ambassador dashboard
+                </NavLink>
+              )}
+              {role === ROLES.AMBASSADOR && (
+                <NavLink to="/ambassador" className={linkClass} onClick={closeMenu}>
+                  Ambassador dashboard
                 </NavLink>
               )}
             </nav>

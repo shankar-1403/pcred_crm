@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useProducts } from '../hooks/useProducts'
 import { ROLES, ROLE_LABELS } from '../constants'
 import { db } from '../lib/firebase'
+import TablePagination from '../components/TablePagination'
+import { usePagination } from '../hooks/usePagination'
 
 export default function AdminProducts() {
   const { user, profile } = useAuth()
@@ -18,6 +20,16 @@ export default function AdminProducts() {
   const [formError, setFormError] = useState('')
 
   const productsTable = useMemo(() => products ?? [], [products])
+
+  const {
+    page: tablePage,
+    setPage: setTablePage,
+    pageSize: tablePageSize,
+    setPageSize: setTablePageSize,
+    total: tableTotal,
+    totalPages: tableTotalPages,
+    pageItems: tablePageItems,
+  } = usePagination(productsTable)
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -138,7 +150,8 @@ export default function AdminProducts() {
         </form>
       </section>
 
-      <section className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+      <section className="max-w-full min-w-0 rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+        <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] table-auto text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
@@ -167,7 +180,7 @@ export default function AdminProducts() {
                   </td>
                 </tr>
               ) : (
-                productsTable.map((p) => (
+                tablePageItems.map((p) => (
                   <tr key={p.id} className="text-slate-300">
                     <td className="px-4 py-3 text-white">
                       {p.name || '—'}
@@ -190,6 +203,17 @@ export default function AdminProducts() {
               )}
             </tbody>
           </table>
+        </div>
+        {!loading && !error && productsTable.length > 0 ? (
+          <TablePagination
+            page={tablePage}
+            totalPages={tableTotalPages}
+            totalItems={tableTotal}
+            pageSize={tablePageSize}
+            onPageChange={setTablePage}
+            onPageSizeChange={setTablePageSize}
+          />
+        ) : null}
       </section>
     </div>
   )

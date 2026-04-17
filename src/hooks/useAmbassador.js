@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import { onValue, ref } from 'firebase/database'
 import { db } from '../lib/firebase'
 
-export function usePartners() {
-  const [partners, setPartners] = useState([])
+export function useAmbassador() {
+  const [ambassador, setAmbassador] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const r = ref(db, 'partners')
+    const r = ref(db, 'ambassador')
     const unsub = onValue(
       r,
       (snap) => {
@@ -17,12 +17,12 @@ export function usePartners() {
           ? Object.entries(v).map(([id, data]) => ({ id, ...data }))
           : []
         list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
-        setPartners(list)
+        setAmbassador(list)
         setError(null)
         setLoading(false)
       },
       (err) => {
-        setPartners([])
+        setAmbassador([])
         setError(err)
         setLoading(false)
       },
@@ -30,5 +30,5 @@ export function usePartners() {
     return () => unsub()
   }, [])
 
-  return { partners, loading, error }
+  return { ambassador, loading, error }
 }

@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { push, ref, set, remove } from 'firebase/database'
 import { useAuth } from '../context/AuthContext'
 import { useLeads } from '../hooks/useLeads'
-import { usePartners } from '../hooks/usePartners'
+import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
+import { useAmbassador } from '../hooks/useAmbassador'
 import { useProducts } from '../hooks/useProducts'
 import { useStatuses } from '../hooks/useStatuses'
 import { useUsers } from '../hooks/useUsers'
@@ -19,11 +20,14 @@ import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
 import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect'
+import TablePagination from '../components/TablePagination'
+import { usePagination } from '../hooks/usePagination'
 
 export default function ManagementBoard() {
   const { user,profile } = useAuth()
   const { leads, loading } = useLeads()
-  const { partners } = usePartners()
+  const { eliteAmbassador } = useEliteAmbassador()
+  const { ambassador: ambassadorRows } = useAmbassador()
   const { products } = useProducts()
   const { statuses } = useStatuses()
   const { usersById, processUsers } = useUsers()
@@ -32,28 +36,26 @@ export default function ManagementBoard() {
   const [salesOwnerFilter, setSalesOwnerFilter] = useState([])
   const [processUserFilter, setProcessUserFilter] = useState([])
   const [productFilter, setProductFilter] = useState('')
-  const [partnerFilter, setPartnerFilter] = useState([])
+  const [eliteAmbassadorFilter, setEliteAmbassadorFilter] = useState([])
+  const [ambassadorFilter, setAmbassadorFilter] = useState([])
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [sortBy, setSortBy] = useState('')
   const [sortOrder, setSortOrder] = useState('')
   const [viewLead, setViewLead] = useState(null)
-  const [partnerModalOpen, setPartnerModalOpen] = useState(false)
   const [leadModalOpen, setLeadModalOpen] = useState(false)
-  const [partnerName, setPartnerName] = useState('')
   const [assignmentMode, setAssignmentMode] = useState('process')
   const [selectedAssignees, setSelectedAssignees] = useState([])
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false)
   const [selectedSalesAssignees, setSelectedSalesAssignees] = useState([])
   const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] =
     useState(false)
-  const [savingPartner, setSavingPartner] = useState(false)
   const [savingLead, setSavingLead] = useState(false)
   const [formError, setFormError] = useState('')
   const [deletingLeadId, setDeletingLeadId] = useState('')
   const [message, setMessage] = useState('')
   const [leadForm, setLeadForm] = useState({
-    partnerId: '',
+    eliteAmbassadorId: '',
     company: '',
     clientName: '',
     location: '',
@@ -114,13 +116,22 @@ export default function ManagementBoard() {
     [salesUsers, user?.uid, usersById],
   )
 
-  const partnerOptions = useMemo(
+  const eliteAmbassadorOptions = useMemo(
     () =>
-      partners.map((p) => ({
+      eliteAmbassador.map((p) => ({
         id: p.id,
         label: p.name || p.id,
       })),
-    [partners],
+    [eliteAmbassador],
+  )
+
+  const ambassadorOptions = useMemo(
+    () =>
+      ambassadorRows.map((a) => ({
+        id: a.id,
+        label: a.name || a.id,
+      })),
+    [ambassadorRows],
   )
 
   const statusOptions = useMemo(() => {
@@ -165,8 +176,15 @@ export default function ManagementBoard() {
     if (productFilter) {
       list = list.filter((l) => l.productId === productFilter)
     }
-    if (partnerFilter.length) {
-      list = list.filter((l) => partnerFilter.includes(l.partnerId))
+    if (eliteAmbassadorFilter.length) {
+      list = list.filter((l) =>
+        eliteAmbassadorFilter.includes(l.eliteAmbassadorId),
+      )
+    }
+    if (ambassadorFilter.length) {
+      list = list.filter((l) =>
+        ambassadorFilter.includes(String(l.ambassadorId ?? '').trim()),
+      )
     }
     list = list.filter((l) => inDateRange(l.leadDate || '', fromDate, toDate))
     const sorted = [...list]
@@ -191,12 +209,23 @@ export default function ManagementBoard() {
     salesOwnerFilter,
     processUserFilter,
     productFilter,
-    partnerFilter,
+    eliteAmbassadorFilter,
+    ambassadorFilter,
     fromDate,
     toDate,
     sortBy,
     sortOrder,
   ])
+
+  const {
+    page: tablePage,
+    setPage: setTablePage,
+    pageSize: tablePageSize,
+    setPageSize: setTablePageSize,
+    total: tableTotal,
+    totalPages: tableTotalPages,
+    pageItems: tablePageItems,
+  } = usePagination(filtered)
 
   function nameFor(uid) {
     const u = usersById[uid]
@@ -209,11 +238,18 @@ export default function ManagementBoard() {
     return p?.name || productId
   }
 
-  function partnerNameFor(partnerId, fallbackName = '') {
+  function eliteAmbassadorNameFor(orgId, fallbackName = '') {
     if (fallbackName) return fallbackName
-    if (!partnerId) return '—'
-    const p = partners.find((item) => item.id === partnerId)
-    return p?.name || partnerId
+    if (!orgId) return '—'
+    const p = eliteAmbassador.find((item) => item.id === orgId)
+    return p?.name || orgId
+  }
+
+  function ambassadorNameFor(ambassadorId, fallbackName = '') {
+    if (fallbackName) return fallbackName
+    if (!ambassadorId) return '—'
+    const a = ambassadorRows.find((item) => item.id === ambassadorId)
+    return a?.name || ambassadorId
   }
 
   function formatCurrencyINR(value) {
@@ -258,40 +294,20 @@ export default function ManagementBoard() {
     )
   }
 
-  async function savePartner(e) {
-    e.preventDefault()
-    if (!user) return
-    const name = partnerName.trim()
-    if (!name) return
-    setSavingPartner(true)
-    setFormError('')
-    try {
-      const newRef = push(ref(db, 'partners'))
-      await set(newRef, {
-        name,
-        createdAt: Date.now(),
-        createdBy: user.uid,
-      })
-      setPartnerName('')
-      setPartnerModalOpen(false)
-    } catch (err) {
-      setFormError(err?.message || 'Could not add partner.')
-    } finally {
-      setSavingPartner(false)
-    }
-  }
-
   async function saveLeadByManagement(e) {
     e.preventDefault()
     if (!user) return
-    if (!leadForm.partnerId) {
-      setFormError('Please select a partner.')
+    if (!leadForm.eliteAmbassadorId) {
+      setFormError('Please select an elite ambassador.')
       return
     }
     setSavingLead(true)
     setFormError('')
     try {
-      const partnerLabel = partnerNameFor(leadForm.partnerId, '')
+      const eliteAmbassadorLabel = eliteAmbassadorNameFor(
+        leadForm.eliteAmbassadorId,
+        '',
+      )
       const baseAmount = Number.parseFloat(leadForm.totalAmount || 0) || 0
       const bankPercent = Number.parseFloat(leadForm.bankPayoutPercent || 0) || 0
       const mandatePercent =
@@ -302,9 +318,9 @@ export default function ManagementBoard() {
         : 0
 
       const payload = {
-        partnerId: leadForm.partnerId,
-        partnerName: partnerLabel,
-        company: leadForm.company.trim() || partnerLabel,
+        eliteAmbassadorId: leadForm.eliteAmbassadorId,
+        eliteAmbassadorName: eliteAmbassadorLabel,
+        company: leadForm.company.trim() || eliteAmbassadorLabel,
         clientName: leadForm.clientName.trim(),
         location: leadForm.location.trim(),
         bankName: leadForm.bankName.trim(),
@@ -337,7 +353,7 @@ export default function ManagementBoard() {
       const newRef = push(ref(db, 'leads'))
       await set(newRef, payload)
       setLeadForm({
-        partnerId: '',
+        eliteAmbassadorId: '',
         company: '',
         clientName: '',
         location: '',
@@ -379,7 +395,8 @@ export default function ManagementBoard() {
     const rows = filtered
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
       .map((lead) => [
-        partnerNameFor(lead.partnerId, lead.partnerName),
+        eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
+        ambassadorNameFor(lead.ambassadorId, lead.ambassadorName),
         lead.company || '',
         lead.status || '',
         productNameFor(lead.productId),
@@ -396,7 +413,8 @@ export default function ManagementBoard() {
     downloadCsv(
       'management-leads.csv',
       [
-        'Partner',
+        'Elite ambassador',
+        'Ambassador',
         'Company',
         'Status',
         'Product',
@@ -416,7 +434,7 @@ export default function ManagementBoard() {
     setSalesAssigneeDropdownOpen(false)
     setAssignmentMode('process')
     setLeadForm({
-      partnerId: '',
+      eliteAmbassadorId: '',
       company: '',
       clientName: '',
       location: '',
@@ -445,7 +463,7 @@ export default function ManagementBoard() {
     setFormError('')
     
     const ok = window.confirm(
-      `Delete lead? Partner users linked to this ID will stop matching leads until updated.`,
+      `Delete this lead? This cannot be undone.`,
     )
     if (!ok) return
 
@@ -471,32 +489,24 @@ export default function ManagementBoard() {
             </p>
           </div>
           <div className="flex flex-wrap items-end gap-4">
-            <div>
-              <button type="button" onClick={() => {
-                  setFormError('')
-                  setPartnerModalOpen(true)
-                }} className="rounded-lg border border-slate-600 px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-800">
-                Add partner
-              </button>
-            </div>
-            <div>
-              <button type="button"
-                onClick={() => {
-                  setFormError('')
-                  setAssignmentMode('process')
-                  setSelectedAssignees([])
-                  setSelectedSalesAssignees([])
-                  setAssigneeDropdownOpen(false)
-                  setSalesAssigneeDropdownOpen(false)
-                  setLeadModalOpen(true)
-                }} className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-500"
-              >
-                New lead
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFormError('')
+                setAssignmentMode('process')
+                setSelectedAssignees([])
+                setSelectedSalesAssignees([])
+                setAssigneeDropdownOpen(false)
+                setSalesAssigneeDropdownOpen(false)
+                setLeadModalOpen(true)
+              }}
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-500"
+            >
+              New lead
+            </button>
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <div>
             <label
               htmlFor="status-filter"
@@ -577,18 +587,35 @@ export default function ManagementBoard() {
 
           <div>
             <label
-              htmlFor="partner-filter"
+              htmlFor="elite-ambassador-filter"
               className="block text-xs font-medium uppercase tracking-wide text-slate-500"
             >
-              Partner
+              Elite ambassador
             </label>
             <TypeaheadMultiSelect
-              id="partner-filter"
+              id="elite-ambassador-filter"
               label={null}
-              placeholder="Type partner…"
-              options={partnerOptions}
-              selectedIds={partnerFilter}
-              onChangeSelectedIds={setPartnerFilter}
+              placeholder="Type elite ambassador…"
+              options={eliteAmbassadorOptions}
+              selectedIds={eliteAmbassadorFilter}
+              onChangeSelectedIds={setEliteAmbassadorFilter}
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="ambassador-filter"
+              className="block text-xs font-medium uppercase tracking-wide text-slate-500"
+            >
+              Ambassador
+            </label>
+            <TypeaheadMultiSelect
+              id="ambassador-filter"
+              label={null}
+              placeholder="Type ambassador…"
+              options={ambassadorOptions}
+              selectedIds={ambassadorFilter}
+              onChangeSelectedIds={setAmbassadorFilter}
             />
           </div>
         </div>
@@ -644,11 +671,13 @@ export default function ManagementBoard() {
         </div>
       </div>
 
-      <div className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+      <div className="max-w-full min-w-0 rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+        <div className="overflow-x-auto">
           <table className="min-w-max w-full text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
-                <th className="px-4 py-2 font-medium">Partner</th>
+                <th className="px-4 py-2 font-medium">Elite ambassador</th>
+                <th className="px-4 py-2 font-medium">Ambassador</th>
                 <th className="px-4 py-2 font-medium">Company</th>
                 <th className="px-4 py-2 font-medium">Status</th>
                 <th className="px-4 py-2 font-medium">Product</th>
@@ -685,18 +714,26 @@ export default function ManagementBoard() {
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={11}
+                    colSpan={12}
                     className="px-4 py-10 text-center text-slate-500"
                   >
                     No leads match this filter.
                   </td>
                 </tr>
               ) : (
-                filtered.map((lead) => {
+                tablePageItems.map((lead) => {
                   const assignees = assignedUids(lead.assignedTo)
                   return (
                     <tr key={lead.id} className="text-slate-300">
-                      <td className="px-4 py-1">{partnerNameFor(lead.partnerId, lead.partnerName)}</td>
+                      <td className="px-4 py-1">
+                        {eliteAmbassadorNameFor(
+                          lead.eliteAmbassadorId,
+                          lead.eliteAmbassadorName,
+                        )}
+                      </td>
+                      <td className="px-4 py-1 text-slate-400">
+                        {ambassadorNameFor(lead.ambassadorId, lead.ambassadorName)}
+                      </td>
                       <td className="px-4 py-1 text-slate-400">{lead.company || '—'}</td>
                       <td className="px-4 py-1">
                         <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
@@ -760,6 +797,15 @@ export default function ManagementBoard() {
               )}
             </tbody>
           </table>
+        </div>
+        <TablePagination
+          page={tablePage}
+          totalPages={tableTotalPages}
+          totalItems={tableTotal}
+          pageSize={tablePageSize}
+          onPageChange={setTablePage}
+          onPageSizeChange={setTablePageSize}
+        />
       </div>
 
       {viewLead && (
@@ -768,46 +814,6 @@ export default function ManagementBoard() {
           usersById={usersById}
           onClose={() => setViewLead(null)}
         />
-      )}
-
-      {partnerModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="text-lg font-semibold text-white">Add partner</h2>
-              <ModalCloseButton onClick={() => setPartnerModalOpen(false)} />
-            </div>
-            <form onSubmit={savePartner} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-300">
-                  Partner name
-                </label>
-                <input
-                  value={partnerName}
-                  onChange={(e) => setPartnerName(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                />
-              </div>
-              {formError && <p className="text-sm text-red-300">{formError}</p>}
-              <div className="flex justify-end gap-2">
-                <div>
-                  <button type="button" onClick={() => setPartnerModalOpen(false)} className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-                    Cancel
-                  </button>
-                </div>
-                <div>
-                  <button
-                    type="submit"
-                    disabled={savingPartner}
-                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-                  >
-                    {savingPartner ? 'Saving...' : 'Save partner'}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
 
       {leadModalOpen && (
@@ -819,23 +825,25 @@ export default function ManagementBoard() {
             </div>
             <form onSubmit={saveLeadByManagement} className="mt-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300">Partner</label>
+                <label className="block text-sm font-medium text-slate-300">
+                  Elite ambassador
+                </label>
                 <select
-                  value={leadForm.partnerId}
+                  value={leadForm.eliteAmbassadorId}
                   onChange={(e) =>
                     setLeadForm((f) => ({
                       ...f,
-                      partnerId: e.target.value,
+                      eliteAmbassadorId: e.target.value,
                       company:
                         f.company ||
-                        partners.find((p) => p.id === e.target.value)?.name ||
+                        eliteAmbassador.find((p) => p.id === e.target.value)?.name ||
                         '',
                     }))
                   }
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 >
-                  <option value="">Select partner</option>
-                  {partners.map((p) => (
+                  <option value="">Select elite ambassador</option>
+                  {eliteAmbassador.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
                     </option>

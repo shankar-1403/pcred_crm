@@ -3,24 +3,34 @@ import { Link } from 'react-router-dom'
 import { push, ref, remove, set, update } from 'firebase/database'
 import { httpsCallable } from 'firebase/functions'
 import ModalCloseButton from '../components/ModalCloseButton'
+import TablePagination from '../components/TablePagination'
+import { usePagination } from '../hooks/usePagination'
 import { ROLE_LABELS, ROLES } from '../constants'
 import { useAuth } from '../context/AuthContext'
 import { useUsers } from '../hooks/useUsers'
 import { db, functions } from '../lib/firebase'
 
-/** Team roles assignable from User management (partner accounts are created from Partner master). */
+/** Team roles assignable when creating a user (elite / ambassador logins use their master screens). */
 const teamRoleOptionsCreate = [
   ROLES.MANAGEMENT,
   ROLES.SALES,
   ROLES.PROCESS,
 ]
 
+const EDIT_ROLE_ORDER = [
+  ROLES.MANAGEMENT,
+  ROLES.SALES,
+  ROLES.PROCESS,
+  ROLES.ELITE_AMBASSADOR,
+  ROLES.AMBASSADOR,
+]
+
 function teamRoleOptionsForEdit(currentRole) {
   const r = String(currentRole ?? '').trim().toLowerCase()
-  if (r === ROLES.PARTNER) {
-    return [...teamRoleOptionsCreate, ROLES.PARTNER]
+  if (r && !EDIT_ROLE_ORDER.includes(r)) {
+    return [...EDIT_ROLE_ORDER, r]
   }
-  return teamRoleOptionsCreate
+  return EDIT_ROLE_ORDER
 }
 
 export default function AdminUsers() {
@@ -38,7 +48,8 @@ export default function AdminUsers() {
   const [editForm, setEditForm] = useState({
     displayName: '',
     role: ROLES.SALES,
-    partnerId: '',
+    eliteAmbassadorId: '',
+    ambassadorId: '',
   })
   const [editPassword, setEditPassword] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
@@ -53,6 +64,16 @@ export default function AdminUsers() {
       )
       .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
   }, [usersById])
+
+  const {
+    page: tablePage,
+    setPage: setTablePage,
+    pageSize: tablePageSize,
+    setPageSize: setTablePageSize,
+    total: tableTotal,
+    totalPages: tableTotalPages,
+    pageItems: tablePageItems,
+  } = usePagination(users)
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -135,7 +156,8 @@ export default function AdminUsers() {
     setEditForm({
       displayName: u?.displayName ?? '',
       role: String(u?.role ?? ROLES.SALES).trim().toLowerCase(),
-      partnerId: u?.partnerId ?? '',
+      eliteAmbassadorId: u?.eliteAmbassadorId ?? '',
+      ambassadorId: u?.ambassadorId ?? '',
     })
     setEditPassword('')
   }
@@ -152,22 +174,39 @@ export default function AdminUsers() {
 
     const nextRole = String(editForm.role ?? '').trim().toLowerCase()
     const nextDisplayName = String(editForm.displayName ?? '').trim()
-    let nextPartnerId = String(editForm.partnerId ?? '').trim()
+    let nextEliteAmbassadorId = String(editForm.eliteAmbassadorId ?? '').trim()
+    let nextAmbassadorId = String(editForm.ambassadorId ?? '').trim()
     const nextPassword = String(editPassword ?? '').trim()
 
     setSavingEdit(true)
     try {
-      // If switching to partner without a partnerId, create a partner master row.
-      if (nextRole === ROLES.PARTNER && !nextPartnerId) {
+      if (nextRole === ROLES.ELITE_AMBASSADOR && !nextEliteAmbassadorId) {
         const existing = usersById?.[editingUid]
-        const partnerRecordName =
+        const recordName =
           nextDisplayName ||
           String(existing?.email ?? '').split('@')[0] ||
-          'Partner'
-        const partnerRef = push(ref(db, 'partners'))
-        nextPartnerId = partnerRef.key
-        await set(partnerRef, {
-          name: partnerRecordName,
+          'Elite ambassador'
+        const eliteRef = push(ref(db, 'elite_ambassador'))
+        nextEliteAmbassadorId = eliteRef.key
+        await set(eliteRef, {
+          name: recordName,
+          referredByUid: null,
+          createdAt: Date.now(),
+          createdByAdminUid: user?.uid ?? null,
+        })
+      }
+
+      if (nextRole === ROLES.AMBASSADOR && !nextAmbassadorId) {
+        const existing = usersById?.[editingUid]
+        const recordName =
+          nextDisplayName ||
+          String(existing?.email ?? '').split('@')[0] ||
+          'Ambassador'
+        const ambRef = push(ref(db, 'ambassador'))
+        nextAmbassadorId = ambRef.key
+        await set(ambRef, {
+          name: recordName,
+          referredByUid: null,
           createdAt: Date.now(),
           createdByAdminUid: user?.uid ?? null,
         })
@@ -184,15 +223,12 @@ export default function AdminUsers() {
         })
       }
 
-      // If switching away from partner, clear partnerId.
-      if (nextRole !== ROLES.PARTNER) {
-        nextPartnerId = ''
-      }
-
       await update(ref(db, `users/${editingUid}`), {
         displayName: nextDisplayName,
         role: nextRole,
-        partnerId: nextPartnerId || null,
+        eliteAmbassadorId:
+          nextRole === ROLES.ELITE_AMBASSADOR ? nextEliteAmbassadorId || null : null,
+        ambassadorId: nextRole === ROLES.AMBASSADOR ? nextAmbassadorId || null : null,
         updatedAt: Date.now(),
         updatedByAdminUid: user?.uid ?? null,
       })
@@ -223,12 +259,16 @@ export default function AdminUsers() {
           Admin creates user accounts and assigns the team role.
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Create sales, process, or management team members here. Partner logins
-          are created from{' '}
-          <Link to="/admin/partners" className="text-blue-300 hover:underline">
-            Partner master
+          Create sales, process, or management team members here. Elite ambassador and
+          ambassador logins are created from{' '}
+          <Link to="/admin/elite-ambassador" className="text-blue-300 hover:underline">
+            Elite ambassador master
           </Link>{' '}
-          together with their organization record.
+          and{' '}
+          <Link to="/admin/ambassador" className="text-blue-300 hover:underline">
+            Ambassador master
+          </Link>
+          .
         </p>
       </div>
 
@@ -311,7 +351,8 @@ export default function AdminUsers() {
         </form>
       </section>
 
-      <section className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+      <section className="max-w-full min-w-0 rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+        <div className="overflow-x-auto">
           <table className="w-full min-w-[780px] table-auto text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
@@ -336,7 +377,7 @@ export default function AdminUsers() {
                   </td>
                 </tr>
               ) : (
-                users.map((u) => (
+                tablePageItems.map((u) => (
                   <tr key={u.uid} className="text-slate-300">
                     <td className="px-4 py-1 text-white">
                       {u.displayName || u.email || '—'}
@@ -380,6 +421,17 @@ export default function AdminUsers() {
               )}
             </tbody>
           </table>
+        </div>
+        {!loading && users.length > 0 ? (
+          <TablePagination
+            page={tablePage}
+            totalPages={tableTotalPages}
+            totalItems={tableTotal}
+            pageSize={tablePageSize}
+            onPageChange={setTablePage}
+            onPageSizeChange={setTablePageSize}
+          />
+        ) : null}
       </section>
 
       {editingUid && (
@@ -445,30 +497,58 @@ export default function AdminUsers() {
                 </p>
               </div>
 
-              {String(editForm.role).trim().toLowerCase() === ROLES.PARTNER && (
+              {String(editForm.role).trim().toLowerCase() === ROLES.ELITE_AMBASSADOR && (
                 <div>
                   <div className="flex items-center justify-between gap-3">
                     <label className="block text-sm font-medium text-slate-300">
-                      Partner ID (optional)
+                      Elite ambassador ID (optional)
                     </label>
                     <Link
-                      to="/admin/partners"
+                      to="/admin/elite-ambassador"
                       className="text-xs text-blue-300 hover:underline"
                     >
-                      Open Partner master
+                      Open Elite ambassador master
                     </Link>
                   </div>
                   <input
                     type="text"
-                    value={editForm.partnerId}
+                    value={editForm.eliteAmbassadorId}
                     onChange={(e) =>
-                      setEditForm((f) => ({ ...f, partnerId: e.target.value }))
+                      setEditForm((f) => ({ ...f, eliteAmbassadorId: e.target.value }))
                     }
                     placeholder="Leave blank to auto-create"
                     className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-white"
                   />
                   <p className="mt-1 text-xs text-slate-500">
-                    If blank, a new partner record will be created automatically on save.
+                    If blank, a new elite ambassador record will be created automatically on save.
+                  </p>
+                </div>
+              )}
+
+              {String(editForm.role).trim().toLowerCase() === ROLES.AMBASSADOR && (
+                <div>
+                  <div className="flex items-center justify-between gap-3">
+                    <label className="block text-sm font-medium text-slate-300">
+                      Ambassador ID (optional)
+                    </label>
+                    <Link
+                      to="/admin/ambassador"
+                      className="text-xs text-blue-300 hover:underline"
+                    >
+                      Open Ambassador master
+                    </Link>
+                  </div>
+                  <input
+                    type="text"
+                    value={editForm.ambassadorId}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, ambassadorId: e.target.value }))
+                    }
+                    placeholder="Leave blank to auto-create"
+                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-white"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    If blank, a new ambassador record will be created automatically on save.
                   </p>
                 </div>
               )}

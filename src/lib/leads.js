@@ -4,7 +4,7 @@ export function assignedUids(assignedTo) {
   return Object.keys(assignedTo).filter((uid) => assignedTo[uid])
 }
 
-/** Partner master row or lead row: internal user who referred / sees the lead. */
+/** Elite ambassador master row or lead row: internal user who referred / sees the lead. */
 export function normalizedReferredByUid(record) {
   return String(record?.referredByUid ?? '').trim()
 }

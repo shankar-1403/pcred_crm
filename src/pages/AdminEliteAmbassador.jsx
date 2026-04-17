@@ -1,29 +1,40 @@
 import { useMemo, useState } from 'react'
 import { push, ref, remove, set } from 'firebase/database'
 import { useAuth } from '../context/AuthContext'
-import { usePartners } from '../hooks/usePartners'
+import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
 import { useUsers } from '../hooks/useUsers'
 import { ROLES } from '../constants'
 import { db } from '../lib/firebase'
+import TablePagination from '../components/TablePagination'
+import { usePagination } from '../hooks/usePagination'
 
-export default function AdminPartners() {
+export default function AdminEliteAmbassador() {
   const { user, profile, createUserByAdmin } = useAuth()
-  const { partners, loading, error } = usePartners()
+  const { eliteAmbassador, loading, error } = useEliteAmbassador()
   const { usersById } = useUsers()
 
-  const isAdmin =
-    String(profile?.role ?? '').trim().toLowerCase() === ROLES.ADMIN
+  const isAdmin = String(profile?.role ?? '').trim().toLowerCase() === ROLES.ADMIN
 
-  const [partnerName, setPartnerName] = useState('')
-  const [partnerEmail, setPartnerEmail] = useState('')
-  const [partnerPassword, setPartnerPassword] = useState('')
+  const [eliteAmbassadorName, setEliteAmbassadorName] = useState('')
+  const [eliteAmbassadorEmail, setEliteAmbassadorEmail] = useState('')
+  const [eliteAmbassadorPassword, setEliteAmbassadorPassword] = useState('')
   const [referredByUid, setReferredByUid] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [deletingPartnerId, setDeletingPartnerId] = useState('')
+  const [deletingEliteAmbassadorId, setDeletingEliteAmbassadorId] = useState('')
   const [message, setMessage] = useState('')
   const [formError, setFormError] = useState('')
 
-  const partnersTable = useMemo(() => partners ?? [], [partners])
+  const eliteAmbassadorTable = useMemo(() => eliteAmbassador ?? [], [eliteAmbassador])
+
+  const {
+    page: tablePage,
+    setPage: setTablePage,
+    pageSize: tablePageSize,
+    setPageSize: setTablePageSize,
+    total: tableTotal,
+    totalPages: tableTotalPages,
+    pageItems: tablePageItems,
+  } = usePagination(eliteAmbassadorTable)
 
   const referrerOptions = useMemo(() => {
     return Object.entries(usersById)
@@ -33,7 +44,9 @@ export default function AdminPartners() {
         return (
           r === ROLES.MANAGEMENT ||
           r === ROLES.SALES ||
-          r === ROLES.PROCESS
+          r === ROLES.PROCESS ||
+          r === ROLES.ELITE_AMBASSADOR ||
+          r === ROLES.AMBASSADOR
         )
       })
       .sort((a, b) =>
@@ -61,21 +74,21 @@ export default function AdminPartners() {
     }
     if (!isAdmin) {
       setFormError(
-        `Current role is "${profile?.role ?? 'missing'}". Only admin can manage partners.`,
+        `Current role is "${profile?.role ?? 'missing'}". Only admin can manage elite ambassador.`,
       )
       return
     }
 
-    const name = partnerName.trim()
-    const emailTrim = partnerEmail.trim()
-    const passwordTrim = partnerPassword
+    const name = eliteAmbassadorName.trim()
+    const emailTrim = eliteAmbassadorEmail.trim()
+    const passwordTrim = eliteAmbassadorPassword
 
     if (!name) {
-      setFormError('Partner name is required.')
+      setFormError('Elite ambassador name is required.')
       return
     }
     if (!emailTrim) {
-      setFormError('Email is required for the partner login.')
+      setFormError('Email is required for the elite ambassador login.')
       return
     }
     if (!passwordTrim || passwordTrim.length < 6) {
@@ -84,12 +97,12 @@ export default function AdminPartners() {
     }
 
     setSubmitting(true)
-    let newPartnerId = null
+    let newEliteAmbassadorId = null
     try {
-      const partnerRef = push(ref(db, 'partners'))
-      newPartnerId = partnerRef.key
+      const eliteAmbassadorRef = push(ref(db, 'elite_ambassador'))
+      newEliteAmbassadorId = eliteAmbassadorRef.key
       const refUid = String(referredByUid ?? '').trim()
-      await set(partnerRef, {
+      await set(eliteAmbassadorRef, {
         name,
         referredByUid: refUid || null,
         createdAt: Date.now(),
@@ -99,54 +112,53 @@ export default function AdminPartners() {
         emailTrim,
         passwordTrim,
         name,
-        ROLES.PARTNER,
-        { partnerId: newPartnerId },
+        ROLES.ELITE_AMBASSADOR,
+        { eliteAmbassadorId: newEliteAmbassadorId },
       )
-      setPartnerName('')
-      setPartnerEmail('')
-      setPartnerPassword('')
+      setEliteAmbassadorName('')
+      setEliteAmbassadorEmail('')
+      setEliteAmbassadorPassword('')
       setReferredByUid('')
-      setMessage(`Partner and login added. User UID: ${uid}`)
+      setMessage(`Elite ambassador and login added. User UID: ${uid}`)
     } catch (err) {
-      if (newPartnerId) {
-        await remove(ref(db, `partners/${newPartnerId}`)).catch(() => {})
+      if (newEliteAmbassadorId) {
+        await remove(ref(db, `elite_ambassador/${newEliteAmbassadorId}`)).catch(() => {})
       }
-      setFormError(err?.message ?? 'Could not add partner.')
+      setFormError(err?.message ?? 'Could not add elite ambassador.')
     } finally {
       setSubmitting(false)
     }
   }
 
-  async function handleDelete(partnerId, label) {
+  async function handleDelete(eliteAmbassadorId, label) {
     setMessage('')
     setFormError('')
     if (!isAdmin) {
-      setFormError('Only admin can delete partners.')
+      setFormError('Only admin can delete elite ambassador.')
       return
     }
     const ok = window.confirm(
-      `Delete partner "${label || partnerId}"? Partner users linked to this ID will stop matching leads until updated.`,
+      `Delete elite ambassador "${label || eliteAmbassadorId}"? Elite ambassador users linked to this ID will stop matching leads until updated.`,
     )
     if (!ok) return
 
-    setDeletingPartnerId(partnerId)
+    setDeletingEliteAmbassadorId(eliteAmbassadorId)
     try {
-      await remove(ref(db, `partners/${partnerId}`))
-      setMessage('Partner deleted.')
+      await remove(ref(db, `elite_ambassador/${eliteAmbassadorId}`))
+      setMessage('Elite ambassador deleted.')
     } catch (err) {
-      setFormError(err?.message ?? 'Could not delete partner.')
+      setFormError(err?.message ?? 'Could not delete elite ambassador.')
     } finally {
-      setDeletingPartnerId('')
+      setDeletingEliteAmbassadorId('')
     }
   }
 
   return (
     <div className="min-w-0 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-white">Partner master</h1>
+        <h1 className="text-2xl font-semibold text-white">Elite ambassador master</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Add a partner organization and its login in one step. Management uses
-          partners on leads; each login sees only leads tagged with that partner.
+          Add a elite ambassador organization and its login in one step. Management uses elite ambassadors on leads; each login sees only leads tagged with that elite ambassador.
         </p>
       </div>
 
@@ -161,20 +173,20 @@ export default function AdminPartners() {
         </p>
         {error && (
           <p className="mt-2 text-sm text-red-300">
-            Could not load partners: {String(error?.message ?? error)}
+            Could not load elite ambassadors: {String(error?.message ?? error)}
           </p>
         )}
         {!isAdmin && (
           <p className="mt-2 rounded-lg border border-amber-800/70 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
-            This account cannot edit partners. Sign in as admin.
+            This account cannot edit elite ambassadors. Sign in as admin.
           </p>
         )}
       </section>
 
       <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
-        <h2 className="text-lg font-medium text-white">Add partner</h2>
+        <h2 className="text-lg font-medium text-white">Add elite ambassador</h2>
         <p className="mt-2 text-xs text-slate-500">
-          Role for the new account is set to Partner and linked to the partner
+          Role for the new account is set to Elite ambassador and linked to the elite ambassador
           record below.
         </p>
         <form
@@ -183,13 +195,13 @@ export default function AdminPartners() {
         >
           <div className="min-w-0">
             <label className="block text-sm font-medium text-slate-300">
-              Partner name
+              Elite ambassador name
             </label>
             <input
               type="text"
               required
-              value={partnerName}
-              onChange={(e) => setPartnerName(e.target.value)}
+              value={eliteAmbassadorName}
+              onChange={(e) => setEliteAmbassadorName(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               placeholder="e.g. Acme Finance"
             />
@@ -201,8 +213,8 @@ export default function AdminPartners() {
             <input
               type="email"
               required
-              value={partnerEmail}
-              onChange={(e) => setPartnerEmail(e.target.value)}
+              value={eliteAmbassadorEmail}
+              onChange={(e) => setEliteAmbassadorEmail(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               autoComplete="off"
             />
@@ -215,8 +227,8 @@ export default function AdminPartners() {
               type="password"
               required
               minLength={6}
-              value={partnerPassword}
-              onChange={(e) => setPartnerPassword(e.target.value)}
+              value={eliteAmbassadorPassword}
+              onChange={(e) => setEliteAmbassadorPassword(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               autoComplete="new-password"
             />
@@ -238,26 +250,26 @@ export default function AdminPartners() {
               ))}
             </select>
             <p className="mt-1 text-xs text-slate-500">
-              Internal user who sees this partner&apos;s new leads on their board.
+              Internal user who sees this elite ambassador&apos;s new leads on their board.
             </p>
           </div>
-          <div className="flex flex-col justify-end gap-3 sm:col-span-2 lg:col-span-1">
-            {formError && <p className="text-sm text-red-300">{formError}</p>}
-            {message && <p className="text-sm text-emerald-300">{message}</p>}
+          <div className="min-w-0 sm:col-span-2 lg:col-span-1">
             <button
               type="submit"
               disabled={submitting || !isAdmin}
-              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 lg:w-auto"
+              className="w-full rounded-lg bg-blue-600 px-4 mt-6 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 lg:w-auto"
             >
-              {submitting ? 'Saving…' : 'Add partner & account'}
+              {submitting ? 'Saving…' : 'Add elite ambassador & account'}
             </button>
           </div>
         </form>
+        {formError && <p className="text-sm text-red-300">{formError}</p>}
+        {message && <p className="text-sm text-emerald-300">{message}</p>}
       </section>
 
       <section className="max-w-full min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-900/40">
         <div className="border-b border-slate-800 px-4 py-3">
-          <h2 className="text-sm font-semibold text-slate-300">Partners</h2>
+          <h2 className="text-sm font-semibold text-slate-300">Elite ambassadors</h2>
         </div>
         <div className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch]">
           <table className="w-full min-w-[640px] table-auto text-left text-xs sm:text-sm">
@@ -265,7 +277,7 @@ export default function AdminPartners() {
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Referred by</th>
-                <th className="px-4 py-2 font-medium">Partner ID</th>
+                <th className="px-4 py-2 font-medium">Elite ambassador ID</th>
                 <th className="px-4 py-2 text-right font-medium">Action</th>
               </tr>
             </thead>
@@ -276,30 +288,30 @@ export default function AdminPartners() {
                     Loading…
                   </td>
                 </tr>
-              ) : partnersTable.length === 0 ? (
+              ) : eliteAmbassadorTable.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
-                    No partners yet. Add one above.
+                    No elite ambassadors yet. Add one above.
                   </td>
                 </tr>
               ) : (
-                partnersTable.map((p) => (
-                  <tr key={p.id} className="text-slate-300">
-                    <td className="px-4 py-2 text-white">{p.name || '—'}</td>
+                tablePageItems.map((ea) => (
+                  <tr key={ea.id} className="text-slate-300">
+                    <td className="px-4 py-2 text-white">{ea.name || '—'}</td>
                     <td className="px-4 py-2 text-slate-400">
-                      {referredByLabel(p.referredByUid)}
+                      {referredByLabel(ea.referredByUid)}
                     </td>
                     <td className="px-4 py-2 font-mono text-xs text-slate-500">
-                      {p.id}
+                      {ea.id}
                     </td>
                     <td className="px-4 py-2 text-right">
                       <button
                         type="button"
-                        onClick={() => handleDelete(p.id, p.name)}
-                        disabled={!isAdmin || deletingPartnerId === p.id}
+                        onClick={() => handleDelete(ea.id, ea.name)}
+                        disabled={!isAdmin || deletingEliteAmbassadorId === ea.id}
                         className="rounded-lg border border-red-800/60 px-3 py-1 text-xs text-red-300 hover:bg-red-950/40 disabled:opacity-50"
                       >
-                        {deletingPartnerId === p.id ? 'Deleting…' : 'Delete'}
+                        {deletingEliteAmbassadorId === ea.id ? 'Deleting…' : 'Delete'}
                       </button>
                     </td>
                   </tr>
@@ -308,6 +320,16 @@ export default function AdminPartners() {
             </tbody>
           </table>
         </div>
+        {!loading && !error && eliteAmbassadorTable.length > 0 ? (
+          <TablePagination
+            page={tablePage}
+            totalPages={tableTotalPages}
+            totalItems={tableTotal}
+            pageSize={tablePageSize}
+            onPageChange={setTablePage}
+            onPageSizeChange={setTablePageSize}
+          />
+        ) : null}
       </section>
     </div>
   )

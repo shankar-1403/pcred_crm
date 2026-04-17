@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useStatuses } from '../hooks/useStatuses'
 import { ROLES } from '../constants'
 import { db } from '../lib/firebase'
+import TablePagination from '../components/TablePagination'
+import { usePagination } from '../hooks/usePagination'
 
 export default function AdminStatuses() {
   const { user, profile } = useAuth()
@@ -19,6 +21,16 @@ export default function AdminStatuses() {
   const [formError, setFormError] = useState('')
 
   const statusesTable = useMemo(() => statuses ?? [], [statuses])
+
+  const {
+    page: tablePage,
+    setPage: setTablePage,
+    pageSize: tablePageSize,
+    setPageSize: setTablePageSize,
+    total: tableTotal,
+    totalPages: tableTotalPages,
+    pageItems: tablePageItems,
+  } = usePagination(statusesTable)
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -136,7 +148,8 @@ export default function AdminStatuses() {
         </form>
       </section>
 
-      <section className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+      <section className="max-w-full min-w-0 rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+        <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] table-auto text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
@@ -165,7 +178,7 @@ export default function AdminStatuses() {
                   </td>
                 </tr>
               ) : (
-                statusesTable.map((s) => (
+                tablePageItems.map((s) => (
                   <tr key={s.id} className="text-slate-300">
                     <td className="px-4 py-3 text-white">{s.label || '-'}</td>
                     <td className="px-4 py-3 font-mono text-xs text-slate-500">
@@ -186,6 +199,17 @@ export default function AdminStatuses() {
               )}
             </tbody>
           </table>
+        </div>
+        {!loading && !error && statusesTable.length > 0 ? (
+          <TablePagination
+            page={tablePage}
+            totalPages={tableTotalPages}
+            totalItems={tableTotal}
+            pageSize={tablePageSize}
+            onPageChange={setTablePage}
+            onPageSizeChange={setTablePageSize}
+          />
+        ) : null}
       </section>
     </div>
   )

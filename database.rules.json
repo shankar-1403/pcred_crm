@@ -21,6 +21,14 @@
     "partners": {
       ".read": "auth != null",
       ".write": "auth != null"
+    },
+    "elite_ambassador": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "ambassador": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }

@@ -6,13 +6,9 @@ import { useLeads } from '../hooks/useLeads'
 import { useUsers } from '../hooks/useUsers'
 import { useProducts } from '../hooks/useProducts'
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
+import { useAmbassador } from '../hooks/useAmbassador'
 import { useStatuses } from '../hooks/useStatuses'
-import { assignedUids, leadReferredToUser, toAssignedMap } from '../lib/leads'
-import {
-  assignableProcessUsers,
-  assignableSalesUsers,
-  labelAssignableProcessUser,
-} from '../lib/assignees'
+import { assignedUids, normalizedReferredByUid, toAssignedMap } from '../lib/leads'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
@@ -40,13 +36,22 @@ const emptyForm = {
   mandatePayoutPercent: '',
 }
 
-export default function SalesBoard() {
-  const { user } = useAuth()
+export default function AmbassadorBoard() {
+  const { user, profile } = useAuth()
   const { leads, loading } = useLeads()
-  const { usersById, processUsers, salesUsers, error: usersError } = useUsers()
-  const { products, loading: productsLoading, error: productsError } = useProducts()
+  const { usersById } = useUsers()
+  const { products, loading: productsLoading, error: productsError } =
+    useProducts()
   const { eliteAmbassador } = useEliteAmbassador()
+  const { ambassador: ambassadorRows } = useAmbassador()
   const { statuses } = useStatuses()
+
+  const ambassadorId = String(profile?.ambassadorId ?? '').trim()
+
+  const ambassadorOrgName = useMemo(() => {
+    if (!ambassadorId) return ''
+    return ambassadorRows.find((a) => a.id === ambassadorId)?.name || ''
+  }, [ambassadorRows, ambassadorId])
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -63,24 +68,10 @@ export default function SalesBoard() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
 
-  const myLeads = useMemo(
-    () =>
-      leads.filter(
-        (l) =>
-          l.createdBy === user?.uid || leadReferredToUser(l, user?.uid),
-      ),
-    [leads, user?.uid],
-  )
-
-  const processAssignees = useMemo(
-    () => assignableProcessUsers(processUsers, user?.uid, usersById),
-    [processUsers, user?.uid, usersById],
-  )
-
-  const salesAssignees = useMemo(
-    () => assignableSalesUsers(salesUsers, user?.uid, usersById),
-    [salesUsers, user?.uid, usersById],
-  )
+  const myLeads = useMemo(() => {
+    if (!ambassadorId) return []
+    return leads.filter((l) => String(l.ambassadorId ?? '').trim() === ambassadorId)
+  }, [leads, ambassadorId])
 
   const filteredMyLeads = useMemo(() => {
     const term = leadSearch.trim().toLowerCase()
@@ -151,13 +142,6 @@ export default function SalesBoard() {
     return product?.name || productId
   }
 
-  function eliteAmbassadorNameFor(orgId, fallbackName = '') {
-    if (fallbackName) return fallbackName
-    if (!orgId) return '—'
-    const p = eliteAmbassador.find((item) => item.id === orgId)
-    return p?.name || orgId
-  }
-
   function openNew() {
     setEditingId(null)
     setForm(emptyForm)
@@ -206,23 +190,33 @@ export default function SalesBoard() {
     setModalOpen(true)
   }
 
-  function toggleAssignee(uid) {
-    setSelectedAssignees((prev) =>
-      prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid],
-    )
-  }
-
-  function toggleSalesAssignee(uid) {
-    setSelectedSalesAssignees((prev) =>
-      prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid],
-    )
-  }
-
   async function saveLead(e) {
     e.preventDefault()
     if (!user) return
+    if (!ambassadorId) return
     setSaving(true)
     try {
+      const existingLead =
+        editingId != null ? leads.find((l) => l.id === editingId) : null
+
+      let eliteAmbassadorIdVal = null
+      let eliteAmbassadorNameVal = ''
+      let referredSnap = ''
+      let ambassadorIdVal = null
+      let ambassadorNameVal = ''
+
+      const ambRow = ambassadorRows.find((a) => a.id === ambassadorId)
+      const refUserUid = normalizedReferredByUid(ambRow)
+      const refUser = refUserUid ? usersById[refUserUid] : null
+      const parentEliteOrgId = String(refUser?.eliteAmbassadorId ?? '').trim()
+      eliteAmbassadorIdVal = parentEliteOrgId || null
+      eliteAmbassadorNameVal = parentEliteOrgId
+        ? eliteAmbassador.find((p) => p.id === parentEliteOrgId)?.name || ''
+        : ''
+      referredSnap = refUserUid || ''
+      ambassadorIdVal = ambassadorId
+      ambassadorNameVal = ambassadorOrgName || ''
+
       const baseAmount = Number.parseFloat(form.totalAmount || 0) || 0
       const bankPercent = Number.parseFloat(form.bankPayoutPercent || 0) || 0
       const mandatePercent =
@@ -244,7 +238,7 @@ export default function SalesBoard() {
         description: form.description.trim(),
         status: form.status,
         updatedStatusDate: form.updatedStatusDate || '',
-        createdBy: user.uid,
+        createdBy: existingLead?.createdBy ?? user.uid,
         assignedTo:
           assignmentMode === 'process'
             ? toAssignedMap(selectedAssignees)
@@ -263,6 +257,11 @@ export default function SalesBoard() {
           : '',
         mandatePayoutAmount: Number(mandatePayoutAmount.toFixed(2)),
         updatedAt: Date.now(),
+        eliteAmbassadorId: eliteAmbassadorIdVal,
+        eliteAmbassadorName: eliteAmbassadorNameVal,
+        referredByUid: referredSnap || null,
+        ambassadorId: ambassadorIdVal,
+        ambassadorName: ambassadorNameVal,
       }
       if (editingId) {
         await update(ref(db, `leads/${editingId}`), payload)
@@ -283,6 +282,19 @@ export default function SalesBoard() {
     return <p className="text-slate-400">Loading…</p>
   }
 
+  if (!ambassadorId) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-semibold text-white">My leads</h1>
+        <div className="rounded-xl border border-amber-800/70 bg-amber-950/30 px-4 py-4 text-sm text-amber-100">
+          Your account is not linked to an ambassador record yet. Ask an admin to set{' '}
+          <code className="text-amber-200">ambassadorId</code> on your user profile,
+          or recreate your login from Ambassador master.
+        </div>
+      </div>
+    )
+  }
+
   const baseAmount = Number.parseFloat(form.totalAmount || 0) || 0
   const bankPercent = Number.parseFloat(form.bankPayoutPercent || 0) || 0
   const mandatePercent = Number.parseFloat(form.mandatePayoutPercent || 0) || 0
@@ -294,10 +306,9 @@ export default function SalesBoard() {
     const rows = filteredMyLeads
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
       .map((lead) => [
-        eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
+        lead.viaName || '',
         lead.company || '',
         lead.clientName || '',
-        lead.viaName || '',
         lead.location || '',
         productNameFor(lead.productId),
         lead.status || '',
@@ -313,12 +324,11 @@ export default function SalesBoard() {
       ])
 
     downloadCsv(
-      'sales-leads.csv',
+      'my-leads.csv',
       [
-        'Elite ambassador',
+        'Via',
         'Company',
         'Client Name',
-        'Via',
         'Location',
         'Product',
         'Status',
@@ -342,19 +352,22 @@ export default function SalesBoard() {
         <div>
           <h1 className="text-2xl font-semibold text-white">My leads</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Create leads and assign one or more process teammates.
+            Create leads, set revenue details, and assign process or sales teammates.
+            {ambassadorOrgName ? (
+              <span className="block text-slate-500">Organization: {ambassadorOrgName}</span>
+            ) : null}
           </p>
         </div>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end sm:gap-4">
           <div className="w-full sm:w-[260px]">
             <label
-              htmlFor="search-company-sales"
+              htmlFor="search-company-ambassador"
               className="block text-xs font-medium uppercase tracking-wide text-slate-500"
             >
               Search company
             </label>
             <input
-              id="search-company-sales"
+              id="search-company-ambassador"
               type="text"
               value={leadSearch}
               onChange={(e) => setLeadSearch(e.target.value)}
@@ -409,7 +422,6 @@ export default function SalesBoard() {
           <table className="w-max min-w-full text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
-                <th className="px-4 py-2 font-medium whitespace-nowrap">Elite ambassador</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Company</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Client name</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Via</th>
@@ -427,19 +439,13 @@ export default function SalesBoard() {
             <tbody className="divide-y divide-slate-800">
               {filteredMyLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={12} className="px-4 py-10 text-center text-slate-500">
                     You have no leads yet. Click New lead to add one.
                   </td>
                 </tr>
               ) : (
                 tablePageItems.map((lead) => (
                   <tr key={lead.id} className="text-slate-300">
-                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
-                      {eliteAmbassadorNameFor(
-                        lead.eliteAmbassadorId,
-                        lead.eliteAmbassadorName,
-                      )}
-                    </td>
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                       {lead.company || '—'}
                     </td>
@@ -514,12 +520,7 @@ export default function SalesBoard() {
         <LeadDetailsModal
           lead={viewLead}
           usersById={usersById}
-          showPartner={Boolean(
-            viewLead.eliteAmbassadorId ||
-              viewLead.eliteAmbassadorName ||
-              viewLead.ambassadorId ||
-              viewLead.ambassadorName,
-          )}
+          showPartner
           onClose={() => setViewLead(null)}
         />
       )}
@@ -530,11 +531,11 @@ export default function SalesBoard() {
             className="max-h-[90vh] w-full max-w-2xl overflow-y-auto overflow-x-visible rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl sm:p-6"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="lead-modal-title"
+            aria-labelledby="lead-modal-title-ambassador"
           >
             <div className="flex items-start justify-between gap-3">
               <h2
-                id="lead-modal-title"
+                id="lead-modal-title-ambassador"
                 className="text-lg font-semibold text-white"
               >
                 {editingId ? 'Edit lead' : 'New lead'}
@@ -562,13 +563,13 @@ export default function SalesBoard() {
                 {form.viaEnabled && (
                   <div>
                     <label
-                      htmlFor="sales-lead-via-name"
+                      htmlFor="ambassador-lead-via-name"
                       className="block text-xs font-medium text-slate-400"
                     >
                       Name
                     </label>
                     <input
-                      id="sales-lead-via-name"
+                      id="ambassador-lead-via-name"
                       type="text"
                       value={form.viaName}
                       onChange={(e) =>
@@ -743,262 +744,7 @@ export default function SalesBoard() {
                 />
                 <AmountInWordsHint value={form.totalAmount} />
               </div>
-              <section className="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4">
-                <h3 className="text-sm font-semibold text-blue-300">
-                  Revenue Details
-                </h3>
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300">
-                      Bank Payout Percent (%)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={form.bankPayoutPercent}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, bankPayoutPercent: e.target.value }))
-                      }
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300">
-                      Amount (₹)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={bankAmount.toFixed(2)}
-                      readOnly
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-white"
-                    />
-                  </div>
-                </div>
 
-                <div className="mt-4">
-                  <p className="text-xs font-medium text-slate-300">Mandate Signed</p>
-                  <div className="mt-2 flex items-center gap-5 text-sm text-slate-300">
-                    <label className="inline-flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="mandateSigned"
-                        checked={form.mandateSigned === true}
-                        onChange={() => setForm((f) => ({ ...f, mandateSigned: true }))}
-                      />
-                      Yes
-                    </label>
-                    <label className="inline-flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="mandateSigned"
-                        checked={form.mandateSigned === false}
-                        onChange={() => setForm((f) => ({ ...f, mandateSigned: false }))}
-                      />
-                      No
-                    </label>
-                  </div>
-                </div>
-
-                {form.mandateSigned && (
-                  <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-300">
-                        Mandate Payout Percent (%)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={form.mandatePayoutPercent}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            mandatePayoutPercent: e.target.value,
-                          }))
-                        }
-                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-300">
-                        Amount (₹)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={mandateAmount.toFixed(2)}
-                        readOnly
-                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-white"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-4 rounded-lg border border-emerald-700/50 bg-emerald-950/20 px-3 py-3 text-sm text-emerald-200">
-                  <div className="flex justify-between">
-                    <span>Bank Payout Amount:</span>
-                    <span>₹{bankAmount.toFixed(2)}</span>
-                  </div>
-                  <div className="mt-1 flex justify-between">
-                    <span>Mandate Amount:</span>
-                    <span>₹{mandateAmount.toFixed(2)}</span>
-                  </div>
-                  <div className="mt-2 flex justify-between font-semibold">
-                    <span>Total Revenue:</span>
-                    <span>₹{totalRevenue.toFixed(2)}</span>
-                  </div>
-                </div>
-              </section>
-
-              <div>
-                <p className="text-sm font-medium text-slate-300">
-                  Assign to
-                </p>
-                <div className="mt-2 flex rounded-lg border border-slate-700 p-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAssignmentMode('process')
-                      setSelectedSalesAssignees([])
-                      setSalesAssigneeDropdownOpen(false)
-                    }}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      assignmentMode === 'process'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    Process
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAssignmentMode('sales')
-                      setSelectedAssignees([])
-                      setAssigneeDropdownOpen(false)
-                    }}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      assignmentMode === 'sales'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    Sales
-                  </button>
-                </div>
-                {usersError && (
-                  <p className="mt-2 rounded-lg border border-amber-800/70 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
-                    Could not read users from Realtime Database
-                    (<code>permission_denied</code>). Publish rules that allow
-                    authenticated read on <code>/users</code>.
-                  </p>
-                )}
-                {assignmentMode === 'process' ? (
-                  <>
-                    <p className="mt-3 text-xs font-medium text-slate-400">
-                      Process team (multi-select)
-                    </p>
-                    <div className="relative mt-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          processAssignees.length > 0 &&
-                          setAssigneeDropdownOpen((v) => !v)
-                        }
-                        className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-sm text-white disabled:opacity-60"
-                        disabled={processAssignees.length === 0}
-                      >
-                        <span className="truncate">
-                          {processAssignees.length === 0
-                            ? 'No process users found'
-                            : selectedAssignees.length === 0
-                              ? 'Select process users'
-                              : `${selectedAssignees.length} selected`}
-                        </span>
-                        <span className="text-slate-400">
-                          {assigneeDropdownOpen ? '▲' : '▼'}
-                        </span>
-                      </button>
-                      {assigneeDropdownOpen && processAssignees.length > 0 && (
-                        <div className="absolute bottom-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl">
-                          {processAssignees.map((u) => (
-                            <label
-                              key={u.uid}
-                              className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedAssignees.includes(u.uid)}
-                                onChange={() => toggleAssignee(u.uid)}
-                                className="rounded border-slate-600 bg-slate-950 text-blue-600"
-                              />
-                              <span>{labelAssignableProcessUser(u)}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="mt-3 text-xs font-medium text-slate-400">
-                      Sales team (multi-select)
-                    </p>
-                    <div className="relative mt-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          salesAssignees.length > 0 &&
-                          setSalesAssigneeDropdownOpen((v) => !v)
-                        }
-                        className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-sm text-white disabled:opacity-60"
-                        disabled={salesAssignees.length === 0}
-                      >
-                        <span className="truncate">
-                          {salesAssignees.length === 0
-                            ? 'No sales users found'
-                            : selectedSalesAssignees.length === 0
-                              ? 'Select sales users'
-                              : `${selectedSalesAssignees.length} selected`}
-                        </span>
-                        <span className="text-slate-400">
-                          {salesAssigneeDropdownOpen ? '▲' : '▼'}
-                        </span>
-                      </button>
-                      {salesAssigneeDropdownOpen &&
-                        salesAssignees.length > 0 && (
-                          <div className="absolute bottom-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl">
-                            {salesAssignees.map((u) => (
-                              <label
-                                key={u.uid}
-                                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedSalesAssignees.includes(
-                                    u.uid,
-                                  )}
-                                  onChange={() =>
-                                    toggleSalesAssignee(u.uid)
-                                  }
-                                  className="rounded border-slate-600 bg-slate-950 text-blue-600"
-                                />
-                                <span>
-                                  {labelAssignableProcessUser(u)}
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                    </div>
-                  </>
-                )}
-              </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button

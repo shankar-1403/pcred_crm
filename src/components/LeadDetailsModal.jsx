@@ -1,11 +1,15 @@
 import ModalCloseButton from './ModalCloseButton'
 import { ROLES } from '../constants'
 import { useAuth } from '../context/AuthContext'
-import { usePartners } from '../hooks/usePartners'
+import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
+import { useAmbassador } from '../hooks/useAmbassador'
 import { useProducts } from '../hooks/useProducts'
 import { useStatuses } from '../hooks/useStatuses'
 import { assignedUids } from '../lib/leads'
 
+/**
+ * @param {boolean} [showPartner=true] When true, show elite ambassador / ambassador sourcing rows when data exists.
+ */
 export default function LeadDetailsModal({
   lead,
   usersById,
@@ -14,12 +18,17 @@ export default function LeadDetailsModal({
 }) {
   const { profile } = useAuth()
   const role = String(profile?.role ?? '').trim().toLowerCase()
-  const isPartnerRole = role === ROLES.PARTNER
+  const isRestrictedExternalRole =
+    role === ROLES.ELITE_AMBASSADOR || role === ROLES.AMBASSADOR
 
   const { products } = useProducts()
-  const { partners } = usePartners()
+  const { eliteAmbassador } = useEliteAmbassador()
+  const { ambassador: ambassadorRows } = useAmbassador()
   const { statuses } = useStatuses()
   if (!lead) return null
+
+  const titleTrim = String(lead.title ?? '').trim()
+  const referredByUid = String(lead.referredByUid ?? '').trim()
 
   const userName = (uid) => {
     const u = usersById?.[uid]
@@ -46,7 +55,16 @@ export default function LeadDetailsModal({
     ? assignees.map((uid) => userName(uid)).join(', ')
     : 'Unassigned'
   const productName = getProductName(lead.productId, products)
-  const partnerName = getPartnerName(lead.partnerId, lead.partnerName, partners)
+  const eliteAmbassadorOrgName = getEliteAmbassadorOrgName(
+    lead.eliteAmbassadorId,
+    lead.eliteAmbassadorName,
+    eliteAmbassador,
+  )
+  const ambassadorName = getAmbassadorName(
+    lead.ambassadorId,
+    lead.ambassadorName,
+    ambassadorRows,
+  )
 
   return (
     <div className="fixed inset-0 z-60 overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
@@ -56,11 +74,21 @@ export default function LeadDetailsModal({
           <ModalCloseButton onClick={onClose} />
         </div>
 
-        <div className="max-h-[80vh] overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+        <div className="crm-thin-scrollbar max-h-[80vh] overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
           <div className="grid gap-8 md:grid-cols-2">
             <section className="space-y-3">
               <p className="text-sm font-semibold text-slate-400">Lead Information</p>
-              {showPartner && <Row label="Partner" value={partnerName} />}
+              {titleTrim ? <Row label="Title" value={titleTrim} /> : null}
+              {showPartner &&
+              (lead.eliteAmbassadorId || lead.eliteAmbassadorName) ? (
+                <Row label="Elite ambassador" value={eliteAmbassadorOrgName} />
+              ) : null}
+              {showPartner && (lead.ambassadorId || lead.ambassadorName) ? (
+                <Row label="Ambassador" value={ambassadorName} />
+              ) : null}
+              {referredByUid ? (
+                <Row label="Referred by" value={userName(referredByUid)} />
+              ) : null}
               {lead.viaName ? (
                 <Row label="Via" value={lead.viaName} />
               ) : null}
@@ -82,11 +110,11 @@ export default function LeadDetailsModal({
             <section className="space-y-3">
               <p className="text-sm font-semibold text-slate-400">Company Details</p>
               <Row label="Location" value={lead.location || '—'} />
-              {isPartnerRole ? null : (
+              {isRestrictedExternalRole ? null : (
                 <Row label="Bank Name" value={lead.bankName || '—'} />
               )}
               <Row label="Product" value={productName} />
-              {isPartnerRole ? null : (
+              {isRestrictedExternalRole ? null : (
                 <Row
                   label="One Pager Link"
                   value={lead.onePagerLink || 'N/A'}
@@ -98,7 +126,7 @@ export default function LeadDetailsModal({
             <section className="space-y-3">
               <p className="text-sm font-semibold text-slate-400">Financial Information</p>
               <Row label="Requirement Amount" value={formatAmount(lead.totalAmount)} />
-              {isPartnerRole ? null : (
+              {isRestrictedExternalRole ? null : (
                 <>
                   <Row label="Bank Payout %" value={formatPercent(lead.bankPayoutPercent)} />
                   <Row label="Bank Payout Amount" value={formatAmount(lead.bankPayoutAmount)} />
@@ -106,7 +134,7 @@ export default function LeadDetailsModal({
               )}
             </section>
 
-            {isPartnerRole ? null : (
+            {isRestrictedExternalRole ? null : (
               <section className="space-y-3">
                 <p className="text-sm font-semibold text-slate-400">Revenue Details</p>
                 <Row label="Mandate Signed" value={lead.mandateSigned ? 'Yes' : 'No'} />
@@ -189,10 +217,17 @@ function getProductName(productId, products) {
   return item?.name?.trim() || productId
 }
 
-function getPartnerName(partnerId, fallbackName, partners) {
+function getEliteAmbassadorOrgName(orgId, fallbackName, eliteAmbassadorRows) {
   if (fallbackName) return fallbackName
-  if (!partnerId) return 'N/A'
-  const item = partners.find((p) => p.id === partnerId)
-  return item?.name?.trim() || partnerId
+  if (!orgId) return 'N/A'
+  const item = eliteAmbassadorRows.find((p) => p.id === orgId)
+  return item?.name?.trim() || orgId
+}
+
+function getAmbassadorName(ambassadorId, fallbackName, ambassadorRows) {
+  if (fallbackName) return fallbackName
+  if (!ambassadorId) return 'N/A'
+  const item = ambassadorRows.find((a) => a.id === ambassadorId)
+  return item?.name?.trim() || ambassadorId
 }
 

@@ -3,7 +3,8 @@ export const ROLES = {
   MANAGEMENT: 'management',
   SALES: 'sales',
   PROCESS: 'process',
-  PARTNER: 'partner',
+  ELITE_AMBASSADOR: 'elite_ambassador',
+  AMBASSADOR: 'ambassador',
 }
 
 export const ROLE_LABELS = {
@@ -11,7 +12,8 @@ export const ROLE_LABELS = {
   [ROLES.MANAGEMENT]: 'Management',
   [ROLES.SALES]: 'Sales',
   [ROLES.PROCESS]: 'Process',
-  [ROLES.PARTNER]: 'Partner',
+  [ROLES.ELITE_AMBASSADOR]: 'Elite Ambassador',
+  [ROLES.AMBASSADOR]: 'Ambassador',
 }
 
 export const LEAD_STATUSES = [

@@ -5,18 +5,16 @@ import { useAuth } from '../context/AuthContext'
 import { useLeads } from '../hooks/useLeads'
 import { useUsers } from '../hooks/useUsers'
 import { useProducts } from '../hooks/useProducts'
-import { usePartners } from '../hooks/usePartners'
+import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
+import { useAmbassador } from '../hooks/useAmbassador'
 import { useStatuses } from '../hooks/useStatuses'
 import { assignedUids, normalizedReferredByUid, toAssignedMap } from '../lib/leads'
-import {
-  assignableProcessUsers,
-  assignableSalesUsers,
-  labelAssignableProcessUser,
-} from '../lib/assignees'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
+import TablePagination from '../components/TablePagination'
+import { usePagination } from '../hooks/usePagination'
 
 const emptyForm = {
   title: '',
@@ -38,20 +36,31 @@ const emptyForm = {
   mandatePayoutPercent: '',
 }
 
-export default function PartnerBoard() {
+export default function EliteAmbassadorBoard() {
   const { user, profile } = useAuth()
   const { leads, loading } = useLeads()
-  const { usersById, processUsers, salesUsers, error: usersError } = useUsers()
+  const { usersById } = useUsers()
   const { products, loading: productsLoading, error: productsError } =
     useProducts()
-  const { partners } = usePartners()
+  const { eliteAmbassador } = useEliteAmbassador()
+  const { ambassador: ambassadorRows } = useAmbassador()
   const { statuses } = useStatuses()
 
-  const partnerId = String(profile?.partnerId ?? '').trim()
-  const partnerOrgName = useMemo(() => {
-    if (!partnerId) return ''
-    return partners.find((p) => p.id === partnerId)?.name || ''
-  }, [partners, partnerId])
+  const eliteAmbassadorId = String(profile?.eliteAmbassadorId ?? '').trim()
+
+  const eliteOrgName = useMemo(() => {
+    if (!eliteAmbassadorId) return ''
+    return eliteAmbassador.find((p) => p.id === eliteAmbassadorId)?.name || ''
+  }, [eliteAmbassador, eliteAmbassadorId])
+
+  const referredAmbassadorIdsForElite = useMemo(() => {
+    if (!user?.uid) return new Set()
+    const ids = []
+    for (const a of ambassadorRows) {
+      if (normalizedReferredByUid(a) === user.uid) ids.push(a.id)
+    }
+    return new Set(ids)
+  }, [ambassadorRows, user?.uid])
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -69,19 +78,14 @@ export default function PartnerBoard() {
   const [toDate, setToDate] = useState('')
 
   const myLeads = useMemo(() => {
-    if (!partnerId) return []
-    return leads.filter((l) => String(l.partnerId ?? '').trim() === partnerId)
-  }, [leads, partnerId])
-
-  const processAssignees = useMemo(
-    () => assignableProcessUsers(processUsers, user?.uid, usersById),
-    [processUsers, user?.uid, usersById],
-  )
-
-  const salesAssignees = useMemo(
-    () => assignableSalesUsers(salesUsers, user?.uid, usersById),
-    [salesUsers, user?.uid, usersById],
-  )
+    if (!eliteAmbassadorId) return []
+    return leads.filter((l) => {
+      const pid = String(l.eliteAmbassadorId ?? '').trim()
+      if (pid === eliteAmbassadorId) return true
+      const aid = String(l.ambassadorId ?? '').trim()
+      return Boolean(aid && referredAmbassadorIdsForElite.has(aid))
+    })
+  }, [leads, eliteAmbassadorId, referredAmbassadorIdsForElite])
 
   const filteredMyLeads = useMemo(() => {
     const term = leadSearch.trim().toLowerCase()
@@ -96,6 +100,16 @@ export default function PartnerBoard() {
     list = list.filter((l) => inDateRange(l.leadDate || '', fromDate, toDate))
     return list
   }, [myLeads, leadSearch, fromDate, toDate])
+
+  const {
+    page: tablePage,
+    setPage: setTablePage,
+    pageSize: tablePageSize,
+    setPageSize: setTablePageSize,
+    total: tableTotal,
+    totalPages: tableTotalPages,
+    pageItems: tablePageItems,
+  } = usePagination(filteredMyLeads)
 
   const statusOptions = useMemo(() => {
     return [
@@ -140,6 +154,13 @@ export default function PartnerBoard() {
     if (!productId) return '—'
     const product = products.find((p) => p.id === productId)
     return product?.name || productId
+  }
+
+  function ambassadorNameFor(ambassadorId, fallbackName = '') {
+    if (fallbackName) return fallbackName
+    if (!ambassadorId) return '—'
+    const a = ambassadorRows.find((item) => item.id === ambassadorId)
+    return a?.name || ambassadorId
   }
 
   function openNew() {
@@ -190,27 +211,29 @@ export default function PartnerBoard() {
     setModalOpen(true)
   }
 
-  function toggleAssignee(uid) {
-    setSelectedAssignees((prev) =>
-      prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid],
-    )
-  }
-
-  function toggleSalesAssignee(uid) {
-    setSelectedSalesAssignees((prev) =>
-      prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid],
-    )
-  }
-
   async function saveLead(e) {
     e.preventDefault()
-    if (!user || !partnerId) return
+    if (!user) return
+    if (!eliteAmbassadorId) return
     setSaving(true)
     try {
       const existingLead =
         editingId != null ? leads.find((l) => l.id === editingId) : null
-      const partnerRow = partners.find((p) => p.id === partnerId)
-      const referredSnap = normalizedReferredByUid(partnerRow)
+
+      let eliteAmbassadorIdVal = null
+      let eliteAmbassadorNameVal = ''
+      let referredSnap = ''
+      let ambassadorIdVal = null
+      let ambassadorNameVal = ''
+
+      const eliteRow = eliteAmbassador.find((p) => p.id === eliteAmbassadorId)
+      referredSnap = normalizedReferredByUid(eliteRow)
+      eliteAmbassadorIdVal = eliteAmbassadorId
+      eliteAmbassadorNameVal = eliteOrgName || ''
+      if (existingLead?.ambassadorId) {
+        ambassadorIdVal = existingLead.ambassadorId
+        ambassadorNameVal = String(existingLead.ambassadorName ?? '')
+      }
 
       const baseAmount = Number.parseFloat(form.totalAmount || 0) || 0
       const bankPercent = Number.parseFloat(form.bankPayoutPercent || 0) || 0
@@ -252,9 +275,11 @@ export default function PartnerBoard() {
           : '',
         mandatePayoutAmount: Number(mandatePayoutAmount.toFixed(2)),
         updatedAt: Date.now(),
-        partnerId,
-        partnerName: partnerOrgName || '',
+        eliteAmbassadorId: eliteAmbassadorIdVal,
+        eliteAmbassadorName: eliteAmbassadorNameVal,
         referredByUid: referredSnap || null,
+        ambassadorId: ambassadorIdVal,
+        ambassadorName: ambassadorNameVal,
       }
       if (editingId) {
         await update(ref(db, `leads/${editingId}`), payload)
@@ -275,14 +300,14 @@ export default function PartnerBoard() {
     return <p className="text-slate-400">Loading…</p>
   }
 
-  if (!partnerId) {
+  if (!eliteAmbassadorId) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-semibold text-white">My leads</h1>
         <div className="rounded-xl border border-amber-800/70 bg-amber-950/30 px-4 py-4 text-sm text-amber-100">
-          Your account is not linked to a partner record yet. Ask an admin to set{' '}
-          <code className="text-amber-200">partnerId</code> on your user profile,
-          or recreate your user with the Partner role.
+          Your account is not linked to an elite ambassador record yet. Ask an admin to set{' '}
+          <code className="text-amber-200">eliteAmbassadorId</code> on your user profile,
+          or recreate your login from Elite ambassador master.
         </div>
       </div>
     )
@@ -301,6 +326,7 @@ export default function PartnerBoard() {
       .map((lead) => [
         lead.viaName || '',
         lead.company || '',
+        ambassadorNameFor(lead.ambassadorId, lead.ambassadorName),
         lead.clientName || '',
         lead.location || '',
         productNameFor(lead.productId),
@@ -317,10 +343,11 @@ export default function PartnerBoard() {
       ])
 
     downloadCsv(
-      'partner-leads.csv',
+      'my-leads.csv',
       [
         'Via',
         'Company',
+        'Ambassador',
         'Client Name',
         'Location',
         'Product',
@@ -346,18 +373,21 @@ export default function PartnerBoard() {
           <h1 className="text-2xl font-semibold text-white">My leads</h1>
           <p className="mt-1 text-sm text-slate-400">
             Create leads, set revenue details, and assign process or sales teammates.
+            {eliteOrgName ? (
+              <span className="block text-slate-500">Organization: {eliteOrgName}</span>
+            ) : null}
           </p>
         </div>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end sm:gap-4">
           <div className="w-full sm:w-[260px]">
             <label
-              htmlFor="search-company-partner"
+              htmlFor="search-company-elite-ambassador"
               className="block text-xs font-medium uppercase tracking-wide text-slate-500"
             >
               Search company
             </label>
             <input
-              id="search-company-partner"
+              id="search-company-elite-ambassador"
               type="text"
               value={leadSearch}
               onChange={(e) => setLeadSearch(e.target.value)}
@@ -407,11 +437,13 @@ export default function PartnerBoard() {
         </div>
       </div>
 
-      <div className="max-w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+      <div className="max-w-full min-w-0 rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
+        <div className="overflow-x-auto">
           <table className="w-max min-w-full text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Company</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Ambassador</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Client name</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Via</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Location</th>
@@ -428,15 +460,18 @@ export default function PartnerBoard() {
             <tbody className="divide-y divide-slate-800">
               {filteredMyLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={13} className="px-4 py-10 text-center text-slate-500">
                     You have no leads yet. Click New lead to add one.
                   </td>
                 </tr>
               ) : (
-                filteredMyLeads.map((lead) => (
+                tablePageItems.map((lead) => (
                   <tr key={lead.id} className="text-slate-300">
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                       {lead.company || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                      {ambassadorNameFor(lead.ambassadorId, lead.ambassadorName)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                       {lead.clientName || '—'}
@@ -494,6 +529,15 @@ export default function PartnerBoard() {
               )}
             </tbody>
           </table>
+        </div>
+        <TablePagination
+          page={tablePage}
+          totalPages={tableTotalPages}
+          totalItems={tableTotal}
+          pageSize={tablePageSize}
+          onPageChange={setTablePage}
+          onPageSizeChange={setTablePageSize}
+        />
       </div>
 
       {viewLead && (
@@ -511,11 +555,11 @@ export default function PartnerBoard() {
             className="max-h-[90vh] w-full max-w-2xl overflow-y-auto overflow-x-visible rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl sm:p-6"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="lead-modal-title-partner"
+            aria-labelledby="lead-modal-title-elite-ambassador"
           >
             <div className="flex items-start justify-between gap-3">
               <h2
-                id="lead-modal-title-partner"
+                id="lead-modal-title-elite-ambassador"
                 className="text-lg font-semibold text-white"
               >
                 {editingId ? 'Edit lead' : 'New lead'}
@@ -543,13 +587,13 @@ export default function PartnerBoard() {
                 {form.viaEnabled && (
                   <div>
                     <label
-                      htmlFor="partner-lead-via-name"
+                      htmlFor="elite-ambassador-lead-via-name"
                       className="block text-xs font-medium text-slate-400"
                     >
                       Name
                     </label>
                     <input
-                      id="partner-lead-via-name"
+                      id="elite-ambassador-lead-via-name"
                       type="text"
                       value={form.viaName}
                       onChange={(e) =>

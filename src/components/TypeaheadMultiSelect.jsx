@@ -118,59 +118,65 @@ export default function TypeaheadMultiSelect({
       </div>
 
       {open && !disabled && (
-        <div className="absolute z-30 mt-2 tams-dropdown w-full overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 pt-2 px-2 shadow-2xl">
-          <div className="mb-1">
+        <div className="tams-dropdown absolute z-30 mt-2 flex w-full max-h-[min(20rem,55vh)] flex-col overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
+          <div className="shrink-0 border-b border-slate-800 px-2 pb-2 pt-2">
             <input
               id={id ? `${id}-search` : undefined}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
             />
           </div>
           {options?.length ? (
-            <button
-              type="button"
-              onClick={() => onChangeSelectedIds(options.map((o) => o.id))}
-              className="mb-1 flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm text-slate-200 hover:bg-slate-800/60"
-            >
-              <span>Select All</span>
-              <span className="text-xs text-slate-400">
-                {selectedIds?.length === options.length ? 'Selected' : ''}
-              </span>
-            </button>
+            <div className="shrink-0 border-b border-slate-800 px-2 py-1">
+              <button
+                type="button"
+                onClick={() => onChangeSelectedIds(options.map((o) => o.id))}
+                className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm text-slate-200 hover:bg-slate-800/60"
+              >
+                <span>Select All</span>
+                <span className="text-xs text-slate-400">
+                  {selectedIds?.length === options.length ? 'Selected' : ''}
+                </span>
+              </button>
+            </div>
           ) : null}
-          {filtered.length === 0 ? (
-            <div className="px-2 py-3 text-xs text-slate-400">No matches</div>
-          ) : (
-            [...filtered]
-              .sort((a, b) => {
-                const aActive = selectedSet.has(a.id)
-                const bActive = selectedSet.has(b.id)
-                if (aActive === bActive) return 0
-                return aActive ? -1 : 1
-              })
-              .map((o) => {
-              const active = selectedSet.has(o.id)
-              return (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => toggle(o.id)}
-                  className={[
-                    'flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm',
-                    active ? 'bg-slate-800 text-white' : 'text-slate-200 hover:bg-slate-800/60',
-                  ].join(' ')}
-                >
-                  <span className="truncate">{o.label}</span>
-                  <span className="ml-2 text-xs text-slate-400">
-                    {active ? 'Selected' : ''}
-                  </span>
-                </button>
-              )
-            })
-          )}
-          <div className="mt-2 py-2 flex justify-between gap-2 border-t border-slate-800 pt-2 sticky bottom-0 bg-slate-900">
+          <div className="tams-dropdown-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-2 py-1">
+            {filtered.length === 0 ? (
+              <div className="px-2 py-3 text-xs text-slate-400">No matches</div>
+            ) : (
+              [...filtered]
+                .sort((a, b) => {
+                  const aActive = selectedSet.has(a.id)
+                  const bActive = selectedSet.has(b.id)
+                  if (aActive === bActive) return 0
+                  return aActive ? -1 : 1
+                })
+                .map((o) => {
+                  const active = selectedSet.has(o.id)
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => toggle(o.id)}
+                      className={[
+                        'flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm',
+                        active
+                          ? 'bg-slate-800 text-white'
+                          : 'text-slate-200 hover:bg-slate-800/60',
+                      ].join(' ')}
+                    >
+                      <span className="truncate">{o.label}</span>
+                      <span className="ml-2 shrink-0 text-xs text-slate-400">
+                        {active ? 'Selected' : ''}
+                      </span>
+                    </button>
+                  )
+                })
+            )}
+          </div>
+          <div className="flex shrink-0 justify-between gap-2 border-t border-slate-800 bg-slate-900 px-2 py-2">
             <button
               type="button"
               onClick={() => onChangeSelectedIds([])}
