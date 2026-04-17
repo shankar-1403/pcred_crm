@@ -12,6 +12,7 @@ import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
 import { downloadCsv, inDateRange } from '../lib/csv'
+import { resolveEliteAmbassadorName } from '../lib/partnerOrg'
 import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
 
@@ -144,10 +145,9 @@ export default function ProcessBoard() {
   }
 
   function eliteAmbassadorNameFor(orgId, fallbackName = '') {
-    if (fallbackName) return fallbackName
-    if (!orgId) return '—'
-    const p = eliteAmbassador.find((item) => item.id === orgId)
-    return p?.name || orgId
+    return (
+      resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassador) || '—'
+    )
   }
 
   const currentUserName = user?.uid

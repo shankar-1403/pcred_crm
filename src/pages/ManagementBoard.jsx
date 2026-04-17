@@ -15,6 +15,14 @@ import {
   processUserFilterOptions,
 } from '../lib/assignees'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
+import {
+  resolveAmbassadorName,
+  resolveEliteAmbassadorName,
+} from '../lib/partnerOrg'
+import {
+  labelForLeadStatus,
+  statusLabelMapFromStatuses,
+} from '../lib/statusLabels'
 import { db } from '../lib/firebase'
 import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
@@ -143,13 +151,10 @@ export default function ManagementBoard() {
     ]
   }, [statuses])
 
-  const statusLabelByValue = useMemo(() => {
-    const m = new Map()
-    statusOptions.forEach((s) => {
-      if (s.value) m.set(s.value, s.label)
-    })
-    return m
-  }, [statusOptions])
+  const statusLabelByValue = useMemo(
+    () => statusLabelMapFromStatuses(statuses),
+    [statuses],
+  )
 
   const filtered = useMemo(() => {
     const term = leadSearch.trim().toLowerCase()
@@ -178,7 +183,9 @@ export default function ManagementBoard() {
     }
     if (eliteAmbassadorFilter.length) {
       list = list.filter((l) =>
-        eliteAmbassadorFilter.includes(l.eliteAmbassadorId),
+        eliteAmbassadorFilter.includes(
+          String(l.eliteAmbassadorId ?? '').trim(),
+        ),
       )
     }
     if (ambassadorFilter.length) {
@@ -239,17 +246,13 @@ export default function ManagementBoard() {
   }
 
   function eliteAmbassadorNameFor(orgId, fallbackName = '') {
-    if (fallbackName) return fallbackName
-    if (!orgId) return '—'
-    const p = eliteAmbassador.find((item) => item.id === orgId)
-    return p?.name || orgId
+    return (
+      resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassador) || '—'
+    )
   }
 
   function ambassadorNameFor(ambassadorId, fallbackName = '') {
-    if (fallbackName) return fallbackName
-    if (!ambassadorId) return '—'
-    const a = ambassadorRows.find((item) => item.id === ambassadorId)
-    return a?.name || ambassadorId
+    return resolveAmbassadorName(ambassadorId, fallbackName, ambassadorRows) || '—'
   }
 
   function formatCurrencyINR(value) {
@@ -398,7 +401,7 @@ export default function ManagementBoard() {
         eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
         ambassadorNameFor(lead.ambassadorId, lead.ambassadorName),
         lead.company || '',
-        lead.status || '',
+        labelForLeadStatus(statusLabelByValue, lead.status),
         productNameFor(lead.productId),
         nameFor(lead.createdBy),
         assignedUids(lead.assignedTo).map((uid) => nameFor(uid)).join(', '),
@@ -737,8 +740,7 @@ export default function ManagementBoard() {
                       <td className="px-4 py-1 text-slate-400">{lead.company || '—'}</td>
                       <td className="px-4 py-1">
                         <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
-                          {statusLabelByValue.get(lead.status) ||
-                            lead.status ||
+                          {labelForLeadStatus(statusLabelByValue, lead.status) ||
                             'New'}
                         </span>
                       </td>

@@ -14,6 +14,7 @@ import {
   labelAssignableProcessUser,
 } from '../lib/assignees'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
+import { resolveEliteAmbassadorName } from '../lib/partnerOrg'
 import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
@@ -152,10 +153,9 @@ export default function SalesBoard() {
   }
 
   function eliteAmbassadorNameFor(orgId, fallbackName = '') {
-    if (fallbackName) return fallbackName
-    if (!orgId) return '—'
-    const p = eliteAmbassador.find((item) => item.id === orgId)
-    return p?.name || orgId
+    return (
+      resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassador) || '—'
+    )
   }
 
   function openNew() {

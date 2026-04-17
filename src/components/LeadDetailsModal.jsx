@@ -6,6 +6,14 @@ import { useAmbassador } from '../hooks/useAmbassador'
 import { useProducts } from '../hooks/useProducts'
 import { useStatuses } from '../hooks/useStatuses'
 import { assignedUids } from '../lib/leads'
+import {
+  resolveAmbassadorName,
+  resolveEliteAmbassadorName,
+} from '../lib/partnerOrg'
+import {
+  labelForLeadStatus,
+  statusLabelMapFromStatuses,
+} from '../lib/statusLabels'
 
 /**
  * @param {boolean} [showPartner=true] When true, show elite ambassador / ambassador sourcing rows when data exists.
@@ -41,15 +49,9 @@ export default function LeadDetailsModal({
     salesAssignees.length > 0
       ? salesAssignees.map((uid) => userName(uid)).join(', ')
       : null
-  const statusMap = new Map()
-  statuses.forEach((s) => {
-    const label = String(s?.label ?? '').trim()
-    const id = String(s?.id ?? '').trim()
-    const legacyValue = String(s?.value ?? '').trim()
-    if (id && label) statusMap.set(id, label)
-    if (legacyValue && label) statusMap.set(legacyValue, label)
-  })
-  const statusLabel = statusMap.get(lead.status) || lead.status || '—'
+  const statusMap = statusLabelMapFromStatuses(statuses)
+  const statusLabel =
+    labelForLeadStatus(statusMap, lead.status) || '—'
 
   const processedBy = assignees.length
     ? assignees.map((uid) => userName(uid)).join(', ')
@@ -218,16 +220,12 @@ function getProductName(productId, products) {
 }
 
 function getEliteAmbassadorOrgName(orgId, fallbackName, eliteAmbassadorRows) {
-  if (fallbackName) return fallbackName
-  if (!orgId) return 'N/A'
-  const item = eliteAmbassadorRows.find((p) => p.id === orgId)
-  return item?.name?.trim() || orgId
+  const s = resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassadorRows)
+  return s || 'N/A'
 }
 
 function getAmbassadorName(ambassadorId, fallbackName, ambassadorRows) {
-  if (fallbackName) return fallbackName
-  if (!ambassadorId) return 'N/A'
-  const item = ambassadorRows.find((a) => a.id === ambassadorId)
-  return item?.name?.trim() || ambassadorId
+  const s = resolveAmbassadorName(ambassadorId, fallbackName, ambassadorRows)
+  return s || 'N/A'
 }
 

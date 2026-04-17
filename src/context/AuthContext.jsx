@@ -16,6 +16,7 @@ import {
 import { deleteApp, initializeApp } from 'firebase/app'
 import { ref, get, set } from 'firebase/database'
 import { auth, db, firebaseConfig } from '../lib/firebase'
+import { isValidPan, loginIdToAuthEmail } from '../lib/panAuth'
 
 const AuthContext = createContext(null)
 
@@ -154,8 +155,18 @@ export function AuthProvider({ children }) {
     }
   }, [user])
 
-  const login = useCallback(async (email, password) => {
-    await signInWithEmailAndPassword(auth, email, password)
+  const login = useCallback(async (emailOrPan, password) => {
+    const id = String(emailOrPan ?? '').trim()
+    let authEmail = id
+    if (!id.includes('@')) {
+      if (!isValidPan(id)) {
+        throw new Error(
+          'Enter a valid email address or PAN (10 characters, e.g. ABCDE1234F).',
+        )
+      }
+      authEmail = loginIdToAuthEmail(id)
+    }
+    await signInWithEmailAndPassword(auth, authEmail, password)
   }, [])
 
   const logout = useCallback(async () => {

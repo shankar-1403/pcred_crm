@@ -5,6 +5,7 @@ import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
 import { useUsers } from '../hooks/useUsers'
 import { ROLES } from '../constants'
 import { db } from '../lib/firebase'
+import { isValidPan, normalizePan, panToAuthEmail } from '../lib/panAuth'
 import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
 
@@ -18,6 +19,7 @@ export default function AdminEliteAmbassador() {
   const [eliteAmbassadorName, setEliteAmbassadorName] = useState('')
   const [eliteAmbassadorEmail, setEliteAmbassadorEmail] = useState('')
   const [eliteAmbassadorPassword, setEliteAmbassadorPassword] = useState('')
+  const [eliteAmbassadorPan, setEliteAmbassadorPan] = useState('')
   const [referredByUid, setReferredByUid] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deletingEliteAmbassadorId, setDeletingEliteAmbassadorId] = useState('')
@@ -91,6 +93,15 @@ export default function AdminEliteAmbassador() {
       setFormError('Email is required for the elite ambassador login.')
       return
     }
+    const panNorm = normalizePan(eliteAmbassadorPan)
+    if (!panNorm) {
+      setFormError('PAN is required for elite ambassador login (sign in with PAN + password).')
+      return
+    }
+    if (!isValidPan(panNorm)) {
+      setFormError('PAN must be 10 characters in format ABCDE1234F.')
+      return
+    }
     if (!passwordTrim || passwordTrim.length < 6) {
       setFormError('Password must be at least 6 characters.')
       return
@@ -104,20 +115,27 @@ export default function AdminEliteAmbassador() {
       const refUid = String(referredByUid ?? '').trim()
       await set(eliteAmbassadorRef, {
         name,
+        pan: panNorm,
         referredByUid: refUid || null,
         createdAt: Date.now(),
         createdByAdminUid: user.uid,
       })
+      const authEmail = panToAuthEmail(panNorm)
       const uid = await createUserByAdmin(
-        emailTrim,
+        authEmail,
         passwordTrim,
         name,
         ROLES.ELITE_AMBASSADOR,
-        { eliteAmbassadorId: newEliteAmbassadorId },
+        {
+          eliteAmbassadorId: newEliteAmbassadorId,
+          pan: panNorm,
+          email: emailTrim,
+        },
       )
       setEliteAmbassadorName('')
       setEliteAmbassadorEmail('')
       setEliteAmbassadorPassword('')
+      setEliteAmbassadorPan('')
       setReferredByUid('')
       setMessage(`Elite ambassador and login added. User UID: ${uid}`)
     } catch (err) {
@@ -187,11 +205,11 @@ export default function AdminEliteAmbassador() {
         <h2 className="text-lg font-medium text-white">Add elite ambassador</h2>
         <p className="mt-2 text-xs text-slate-500">
           Role for the new account is set to Elite ambassador and linked to the elite ambassador
-          record below.
+          record below. Sign-in uses PAN and password; email is stored on the profile.
         </p>
         <form
           onSubmit={handleCreate}
-          className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
+          className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-6"
         >
           <div className="min-w-0">
             <label className="block text-sm font-medium text-slate-300">
@@ -216,6 +234,21 @@ export default function AdminEliteAmbassador() {
               value={eliteAmbassadorEmail}
               onChange={(e) => setEliteAmbassadorEmail(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+              autoComplete="off"
+            />
+          </div>
+          <div className="min-w-0">
+            <label className="block text-sm font-medium text-slate-300">
+              PAN (login ID)
+            </label>
+            <input
+              type="text"
+              required
+              value={eliteAmbassadorPan}
+              onChange={(e) => setEliteAmbassadorPan(e.target.value.toUpperCase())}
+              maxLength={10}
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-white uppercase"
+              placeholder="ABCDE1234F"
               autoComplete="off"
             />
           </div>
@@ -253,7 +286,7 @@ export default function AdminEliteAmbassador() {
               Internal user who sees this elite ambassador&apos;s new leads on their board.
             </p>
           </div>
-          <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+          <div className="min-w-0 sm:col-span-2 lg:col-span-2 xl:col-span-1">
             <button
               type="submit"
               disabled={submitting || !isAdmin}
@@ -272,10 +305,11 @@ export default function AdminEliteAmbassador() {
           <h2 className="text-sm font-semibold text-slate-300">Elite ambassadors</h2>
         </div>
         <div className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch]">
-          <table className="w-full min-w-[640px] table-auto text-left text-xs sm:text-sm">
+          <table className="w-full min-w-[720px] table-auto text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
+                <th className="px-4 py-2 font-medium">PAN</th>
                 <th className="px-4 py-2 font-medium">Referred by</th>
                 <th className="px-4 py-2 font-medium">Elite ambassador ID</th>
                 <th className="px-4 py-2 text-right font-medium">Action</th>
@@ -284,13 +318,13 @@ export default function AdminEliteAmbassador() {
             <tbody className="divide-y divide-slate-800">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
                     Loading…
                   </td>
                 </tr>
               ) : eliteAmbassadorTable.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
                     No elite ambassadors yet. Add one above.
                   </td>
                 </tr>
@@ -298,6 +332,9 @@ export default function AdminEliteAmbassador() {
                 tablePageItems.map((ea) => (
                   <tr key={ea.id} className="text-slate-300">
                     <td className="px-4 py-2 text-white">{ea.name || '—'}</td>
+                    <td className="px-4 py-2 font-mono text-xs text-slate-300">
+                      {ea.pan || '—'}
+                    </td>
                     <td className="px-4 py-2 text-slate-400">
                       {referredByLabel(ea.referredByUid)}
                     </td>

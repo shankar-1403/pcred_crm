@@ -7,7 +7,7 @@ export default function Login() {
   const location = useLocation()
   const from = location.state?.from?.pathname
 
-  const [email, setEmail] = useState('')
+  const [emailOrPan, setEmailOrPan] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
@@ -22,7 +22,7 @@ export default function Login() {
     setError('')
     setSubmitting(true)
     try {
-      await login(email.trim(), password)
+      await login(emailOrPan.trim(), password)
     } catch (err) {
       setError(err.message ?? 'Sign in failed')
     } finally {
@@ -43,26 +43,24 @@ export default function Login() {
         <h1 className="text-center text-2xl font-semibold text-white">
           Sign in
         </h1>
-        <p className="mt-1 text-center text-sm text-slate-400">
-          CRM — Management, Sales & Process
-        </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <div>
             <label
-              htmlFor="email"
+              htmlFor="email-or-pan"
               className="block text-sm font-medium text-slate-300"
             >
-              Email
+              Email or PAN
             </label>
             <input
-              id="email"
-              type="email"
-              autoComplete="email"
+              id="email-or-pan"
+              type="text"
+              autoComplete="username"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={emailOrPan}
+              onChange={(e) => setEmailOrPan(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-white outline-none ring-blue-500/0 transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+              placeholder="you@company.com or ABCDE1234F"
             />
           </div>
           <div>

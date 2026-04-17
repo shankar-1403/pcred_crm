@@ -10,6 +10,14 @@ import { useAmbassador } from '../hooks/useAmbassador'
 import { useStatuses } from '../hooks/useStatuses'
 import { assignedUids, normalizedReferredByUid, toAssignedMap } from '../lib/leads'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
+import {
+  resolveAmbassadorName,
+  resolveEliteAmbassadorName,
+} from '../lib/partnerOrg'
+import {
+  labelForLeadStatus,
+  statusLabelMapFromStatuses,
+} from '../lib/statusLabels'
 import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
@@ -120,13 +128,10 @@ export default function EliteAmbassadorBoard() {
     ]
   }, [statuses])
 
-  const statusLabelByValue = useMemo(() => {
-    const m = new Map()
-    statusOptions.forEach((s) => {
-      if (s.value) m.set(s.value, s.label)
-    })
-    return m
-  }, [statusOptions])
+  const statusLabelByValue = useMemo(
+    () => statusLabelMapFromStatuses(statuses),
+    [statuses],
+  )
 
   function processNames(assignedTo) {
     const assignees = assignedUids(assignedTo)
@@ -157,10 +162,15 @@ export default function EliteAmbassadorBoard() {
   }
 
   function ambassadorNameFor(ambassadorId, fallbackName = '') {
-    if (fallbackName) return fallbackName
-    if (!ambassadorId) return '—'
-    const a = ambassadorRows.find((item) => item.id === ambassadorId)
-    return a?.name || ambassadorId
+    return (
+      resolveAmbassadorName(ambassadorId, fallbackName, ambassadorRows) || '—'
+    )
+  }
+
+  function eliteAmbassadorNameFor(orgId, fallbackName = '') {
+    return (
+      resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassador) || '—'
+    )
   }
 
   function openNew() {
@@ -324,13 +334,14 @@ export default function EliteAmbassadorBoard() {
     const rows = filteredMyLeads
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
       .map((lead) => [
+        eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
+        ambassadorNameFor(lead.ambassadorId, lead.ambassadorName),
         lead.viaName || '',
         lead.company || '',
-        ambassadorNameFor(lead.ambassadorId, lead.ambassadorName),
         lead.clientName || '',
         lead.location || '',
         productNameFor(lead.productId),
-        lead.status || '',
+        labelForLeadStatus(statusLabelByValue, lead.status),
         processNames(lead.assignedTo),
         salesNames(lead.salesAssignedTo),
         lead.leadDate || '',
@@ -345,9 +356,10 @@ export default function EliteAmbassadorBoard() {
     downloadCsv(
       'my-leads.csv',
       [
+        'Elite ambassador',
+        'Ambassador',
         'Via',
         'Company',
-        'Ambassador',
         'Client Name',
         'Location',
         'Product',
@@ -485,8 +497,7 @@ export default function EliteAmbassadorBoard() {
                     </td>
                     <td className="whitespace-nowrap px-4 py-1">
                       <span className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
-                        {statusLabelByValue.get(lead.status) ||
-                          lead.status}
+                        {labelForLeadStatus(statusLabelByValue, lead.status)}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-400">
