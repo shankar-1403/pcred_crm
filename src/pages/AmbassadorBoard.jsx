@@ -132,7 +132,7 @@ export default function AmbassadorBoard() {
 
   function salesNames(salesAssignedTo) {
     const assignees = assignedUids(salesAssignedTo)
-    if (!assignees.length) return '—'
+    if (!assignees.length) return '-'
     return assignees
       .map((uid) => {
         const u = usersById[uid]
@@ -142,7 +142,7 @@ export default function AmbassadorBoard() {
   }
 
   function productNameFor(productId) {
-    if (!productId) return '—'
+    if (!productId) return '-'
     const product = products.find((p) => p.id === productId)
     return product?.name || productId
   }
@@ -315,12 +315,12 @@ export default function AmbassadorBoard() {
           lead.eliteAmbassadorId,
           lead.eliteAmbassadorName,
           eliteAmbassador,
-        ) || '—',
+        ) || '-',
         resolveAmbassadorName(
           lead.ambassadorId,
           lead.ambassadorName,
           ambassadorRows,
-        ) || '—',
+        ) || '-',
         lead.viaName || '',
         lead.company || '',
         lead.clientName || '',
@@ -464,15 +464,15 @@ export default function AmbassadorBoard() {
                 tablePageItems.map((lead) => (
                   <tr key={lead.id} className="text-slate-300">
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
-                      {lead.company || '—'}
+                      {lead.company || '-'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
-                      {lead.clientName || '—'}
+                      {lead.clientName || '-'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
-                      {lead.viaName || '—'}
+                      {lead.viaName || '-'}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">{lead.location || '—'}</td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">{lead.location || '-'}</td>
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                       {productNameFor(lead.productId)}
                     </td>
@@ -491,10 +491,10 @@ export default function AmbassadorBoard() {
                       ₹ {Number(lead?.totalAmount).toLocaleString('en-IN') || 0}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-500">
-                      {lead.leadDate || '—'}
+                      {lead.leadDate || '-'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-500">
-                      {lead.updatedStatusDate || '—'}
+                      {lead.updatedStatusDate || '-'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1">
                       <div className="flex flex-nowrap items-center gap-2">

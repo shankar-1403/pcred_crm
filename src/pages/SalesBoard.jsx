@@ -8,11 +8,8 @@ import { useProducts } from '../hooks/useProducts'
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
 import { useStatuses } from '../hooks/useStatuses'
 import { assignedUids, leadReferredToUser, toAssignedMap } from '../lib/leads'
-import {
-  assignableProcessUsers,
-  assignableSalesUsers,
-  labelAssignableProcessUser,
-} from '../lib/assignees'
+import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser} from '../lib/assignees'
+import { labelForLeadStatus, statusLabelMapFromStatuses,} from '../lib/statusLabels'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import { resolveEliteAmbassadorName } from '../lib/partnerOrg'
 import LeadDetailsModal from '../components/LeadDetailsModal'
@@ -116,13 +113,10 @@ export default function SalesBoard() {
     ]
   }, [statuses])
 
-  const statusLabelByValue = useMemo(() => {
-    const m = new Map()
-    statusOptions.forEach((s) => {
-      if (s.value) m.set(s.value, s.label)
-    })
-    return m
-  }, [statusOptions])
+  const statusLabelByValue = useMemo(
+    () => statusLabelMapFromStatuses(statuses),
+    [statuses],
+  )
 
   function processNames(assignedTo) {
     const assignees = assignedUids(assignedTo)
@@ -137,7 +131,7 @@ export default function SalesBoard() {
 
   function salesNames(salesAssignedTo) {
     const assignees = assignedUids(salesAssignedTo)
-    if (!assignees.length) return '—'
+    if (!assignees.length) return '-'
     return assignees
       .map((uid) => {
         const u = usersById[uid]
@@ -147,14 +141,14 @@ export default function SalesBoard() {
   }
 
   function productNameFor(productId) {
-    if (!productId) return '—'
+    if (!productId) return '-'
     const product = products.find((p) => p.id === productId)
     return product?.name || productId
   }
 
   function eliteAmbassadorNameFor(orgId, fallbackName = '') {
     return (
-      resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassador) || '—'
+      resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassador) || '-'
     )
   }
 
@@ -300,7 +294,7 @@ export default function SalesBoard() {
         lead.viaName || '',
         lead.location || '',
         productNameFor(lead.productId),
-        lead.status || '',
+        labelForLeadStatus(statusLabelByValue, lead.status),
         processNames(lead.assignedTo),
         salesNames(lead.salesAssignedTo),
         lead.leadDate || '',
@@ -441,22 +435,21 @@ export default function SalesBoard() {
                       )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
-                      {lead.company || '—'}
+                      {lead.company || '-'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
-                      {lead.clientName || '—'}
+                      {lead.clientName || '-'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
-                      {lead.viaName || '—'}
+                      {lead.viaName || '-'}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">{lead.location || '—'}</td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">{lead.location || '-'}</td>
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                       {productNameFor(lead.productId)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1">
                       <span className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
-                        {statusLabelByValue.get(lead.status) ||
-                          lead.status}
+                        {labelForLeadStatus(statusLabelByValue, lead.status) ||'New'}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-400">
@@ -469,10 +462,10 @@ export default function SalesBoard() {
                       ₹ {Number(lead?.totalAmount).toLocaleString('en-IN') || 0}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-500">
-                      {lead.leadDate || '—'}
+                      {lead.leadDate || '-'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-500">
-                      {lead.updatedStatusDate || '—'}
+                      {lead.updatedStatusDate || '-'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1">
                       <div className="flex flex-nowrap items-center gap-2">

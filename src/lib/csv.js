@@ -11,7 +11,14 @@ export function formatAmountForCsv(value) {
 
 function escapeCsvCell(value) {
   const text = String(value ?? '')
-  if (text.includes('"') || text.includes(',') || text.includes('\n')) {
+  // Excel treats leading = + - @ tab CR as formula/syntax when opening CSV; quote so the value displays as text (e.g. "-" or "—").
+  const excelNeedsQuotes =
+    /^[=+\-@\t\r]/.test(text) ||
+    text.includes('"') ||
+    text.includes(',') ||
+    text.includes('\n') ||
+    text.includes('\r')
+  if (excelNeedsQuotes) {
     return `"${text.replace(/"/g, '""')}"`
   }
   return text

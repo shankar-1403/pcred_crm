@@ -15,6 +15,7 @@ import { downloadCsv, inDateRange } from '../lib/csv'
 import { resolveEliteAmbassadorName } from '../lib/partnerOrg'
 import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
+import {labelForLeadStatus,statusLabelMapFromStatuses,} from '../lib/statusLabels'
 
 export default function ProcessBoard() {
   const { user } = useAuth()
@@ -146,7 +147,7 @@ export default function ProcessBoard() {
 
   function eliteAmbassadorNameFor(orgId, fallbackName = '') {
     return (
-      resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassador) || '—'
+      resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassador) || '-'
     )
   }
 
@@ -172,17 +173,10 @@ export default function ProcessBoard() {
     ]
   }, [statuses])
 
-  const statusLabelByValue = useMemo(() => {
-    const m = new Map()
-    statusOptions.forEach((s) => {
-      if (s.value) m.set(s.value, s.label)
-    })
-    return m
-  }, [statusOptions])
-
-  function statusLabelFor(status) {
-    return statusLabelByValue.get(status) || status || '—'
-  }
+  const statusLabelByValue = useMemo(
+    () => statusLabelMapFromStatuses(statuses),
+    [statuses],
+  )
 
   if (loading) {
     return <p className="text-slate-400">Loading…</p>
@@ -197,6 +191,7 @@ export default function ProcessBoard() {
         lead.clientName || '',
         lead.location || '',
         lead.bankName || '',
+        labelForLeadStatus(statusLabelByValue, lead.status),
         lead.onePagerLink || '',
         products.find((p) => p.id === lead.productId)?.name || '',
         lead.leadDate || '',
@@ -204,7 +199,6 @@ export default function ProcessBoard() {
         assignedUids(lead.assignedTo)
           .map((uid) => usersById[uid]?.displayName || usersById[uid]?.email || uid.slice(0, 8))
           .join(', '),
-        lead.status || '',
       ])
 
     downloadCsv(
@@ -215,12 +209,12 @@ export default function ProcessBoard() {
         'Client Name',
         'Location',
         'Bank Name',
+        'Status',
         'One Pager',
         'Product',
         'Lead Date',
         'Sales Owner',
         'Processed By',
-        'Status',
       ],
       rows,
     )
@@ -288,7 +282,7 @@ export default function ProcessBoard() {
 
       <div className="max-w-full min-w-0 rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1440px] table-auto text-left text-xs sm:text-sm">
+          <table className="w-full min-w-360 table-auto text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Elite ambassador</th>
@@ -296,11 +290,11 @@ export default function ProcessBoard() {
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Client name</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Location</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Product</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Status</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Lead date</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Updated status date</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Sales owner</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Processed by</th>
-                <th className="px-4 py-2 font-medium whitespace-nowrap">Status</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Action</th>
               </tr>
             </thead>
@@ -314,30 +308,33 @@ export default function ProcessBoard() {
               ) : (
                 tablePageItems.map((lead) => (
                   <tr key={lead.id} className="text-slate-300">
-                    <td className="px-4 py-1 text-slate-400">
+                    <td className="px-4 py-1 text-slate-400 whitespace-nowrap">
                       {eliteAmbassadorNameFor(
                         lead.eliteAmbassadorId,
                         lead.eliteAmbassadorName,
                       )}
                     </td>
-                    <td className="px-4 py-1 text-slate-400">{lead.company || '—'}</td>
-                    <td className="px-4 py-1 text-slate-400">{lead.clientName || '—'}</td>
-                    <td className="px-4 py-1 text-slate-400">{lead.location || '—'}</td>
-                    <td className="px-4 py-1 text-slate-400">
-                      {products.find((p) => p.id === lead.productId)?.name || '—'}
+                    <td className="px-4 py-1 text-slate-400 whitespace-nowrap">{lead.company || '-'}</td>
+                    <td className="px-4 py-1 text-slate-400 whitespace-nowrap">{lead.clientName || '-'}</td>
+                    <td className="px-4 py-1 text-slate-400 whitespace-nowrap">{lead.location || '-'}</td>
+                    <td className="px-4 py-1 text-slate-400 whitespace-nowrap">
+                      {products.find((p) => p.id === lead.productId)?.name || '-'}
                     </td>
-                    <td className="px-4 py-1 text-xs text-slate-500">
-                      {lead.leadDate || '—'}
+                    <td className="px-4 py-1 text-slate-400 whitespace-nowrap">
+                      {labelForLeadStatus(statusLabelByValue, lead.status) ||'New'}
                     </td>
-                    <td className="px-4 py-1 text-xs text-slate-500">
-                      {lead.updatedStatusDate || '—'}
+                    <td className="px-4 py-1 text-xs text-slate-500 whitespace-nowrap">
+                      {lead.leadDate || '-'}
                     </td>
-                    <td className="px-4 py-1 text-slate-400">
+                    <td className="px-4 py-1 text-xs text-slate-500 whitespace-nowrap">
+                      {lead.updatedStatusDate || '-'}
+                    </td>
+                    <td className="px-4 py-1 text-slate-400 whitespace-nowrap">
                       {usersById[lead.createdBy]?.displayName ||
                         usersById[lead.createdBy]?.email ||
-                        '—'}
+                        '-'}
                     </td>
-                    <td className="px-4 py-1 text-slate-400">
+                    <td className="px-4 py-1 text-slate-400 whitespace-nowrap">
                       {assignedUids(lead.assignedTo)
                         .map(
                           (uid) =>
@@ -345,13 +342,10 @@ export default function ProcessBoard() {
                             usersById[uid]?.email ||
                             uid.slice(0, 8),
                         )
-                        .join(', ') || '—'}
-                    </td>
-                    <td className="px-4 py-1 text-slate-400">
-                      {statusLabelFor(lead.status)}
+                        .join(', ') || '-'}
                     </td>
                     <td className="px-4 py-1">
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => openEdit(lead)}

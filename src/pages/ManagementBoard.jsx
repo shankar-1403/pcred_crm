@@ -8,21 +8,10 @@ import { useProducts } from '../hooks/useProducts'
 import { useStatuses } from '../hooks/useStatuses'
 import { useUsers } from '../hooks/useUsers'
 import { assignedUids, toAssignedMap } from '../lib/leads'
-import {
-  assignableProcessUsers,
-  assignableSalesUsers,
-  labelAssignableProcessUser,
-  processUserFilterOptions,
-} from '../lib/assignees'
+import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,processUserFilterOptions,} from '../lib/assignees'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
-import {
-  resolveAmbassadorName,
-  resolveEliteAmbassadorName,
-} from '../lib/partnerOrg'
-import {
-  labelForLeadStatus,
-  statusLabelMapFromStatuses,
-} from '../lib/statusLabels'
+import {resolveAmbassadorName,resolveEliteAmbassadorName,} from '../lib/partnerOrg'
+import {labelForLeadStatus,statusLabelMapFromStatuses,} from '../lib/statusLabels'
 import { db } from '../lib/firebase'
 import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
@@ -240,25 +229,25 @@ export default function ManagementBoard() {
   }
 
   function productNameFor(productId) {
-    if (!productId) return '—'
+    if (!productId) return '-'
     const p = products.find((item) => item.id === productId)
     return p?.name || productId
   }
 
   function eliteAmbassadorNameFor(orgId, fallbackName = '') {
     return (
-      resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassador) || '—'
+      resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassador) || '-'
     )
   }
 
   function ambassadorNameFor(ambassadorId, fallbackName = '') {
-    return resolveAmbassadorName(ambassadorId, fallbackName, ambassadorRows) || '—'
+    return resolveAmbassadorName(ambassadorId, fallbackName, ambassadorRows) || '-'
   }
 
   function formatCurrencyINR(value) {
-    if (value === '' || value == null) return '—'
+    if (value === '' || value == null) return '-'
     const amount = Number(value)
-    if (!Number.isFinite(amount)) return '—'
+    if (!Number.isFinite(amount)) return '-'
     return `₹ ${amount.toLocaleString('en-IN')}`
   }
 
@@ -737,7 +726,7 @@ export default function ManagementBoard() {
                       <td className="px-4 py-1 text-slate-400">
                         {ambassadorNameFor(lead.ambassadorId, lead.ambassadorName)}
                       </td>
-                      <td className="px-4 py-1 text-slate-400">{lead.company || '—'}</td>
+                      <td className="px-4 py-1 text-slate-400">{lead.company || '-'}</td>
                       <td className="px-4 py-1">
                         <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
                           {labelForLeadStatus(statusLabelByValue, lead.status) ||
@@ -768,8 +757,8 @@ export default function ManagementBoard() {
                             (Number(lead?.mandatePayoutAmount) || 0),
                         )}
                       </td>
-                      <td className="px-4 py-1 text-xs text-slate-500">{lead.leadDate || '—'}</td>
-                      <td className="px-4 py-1 text-xs text-slate-500">{lead.updatedStatusDate || '—'}</td>
+                      <td className="px-4 py-1 text-xs text-slate-500">{lead.leadDate || '-'}</td>
+                      <td className="px-4 py-1 text-xs text-slate-500">{lead.updatedStatusDate || '-'}</td>
                       <td className="px-4 py-1">
                         <div className="flex items-center gap-2 justify-end">
                           <div>
