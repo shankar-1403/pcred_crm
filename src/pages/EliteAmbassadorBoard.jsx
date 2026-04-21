@@ -13,6 +13,7 @@ import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import {
   resolveAmbassadorName,
   resolveEliteAmbassadorName,
+  resolveAmbassadorPhone
 } from '../lib/partnerOrg'
 import {
   labelForLeadStatus,
@@ -165,6 +166,15 @@ export default function EliteAmbassadorBoard() {
     return (
       resolveAmbassadorName(ambassadorId, fallbackName, ambassadorRows) || '-'
     )
+  }
+
+  function ambassadorPhoneDisplay(lead) {
+    const phone = resolveAmbassadorPhone(
+      lead.ambassadorId,
+      lead.ambassadorPhoneNo,
+      ambassadorRows,
+    )
+    return phone || '-'
   }
 
   function eliteAmbassadorNameFor(orgId, fallbackName = '') {
@@ -456,6 +466,7 @@ export default function EliteAmbassadorBoard() {
               <tr>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Company</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Ambassador</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Ambassador phone</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Client name</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Via</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Location</th>
@@ -484,6 +495,9 @@ export default function EliteAmbassadorBoard() {
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                       {ambassadorNameFor(lead.ambassadorId, lead.ambassadorName)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                      {ambassadorPhoneDisplay(lead)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                       {lead.clientName || '-'}

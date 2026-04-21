@@ -20,6 +20,7 @@ export default function AdminAmbassador() {
   const [ambassadorEmail, setAmbassadorEmail] = useState('')
   const [ambassadorPassword, setAmbassadorPassword] = useState('')
   const [ambassadorPan, setAmbassadorPan] = useState('')
+  const [ambassadorPhone, setAmbassadorPhone] = useState('')
   const [referredByUid, setReferredByUid] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deletingAmbassadorId, setDeletingAmbassadorId] = useState('')
@@ -65,6 +66,44 @@ export default function AdminAmbassador() {
     return u.displayName || u.email || uid.slice(0, 8)
   }
 
+  const sendMail = async ({ email, name, password, pan }) => {
+    try {
+      await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": import.meta.env.VITE_BREVO_API_KEY,
+        },
+        body: JSON.stringify({
+          sender: {
+            email: "noreply@pcred.org",
+            name: "Pcred Venture",
+          },
+          to: [{ email }],
+          subject: "Welcome to PCRED Venture Pvt.Ltd",
+          htmlContent: `
+            <a href="https://www.pcred.org/" target="_blank"> 
+              <img src="https://www.pcred.org/assets/img/websitelogofinal.png" width="100%" height="100%" style="height:30px;width:110px;"/>
+            </a>
+            <br/>
+            <div>
+              <h1 style="font-size:16px;">Welcome to Pcred Venture</h2>
+              <p>Hello ${name}</p>
+              <p>Login Id (PAN): ${pan}</p>
+              <p>Password: ${password}</p>
+            </div>
+            <br/>
+            <p>Regards,<br/>Pcred Team</p>
+            <hr/>
+            <p style="font-size:12px;color:gray;">This is an automated email. Please do not reply.</p>
+          `,
+        }),
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   async function handleCreate(e) {
     e.preventDefault()
     setMessage('')
@@ -82,6 +121,7 @@ export default function AdminAmbassador() {
     }
 
     const name = ambassadorName.trim()
+    const phoneNo = ambassadorPhone
     const emailTrim = ambassadorEmail.trim()
     const passwordTrim = ambassadorPassword
 
@@ -115,6 +155,7 @@ export default function AdminAmbassador() {
       await set(ambassadorRef, {
         name,
         pan: panNorm,
+        phoneNo:ambassadorPhone,
         referredByUid: refUid || null,
         createdAt: Date.now(),
         createdByAdminUid: user.uid,
@@ -131,6 +172,12 @@ export default function AdminAmbassador() {
           email: emailTrim,
         },
       )
+      await sendMail({
+        email: emailTrim,
+        name,
+        password: passwordTrim,
+        pan: panNorm,
+      });
       setAmbassadorName('')
       setAmbassadorEmail('')
       setAmbassadorPassword('')
@@ -207,7 +254,7 @@ export default function AdminAmbassador() {
           Role for the new account is set to Ambassador and linked to the ambassador
           record below. Sign-in uses PAN and password; email is stored on the profile.
         </p>
-        <form onSubmit={handleCreate} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <form onSubmit={handleCreate} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="min-w-0">
             <label className="block text-sm font-medium text-slate-300">
               Ambassador name
@@ -243,6 +290,18 @@ export default function AdminAmbassador() {
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-white uppercase"
               placeholder="ABCDE1234F"
               autoComplete="off"
+            />
+          </div>
+          <div className="min-w-0">
+            <label className="block text-sm font-medium text-slate-300">
+              Phone No.
+            </label>
+            <input
+              type="number"
+              required
+              value={ambassadorPhone}
+              onChange={(e) => setAmbassadorPhone(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
             />
           </div>
           <div className="min-w-0">

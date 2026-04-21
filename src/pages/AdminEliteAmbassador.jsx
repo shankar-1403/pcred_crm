@@ -8,6 +8,7 @@ import { db } from '../lib/firebase'
 import { isValidPan, normalizePan, panToAuthEmail } from '../lib/panAuth'
 import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 export default function AdminEliteAmbassador() {
   const { user, profile, createUserByAdmin } = useAuth()
@@ -19,6 +20,7 @@ export default function AdminEliteAmbassador() {
   const [eliteAmbassadorName, setEliteAmbassadorName] = useState('')
   const [eliteAmbassadorEmail, setEliteAmbassadorEmail] = useState('')
   const [eliteAmbassadorPassword, setEliteAmbassadorPassword] = useState('')
+  const [eliteAmbassadorPhone, setEliteAmbassadorPhone] = useState('')
   const [eliteAmbassadorPan, setEliteAmbassadorPan] = useState('')
   const [referredByUid, setReferredByUid] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -65,6 +67,44 @@ export default function AdminEliteAmbassador() {
     return u.displayName || u.email || uid.slice(0, 8)
   }
 
+  const sendMail = async ({ email, name, password, pan }) => {
+    try {
+      await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": import.meta.env.VITE_BREVO_API_KEY,
+        },
+        body: JSON.stringify({
+          sender: {
+            email: "noreply@pcred.org",
+            name: "Pcred Venture",
+          },
+          to: [{ email }],
+          subject: "Welcome to PCRED Venture Pvt.Ltd",
+          htmlContent: `
+            <a href="https://www.pcred.org/" target="_blank"> 
+              <img src="https://www.pcred.org/assets/img/websitelogofinal.png" width="100%" height="100%" style="height:30px;width:110px;"/>
+            </a>
+            <br/>
+            <div>
+              <h1 style="font-size:16px;">Welcome to Pcred Venture</h2>
+              <p>Hello ${name}</p>
+              <p>Login Id (PAN): ${pan}</p>
+              <p>Password: ${password}</p>
+            </div>
+            <br/>
+            <p>Regards,<br/>Pcred Team</p>
+            <hr/>
+            <p style="font-size:12px;color:gray;">This is an automated email. Please do not reply.</p>
+          `,
+        }),
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   async function handleCreate(e) {
     e.preventDefault()
     setMessage('')
@@ -82,6 +122,7 @@ export default function AdminEliteAmbassador() {
     }
 
     const name = eliteAmbassadorName.trim()
+    const phoneNo = eliteAmbassadorPhone
     const emailTrim = eliteAmbassadorEmail.trim()
     const passwordTrim = eliteAmbassadorPassword
 
@@ -116,6 +157,7 @@ export default function AdminEliteAmbassador() {
       await set(eliteAmbassadorRef, {
         name,
         pan: panNorm,
+        phoneNo:eliteAmbassadorPhone,
         referredByUid: refUid || null,
         createdAt: Date.now(),
         createdByAdminUid: user.uid,
@@ -132,6 +174,12 @@ export default function AdminEliteAmbassador() {
           email: emailTrim,
         },
       )
+      await sendMail({
+        email: emailTrim,
+        name,
+        password: passwordTrim,
+        pan: panNorm,
+      });
       setEliteAmbassadorName('')
       setEliteAmbassadorEmail('')
       setEliteAmbassadorPassword('')
@@ -209,7 +257,7 @@ export default function AdminEliteAmbassador() {
         </p>
         <form
           onSubmit={handleCreate}
-          className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-6"
+          className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
           <div className="min-w-0">
             <label className="block text-sm font-medium text-slate-300">
@@ -254,6 +302,18 @@ export default function AdminEliteAmbassador() {
           </div>
           <div className="min-w-0">
             <label className="block text-sm font-medium text-slate-300">
+              Phone No.
+            </label>
+            <input
+              type="number"
+              required
+              value={eliteAmbassadorPhone}
+              onChange={(e) => setEliteAmbassadorPhone(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+            />
+          </div>
+          <div className="min-w-0">
+            <label className="block text-sm font-medium text-slate-300">
               Password
             </label>
             <input
@@ -292,7 +352,7 @@ export default function AdminEliteAmbassador() {
               disabled={submitting || !isAdmin}
               className="w-full rounded-lg bg-blue-600 px-4 mt-6 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 lg:w-auto"
             >
-              {submitting ? 'Saving…' : 'Add elite ambassador & account'}
+              {submitting ? 'Saving…' : 'Add elite ambassador'}
             </button>
           </div>
         </form>
@@ -310,6 +370,7 @@ export default function AdminEliteAmbassador() {
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">PAN</th>
+                <th className="px-4 py-2 font-medium">Phone No.</th>
                 <th className="px-4 py-2 font-medium">Referred by</th>
                 <th className="px-4 py-2 font-medium">Elite ambassador ID</th>
                 <th className="px-4 py-2 text-right font-medium">Action</th>
@@ -332,9 +393,8 @@ export default function AdminEliteAmbassador() {
                 tablePageItems.map((ea) => (
                   <tr key={ea.id} className="text-slate-300">
                     <td className="px-4 py-2 text-white">{ea.name || '—'}</td>
-                    <td className="px-4 py-2 font-mono text-xs text-slate-300">
-                      {ea.pan || '—'}
-                    </td>
+                    <td className="px-4 py-2 font-mono text-xs text-slate-300">{ea.pan || '—'}</td>
+                    <td className="px-4 py-2 font-mono text-xs text-slate-300">{ea.phoneNo || '—'}</td>
                     <td className="px-4 py-2 text-slate-400">
                       {referredByLabel(ea.referredByUid)}
                     </td>

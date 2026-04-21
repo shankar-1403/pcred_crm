@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { push, ref, set, remove } from 'firebase/database'
+import { push, ref, remove, set, update } from 'firebase/database'
 import { useAuth } from '../context/AuthContext'
 import { useLeads } from '../hooks/useLeads'
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
@@ -41,6 +41,7 @@ export default function ManagementBoard() {
   const [sortOrder, setSortOrder] = useState('')
   const [viewLead, setViewLead] = useState(null)
   const [leadModalOpen, setLeadModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const [assignmentMode, setAssignmentMode] = useState('process')
   const [selectedAssignees, setSelectedAssignees] = useState([])
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false)
@@ -286,13 +287,45 @@ export default function ManagementBoard() {
     )
   }
 
+  function openEdit(lead) {
+    setFormError('')
+    setEditingId(lead.id)
+    setLeadForm({
+      eliteAmbassadorId: String(lead.eliteAmbassadorId ?? '').trim(),
+      company: lead.company ?? '',
+      clientName: lead.clientName ?? '',
+      location: lead.location ?? '',
+      bankName: lead.bankName ?? '',
+      onePagerLink: lead.onePagerLink ?? '',
+      description: lead.description ?? '',
+      status: lead.status ?? '',
+      updatedStatusDate: lead.updatedStatusDate ?? '',
+      productId: lead.productId ?? '',
+      leadDate: lead.leadDate ?? '',
+      totalAmount: lead.totalAmount ?? '',
+      bankPayoutPercent: lead.bankPayoutPercent ?? '',
+      mandateSigned: Boolean(lead.mandateSigned),
+      mandatePayoutPercent: lead.mandatePayoutPercent ?? '',
+    })
+    const processUids = assignedUids(lead.assignedTo)
+    const salesUids = assignedUids(lead.salesAssignedTo)
+    if (salesUids.length && !processUids.length) {
+      setAssignmentMode('sales')
+      setSelectedSalesAssignees(salesUids)
+      setSelectedAssignees([])
+    } else {
+      setAssignmentMode('process')
+      setSelectedAssignees(processUids)
+      setSelectedSalesAssignees([])
+    }
+    setAssigneeDropdownOpen(false)
+    setSalesAssigneeDropdownOpen(false)
+    setLeadModalOpen(true)
+  }
+
   async function saveLeadByManagement(e) {
     e.preventDefault()
     if (!user) return
-    if (!leadForm.eliteAmbassadorId) {
-      setFormError('Please select an elite ambassador.')
-      return
-    }
     setSavingLead(true)
     setFormError('')
     try {
@@ -321,7 +354,6 @@ export default function ManagementBoard() {
         description: leadForm.description.trim(),
         status: leadForm.status || '',
         updatedStatusDate: leadForm.updatedStatusDate || '',
-        createdBy: user.uid,
         assignedTo:
           assignmentMode === 'process'
             ? toAssignedMap(selectedAssignees)
@@ -340,35 +372,19 @@ export default function ManagementBoard() {
           : '',
         mandatePayoutAmount: Number(mandatePayoutAmount.toFixed(2)),
         updatedAt: Date.now(),
-        createdAt: Date.now(),
       }
-      const newRef = push(ref(db, 'leads'))
-      await set(newRef, payload)
-      setLeadForm({
-        eliteAmbassadorId: '',
-        company: '',
-        clientName: '',
-        location: '',
-        bankName: '',
-        onePagerLink: '',
-        description: '',
-        status: '',
-        updatedStatusDate: '',
-        productId: '',
-        leadDate: '',
-        totalAmount: '',
-        bankPayoutPercent: '',
-        mandateSigned: false,
-        mandatePayoutPercent: '',
-      })
-      setAssignmentMode('process')
-      setSelectedAssignees([])
-      setAssigneeDropdownOpen(false)
-      setSelectedSalesAssignees([])
-      setSalesAssigneeDropdownOpen(false)
-      setLeadModalOpen(false)
+      if (editingId) {
+        await update(ref(db, `leads/${editingId}`), payload)
+      } else {
+        await set(push(ref(db, 'leads')), {
+          ...payload,
+          createdBy: user.uid,
+          createdAt: Date.now(),
+        })
+      }
+      closeLeadModal()
     } catch (err) {
-      setFormError(err?.message || 'Could not create lead.')
+      setFormError(err?.message || 'Could not save lead.')
     } finally {
       setSavingLead(false)
     }
@@ -422,6 +438,7 @@ export default function ManagementBoard() {
 
   function closeLeadModal() {
     setLeadModalOpen(false)
+    setEditingId(null)
     setAssigneeDropdownOpen(false)
     setSalesAssigneeDropdownOpen(false)
     setAssignmentMode('process')
@@ -485,7 +502,25 @@ export default function ManagementBoard() {
               type="button"
               onClick={() => {
                 setFormError('')
+                setEditingId(null)
                 setAssignmentMode('process')
+                setLeadForm({
+                  eliteAmbassadorId: '',
+                  company: '',
+                  clientName: '',
+                  location: '',
+                  bankName: '',
+                  onePagerLink: '',
+                  description: '',
+                  status: '',
+                  updatedStatusDate: '',
+                  productId: '',
+                  leadDate: '',
+                  totalAmount: '',
+                  bankPayoutPercent: '',
+                  mandateSigned: false,
+                  mandatePayoutPercent: '',
+                })
                 setSelectedAssignees([])
                 setSelectedSalesAssignees([])
                 setAssigneeDropdownOpen(false)
@@ -760,7 +795,7 @@ export default function ManagementBoard() {
                       <td className="px-4 py-1 text-xs text-slate-500">{lead.leadDate || '-'}</td>
                       <td className="px-4 py-1 text-xs text-slate-500">{lead.updatedStatusDate || '-'}</td>
                       <td className="px-4 py-1">
-                        <div className="flex items-center gap-2 justify-end">
+                        <div className="flex flex-wrap items-center gap-2 justify-end">
                           <div>
                             <button
                               type="button"
@@ -769,6 +804,15 @@ export default function ManagementBoard() {
                               >
                                 View details
                               </button>
+                          </div>
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => openEdit(lead)}
+                              className="rounded-lg border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800 sm:px-3"
+                            >
+                              Edit
+                            </button>
                           </div>
                           <div>
                             <button
@@ -811,7 +855,9 @@ export default function ManagementBoard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl sm:p-6">
             <div className="flex items-start justify-between gap-3">
-              <h2 className="text-lg font-semibold text-white">New lead</h2>
+              <h2 className="text-lg font-semibold text-white">
+                {editingId ? 'Edit lead' : 'New lead'}
+              </h2>
               <ModalCloseButton onClick={closeLeadModal} />
             </div>
             <form onSubmit={saveLeadByManagement} className="mt-6 space-y-4">
@@ -1238,7 +1284,11 @@ export default function ManagementBoard() {
                   disabled={savingLead}
                   className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
                 >
-                  {savingLead ? 'Saving...' : 'Save lead'}
+                  {savingLead
+                    ? 'Saving...'
+                    : editingId
+                      ? 'Update lead'
+                      : 'Save lead'}
                 </button>
               </div>
             </form>

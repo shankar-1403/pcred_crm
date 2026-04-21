@@ -12,7 +12,10 @@ import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
 import { downloadCsv, inDateRange } from '../lib/csv'
-import { resolveEliteAmbassadorName } from '../lib/partnerOrg'
+import {
+  resolveEliteAmbassadorName,
+  resolveEliteAmbassadorPhone,
+} from '../lib/partnerOrg'
 import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
 import {labelForLeadStatus,statusLabelMapFromStatuses,} from '../lib/statusLabels'
@@ -81,7 +84,7 @@ export default function ProcessBoard() {
     totalPages: tableTotalPages,
     pageItems: tablePageItems,
   } = usePagination(filteredAssignedToMe)
-
+  
   function openEdit(lead) {
     setEditLeadId(lead.id)
     setEditForm({
@@ -151,6 +154,15 @@ export default function ProcessBoard() {
     )
   }
 
+  function eliteAmbassadorPhoneDisplay(lead) {
+    const phone = resolveEliteAmbassadorPhone(
+      lead.eliteAmbassadorId,
+      lead.eliteAmbassadorPhoneNo,
+      eliteAmbassador,
+    )
+    return phone || '-'
+  }
+
   const currentUserName = user?.uid
     ? usersById[user.uid]?.displayName || usersById[user.uid]?.email || 'You'
     : 'You'
@@ -187,6 +199,7 @@ export default function ProcessBoard() {
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
       .map((lead) => [
         eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
+        eliteAmbassadorPhoneDisplay(lead),
         lead.company || '',
         lead.clientName || '',
         lead.location || '',
@@ -205,6 +218,7 @@ export default function ProcessBoard() {
       'process-leads.csv',
       [
         'Elite ambassador',
+        'Elite ambassador phone',
         'Company',
         'Client Name',
         'Location',
@@ -286,6 +300,7 @@ export default function ProcessBoard() {
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Elite ambassador</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Elite ambassador phone</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Company</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Client name</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Location</th>
@@ -301,7 +316,7 @@ export default function ProcessBoard() {
             <tbody className="divide-y divide-slate-800">
               {filteredAssignedToMe.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={12} className="px-4 py-10 text-center text-slate-500">
                     No leads assigned to you yet.
                   </td>
                 </tr>
@@ -309,10 +324,10 @@ export default function ProcessBoard() {
                 tablePageItems.map((lead) => (
                   <tr key={lead.id} className="text-slate-300">
                     <td className="px-4 py-1 text-slate-400 whitespace-nowrap">
-                      {eliteAmbassadorNameFor(
-                        lead.eliteAmbassadorId,
-                        lead.eliteAmbassadorName,
-                      )}
+                      {eliteAmbassadorNameFor(lead.eliteAmbassadorId,lead.eliteAmbassadorName)}
+                    </td>
+                    <td className="px-4 py-1 text-slate-400 whitespace-nowrap">
+                      {eliteAmbassadorPhoneDisplay(lead)}
                     </td>
                     <td className="px-4 py-1 text-slate-400 whitespace-nowrap">{lead.company || '-'}</td>
                     <td className="px-4 py-1 text-slate-400 whitespace-nowrap">{lead.clientName || '-'}</td>
