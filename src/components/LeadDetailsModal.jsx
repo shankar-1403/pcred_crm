@@ -81,8 +81,7 @@ export default function LeadDetailsModal({
             <section className="space-y-3">
               <p className="text-sm font-semibold text-slate-400">Lead Information</p>
               {titleTrim ? <Row label="Title" value={titleTrim} /> : null}
-              {showPartner &&
-              (lead.eliteAmbassadorId || lead.eliteAmbassadorName) ? (
+              {showPartner && (lead.eliteAmbassadorId || lead.eliteAmbassadorName) ? (
                 <Row label="Elite ambassador" value={eliteAmbassadorOrgName} />
               ) : null}
               {showPartner && (lead.ambassadorId || lead.ambassadorName) ? (
@@ -95,6 +94,7 @@ export default function LeadDetailsModal({
                 <Row label="Via" value={lead.viaName} />
               ) : null}
               <Row label="Company" value={lead.company || '—'} />
+              <Row label="Mobile No." value={lead.clientPhoneNo || '—'} />
               <Row label="Client Name" value={lead.clientName || '—'} />
               <Row label="Sales Owner" value={userName(lead.createdBy)} />
               <Row label="Processed By" value={processedBy} />

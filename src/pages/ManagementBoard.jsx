@@ -56,6 +56,7 @@ export default function ManagementBoard() {
     eliteAmbassadorId: '',
     company: '',
     clientName: '',
+    clientPhoneNo:'',
     location: '',
     bankName: '',
     onePagerLink: '',
@@ -294,6 +295,7 @@ export default function ManagementBoard() {
       eliteAmbassadorId: String(lead.eliteAmbassadorId ?? '').trim(),
       company: lead.company ?? '',
       clientName: lead.clientName ?? '',
+      clientPhoneNo: lead.clientPhoneNo ?? '',
       location: lead.location ?? '',
       bankName: lead.bankName ?? '',
       onePagerLink: lead.onePagerLink ?? '',
@@ -348,6 +350,7 @@ export default function ManagementBoard() {
         company: leadForm.company.trim() || eliteAmbassadorLabel,
         clientName: leadForm.clientName.trim(),
         location: leadForm.location.trim(),
+        clientPhoneNo: leadForm.clientPhoneNo.trim(),
         bankName: leadForm.bankName.trim(),
         onePagerLink: leadForm.onePagerLink.trim(),
         leadDate: leadForm.leadDate || '',
@@ -406,6 +409,7 @@ export default function ManagementBoard() {
         eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
         ambassadorNameFor(lead.ambassadorId, lead.ambassadorName),
         lead.company || '',
+        lead.clientPhoneNo || '',
         labelForLeadStatus(statusLabelByValue, lead.status),
         productNameFor(lead.productId),
         nameFor(lead.createdBy),
@@ -424,6 +428,7 @@ export default function ManagementBoard() {
         'Elite ambassador',
         'Ambassador',
         'Company',
+        'Phone No.',
         'Status',
         'Product',
         'Sales Owner',
@@ -446,6 +451,7 @@ export default function ManagementBoard() {
       eliteAmbassadorId: '',
       company: '',
       clientName: '',
+      clientPhoneNo: '',
       location: '',
       bankName: '',
       onePagerLink: '',
@@ -508,6 +514,7 @@ export default function ManagementBoard() {
                   eliteAmbassadorId: '',
                   company: '',
                   clientName: '',
+                  clientPhoneNo: '',
                   location: '',
                   bankName: '',
                   onePagerLink: '',
@@ -903,6 +910,16 @@ export default function ManagementBoard() {
                   value={leadForm.clientName}
                   onChange={(e) =>
                     setLeadForm((f) => ({ ...f, clientName: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Mobile No.</label>
+                <input
+                  value={leadForm.clientPhoneNo}
+                  onChange={(e) =>
+                    setLeadForm((f) => ({ ...f, clientPhoneNo: e.target.value }))
                   }
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 />

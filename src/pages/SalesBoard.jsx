@@ -24,6 +24,7 @@ const emptyForm = {
   viaName: '',
   company: '',
   clientName: '',
+  clientPhoneNo:'',
   location: '',
   bankName: '',
   onePagerLink: '',
@@ -171,6 +172,7 @@ export default function SalesBoard() {
       viaName: lead.viaName ?? '',
       company: lead.company ?? '',
       clientName: lead.clientName ?? '',
+      clientPhoneNo: lead.clientPhoneNo ?? '',
       location: lead.location ?? '',
       bankName: lead.bankName ?? '',
       onePagerLink: lead.onePagerLink ?? '',
@@ -231,6 +233,7 @@ export default function SalesBoard() {
         viaName: form.viaEnabled ? form.viaName.trim() : '',
         company: form.company.trim(),
         clientName: form.clientName.trim(),
+        clientPhoneNo: form.clientPhoneNo.trim(),
         location: form.location.trim(),
         bankName: form.bankName.trim(),
         onePagerLink: form.onePagerLink.trim(),
@@ -291,6 +294,7 @@ export default function SalesBoard() {
         eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
         lead.company || '',
         lead.clientName || '',
+        lead.clientPhoneNo || '',
         lead.viaName || '',
         lead.location || '',
         productNameFor(lead.productId),
@@ -312,6 +316,7 @@ export default function SalesBoard() {
         'Elite ambassador',
         'Company',
         'Client Name',
+        'Mobile No',
         'Via',
         'Location',
         'Product',
@@ -593,6 +598,16 @@ export default function SalesBoard() {
                   value={form.clientName}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, clientName: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Mobile No.</label>
+                <input
+                  value={form.clientPhoneNo}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, clientPhoneNo: e.target.value }))
                   }
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 />
