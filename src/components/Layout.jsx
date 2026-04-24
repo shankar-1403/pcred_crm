@@ -23,7 +23,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-800 bg-slate-900/90 backdrop-blur">
-        <div className="mx-auto max-w-[1400px] px-4 py-3">
+        <div className="mx-auto max-w-350 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <NavLink
               to="/"
@@ -110,6 +110,16 @@ export default function Layout() {
                   Ambassador dashboard
                 </NavLink>
               )}
+              {[
+                  ROLES.SALES,
+                  ROLES.PROCESS,
+                  ROLES.MANAGEMENT,
+                  ROLES.ELITE_AMBASSADOR
+                ].includes(role) && (
+                  <NavLink to="/ambassadors-list" className={linkClass} onClick={closeMenu}>
+                    Ambassadors List
+                  </NavLink>
+                )}
             </nav>
             <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
               <span className="hidden text-slate-500 lg:inline">

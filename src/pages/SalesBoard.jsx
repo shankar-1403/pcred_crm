@@ -214,6 +214,38 @@ export default function SalesBoard() {
     )
   }
 
+  function sendTelegramMessage() {
+    const BOT_TOKEN = import.meta.env.VITE_BOT_TOKEN
+    const CHAT_ID = "-1003871644587"
+    const message = `
+      Hello Team,
+
+      Here are new lead details:
+
+      Company: ${form.company || '-'}
+      Client Name: ${form.clientName || '-'}
+      Product: ${productNameFor(form.productId)}
+      Amount: ₹${Number(form.totalAmount || 0).toLocaleString('en-IN')}
+      Status: ${labelForLeadStatus(statusLabelByValue, form.status) || 'New'}
+
+      Thank you.
+    `
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: message,
+        parse_mode: "Markdown"
+      })
+    })
+    .then(res => res.json())
+    .then(data => console.log("Sent:", data))
+    .catch(err => console.error("Error:", err))
+  }
+
   async function saveLead(e) {
     e.preventDefault()
     if (!user) return
@@ -269,6 +301,7 @@ export default function SalesBoard() {
           ...payload,
           createdAt: Date.now(),
         })
+        sendTelegramMessage()
       }
       setModalOpen(false)
     } finally {
@@ -345,7 +378,7 @@ export default function SalesBoard() {
           </p>
         </div>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end sm:gap-4">
-          <div className="w-full sm:w-[260px]">
+          <div className="w-full sm:w-65">
             <label
               htmlFor="search-company-sales"
               className="block text-xs font-medium uppercase tracking-wide text-slate-500"

@@ -233,6 +233,40 @@ export default function EliteAmbassadorBoard() {
     setModalOpen(true)
   }
 
+  function sendTelegramMessage() {
+    const BOT_TOKEN = import.meta.env.VITE_BOT_TOKEN
+    const CHAT_ID = "-1003871644587"
+    const message = `
+      Created by ${profile.displayName} (Elite Ambassador)
+
+      Hello Team,
+
+      Here are new lead details:
+      
+      Company: ${form.company || '-'}
+      Client Name: ${form.clientName || '-'}
+      Product: ${productNameFor(form.productId)}
+      Amount: ₹${Number(form.totalAmount || 0).toLocaleString('en-IN')}
+      Status: ${labelForLeadStatus(statusLabelByValue, form.status) || 'New'}
+
+      Thank you.
+    `
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: message,
+        parse_mode: "Markdown"
+      })
+    })
+    .then(res => res.json())
+    .then(data => console.log("Sent:", data))
+    .catch(err => console.error("Error:", err))
+  }
+
   async function saveLead(e) {
     e.preventDefault()
     if (!user) return
@@ -312,6 +346,7 @@ export default function EliteAmbassadorBoard() {
           ...payload,
           createdAt: Date.now(),
         })
+        sendTelegramMessage()
       }
       setModalOpen(false)
     } finally {
