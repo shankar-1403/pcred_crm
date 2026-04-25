@@ -110,16 +110,16 @@ export default function Layout() {
                   Ambassador dashboard
                 </NavLink>
               )}
-              {[
-                  ROLES.SALES,
-                  ROLES.PROCESS,
-                  ROLES.MANAGEMENT,
-                  ROLES.ELITE_AMBASSADOR
-                ].includes(role) && (
+              {[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.ELITE_AMBASSADOR].includes(role) && (
                   <NavLink to="/ambassadors-list" className={linkClass} onClick={closeMenu}>
                     Ambassadors List
                   </NavLink>
                 )}
+              {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                <NavLink to="/certificate" className={linkClass} onClick={closeMenu}>
+                  Certificate
+                </NavLink>
+              )}
             </nav>
             <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
               <span className="hidden text-slate-500 lg:inline">

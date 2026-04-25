@@ -9,6 +9,7 @@ import { isValidPan, normalizePan, panToAuthEmail } from '../lib/panAuth'
 import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
 import { httpsCallable } from 'firebase/functions'
+import { SALUTATIONS } from '../lib/salutation'
 
 export default function AdminEliteAmbassador() {
   const { user, profile, createUserByAdmin } = useAuth()
@@ -23,6 +24,7 @@ export default function AdminEliteAmbassador() {
   const [eliteAmbassadorPhone, setEliteAmbassadorPhone] = useState('')
   const [eliteAmbassadorPan, setEliteAmbassadorPan] = useState('')
   const [referredByUid, setReferredByUid] = useState('')
+  const [salutationValue, setSalutationValue] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deletingEliteAmbassadorId, setDeletingEliteAmbassadorId] = useState('')
   const [message, setMessage] = useState('')
@@ -126,7 +128,7 @@ export default function AdminEliteAmbassador() {
       )
       return
     }
-
+    const salutation = salutationValue.trim()
     const name = eliteAmbassadorName.trim()
     const phoneNo = eliteAmbassadorPhone
     const emailTrim = eliteAmbassadorEmail.trim()
@@ -165,6 +167,7 @@ export default function AdminEliteAmbassador() {
       newUid = await createUserByAdmin(
         authEmail,
         passwordTrim,
+        salutation,
         name,
         ROLES.ELITE_AMBASSADOR,
         {
@@ -178,9 +181,11 @@ export default function AdminEliteAmbassador() {
       await update(ref(db, `users/${newUid}`), { eliteAmbassadorId: newUid })
 
       await set(ref(db, `elite_ambassador/${newUid}`), {
+        salutation,
         name,
         pan: panNorm,
         phoneNo: phoneStr || null,
+        email:emailTrim,
         referredByUid: refUid,
         createdAt: Date.now(),
         createdByAdminUid: user.uid,
@@ -242,6 +247,11 @@ export default function AdminEliteAmbassador() {
     }
   }
 
+  
+  function getSalutationLabel(id) {
+    return SALUTATIONS.find((d) => d.id == id)?.label || "";
+  }
+
   return (
     <div className="min-w-0 space-y-6">
       <div>
@@ -282,6 +292,21 @@ export default function AdminEliteAmbassador() {
           onSubmit={handleCreate}
           className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
+          <div className='min-w-0'>
+            <label className="block text-sm font-medium text-slate-300">Salutation</label>
+            <select
+              value={salutationValue}
+              onChange={(e) => setSalutationValue(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+            >
+              <option value="">-- select --</option>
+              {SALUTATIONS.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="min-w-0">
             <label className="block text-sm font-medium text-slate-300">
               Elite ambassador name
@@ -395,6 +420,7 @@ export default function AdminEliteAmbassador() {
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">PAN</th>
                 <th className="px-4 py-2 font-medium">Phone No.</th>
+                <th className="px-4 py-2 font-medium">Email</th>
                 <th className="px-4 py-2 font-medium">Referred by</th>
                 <th className="px-4 py-2 font-medium">Elite ambassador ID</th>
                 <th className="px-4 py-2 text-right font-medium">Action</th>
@@ -403,22 +429,23 @@ export default function AdminEliteAmbassador() {
             <tbody className="divide-y divide-slate-800">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                     Loading…
                   </td>
                 </tr>
               ) : eliteAmbassadorTable.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                     No elite ambassadors yet. Add one above.
                   </td>
                 </tr>
               ) : (
                 tablePageItems.map((ea) => (
                   <tr key={ea.id} className="text-slate-300">
-                    <td className="px-4 py-2 text-white">{ea.name || '—'}</td>
+                    <td className="px-4 py-2 text-white">{getSalutationLabel(ea.salutation)} {ea.name || '—'}</td>
                     <td className="px-4 py-2 font-mono text-xs text-slate-300">{ea.pan || '—'}</td>
                     <td className="px-4 py-2 font-mono text-xs text-slate-300">{ea.phoneNo || '—'}</td>
+                    <td className="px-4 py-2 font-mono text-xs text-slate-300">{ea.email || '—'}</td>
                     <td className="px-4 py-2 text-slate-400">
                       {referredByLabel(ea.referredByUid)}
                     </td>
