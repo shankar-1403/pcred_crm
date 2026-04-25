@@ -1,14 +1,14 @@
-import { useMemo, useState } from 'react'
-import { push, ref, remove, set } from 'firebase/database'
+import { useEffect, useMemo, useState } from 'react'
+import { ref, remove, set, update } from 'firebase/database'
 import { useAuth } from '../context/AuthContext'
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
 import { useUsers } from '../hooks/useUsers'
 import { ROLES } from '../constants'
-import { db } from '../lib/firebase'
+import { db, functions } from '../lib/firebase'
 import { isValidPan, normalizePan, panToAuthEmail } from '../lib/panAuth'
 import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from 'firebase/functions'
 
 export default function AdminEliteAmbassador() {
   const { user, profile, createUserByAdmin } = useAuth()
@@ -48,9 +48,7 @@ export default function AdminEliteAmbassador() {
         return (
           r === ROLES.MANAGEMENT ||
           r === ROLES.SALES ||
-          r === ROLES.PROCESS ||
-          r === ROLES.ELITE_AMBASSADOR ||
-          r === ROLES.AMBASSADOR
+          r === ROLES.PROCESS
         )
       })
       .sort((a, b) =>
@@ -59,6 +57,14 @@ export default function AdminEliteAmbassador() {
           .localeCompare(String(b.displayName || b.email || '').toLowerCase()),
       )
   }, [usersById])
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setReferredByUid('')
+      return
+    }
+    setReferredByUid(user.uid)
+  }, [user?.uid])
 
   function referredByLabel(uid) {
     if (!uid) return '—'
@@ -149,46 +155,63 @@ export default function AdminEliteAmbassador() {
     }
 
     setSubmitting(true)
-    let newEliteAmbassadorId = null
+    let newUid = null
+    let eliteWritten = false
     try {
-      const eliteAmbassadorRef = push(ref(db, 'elite_ambassador'))
-      newEliteAmbassadorId = eliteAmbassadorRef.key
-      const refUid = String(referredByUid ?? '').trim()
-      await set(eliteAmbassadorRef, {
-        name,
-        pan: panNorm,
-        phoneNo:eliteAmbassadorPhone,
-        referredByUid: refUid || null,
-        createdAt: Date.now(),
-        createdByAdminUid: user.uid,
-      })
+      const refUid = String(referredByUid ?? '').trim() || user.uid
       const authEmail = panToAuthEmail(panNorm)
-      const uid = await createUserByAdmin(
+      const phoneStr = String(phoneNo ?? '').trim()
+
+      newUid = await createUserByAdmin(
         authEmail,
         passwordTrim,
         name,
         ROLES.ELITE_AMBASSADOR,
         {
-          eliteAmbassadorId: newEliteAmbassadorId,
           pan: panNorm,
           email: emailTrim,
+          phoneNo: phoneStr || null,
+          referredByUid: refUid,
         },
       )
-      await sendMail({
-        email: emailTrim,
+
+      await update(ref(db, `users/${newUid}`), { eliteAmbassadorId: newUid })
+
+      await set(ref(db, `elite_ambassador/${newUid}`), {
         name,
-        password: passwordTrim,
         pan: panNorm,
-      });
+        phoneNo: phoneStr || null,
+        referredByUid: refUid,
+        createdAt: Date.now(),
+        createdByAdminUid: user.uid,
+      })
+      eliteWritten = true
+
+      // await sendMail({
+      //   email: emailTrim,
+      //   name,
+      //   password: passwordTrim,
+      //   pan: panNorm,
+      // })
       setEliteAmbassadorName('')
       setEliteAmbassadorEmail('')
       setEliteAmbassadorPassword('')
       setEliteAmbassadorPan('')
-      setReferredByUid('')
-      setMessage(`Elite ambassador and login added. User UID: ${uid}`)
+      setEliteAmbassadorPhone('')
+      setReferredByUid(user.uid)
+      setMessage(`Elite ambassador and login added. User UID: ${newUid}`)
     } catch (err) {
-      if (newEliteAmbassadorId) {
-        await remove(ref(db, `elite_ambassador/${newEliteAmbassadorId}`)).catch(() => {})
+      if (eliteWritten && newUid) {
+        await remove(ref(db, `elite_ambassador/${newUid}`)).catch(() => {})
+      }
+      if (newUid) {
+        await remove(ref(db, `users/${newUid}`)).catch(() => {})
+        try {
+          const deleteUserByAdmin = httpsCallable(functions, 'deleteUserByAdmin')
+          await deleteUserByAdmin({ uid: newUid })
+        } catch {
+          /* Auth delete may fail if Functions unavailable; profile row already removed */
+        }
       }
       setFormError(err?.message ?? 'Could not add elite ambassador.')
     } finally {
@@ -335,7 +358,7 @@ export default function AdminEliteAmbassador() {
               onChange={(e) => setReferredByUid(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
             >
-              <option value="">Not set</option>
+              <option value="">-- select --</option>
               {referrerOptions.map((u) => (
                 <option key={u.uid} value={u.uid}>
                   {u.displayName || u.email || u.uid.slice(0, 8)}
@@ -343,7 +366,8 @@ export default function AdminEliteAmbassador() {
               ))}
             </select>
             <p className="mt-1 text-xs text-slate-500">
-              Internal user who sees this elite ambassador&apos;s new leads on their board.
+              Defaults to your account ({user?.uid?.slice(0, 8)}…). Pick another user to
+              attribute referrals differently.
             </p>
           </div>
           <div className="min-w-0 sm:col-span-2 lg:col-span-2 xl:col-span-1">

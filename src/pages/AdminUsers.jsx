@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { push, ref, remove, set, update } from 'firebase/database'
+import { ref, remove, set, update } from 'firebase/database'
 import { httpsCallable } from 'firebase/functions'
 import ModalCloseButton from '../components/ModalCloseButton'
 import TablePagination from '../components/TablePagination'
@@ -186,9 +186,8 @@ export default function AdminUsers() {
           nextDisplayName ||
           String(existing?.email ?? '').split('@')[0] ||
           'Elite ambassador'
-        const eliteRef = push(ref(db, 'elite_ambassador'))
-        nextEliteAmbassadorId = eliteRef.key
-        await set(eliteRef, {
+        nextEliteAmbassadorId = editingUid
+        await set(ref(db, `elite_ambassador/${editingUid}`), {
           name: recordName,
           referredByUid: null,
           createdAt: Date.now(),
@@ -202,9 +201,8 @@ export default function AdminUsers() {
           nextDisplayName ||
           String(existing?.email ?? '').split('@')[0] ||
           'Ambassador'
-        const ambRef = push(ref(db, 'ambassador'))
-        nextAmbassadorId = ambRef.key
-        await set(ambRef, {
+        nextAmbassadorId = editingUid
+        await set(ref(db, `ambassador/${editingUid}`), {
           name: recordName,
           referredByUid: null,
           createdAt: Date.now(),
