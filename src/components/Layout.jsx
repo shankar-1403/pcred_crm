@@ -120,6 +120,11 @@ export default function Layout() {
                   Certificate
                 </NavLink>
               )}
+              {[ROLES.ADMIN].includes(role) && (
+                <NavLink to="/creative" className={linkClass} onClick={closeMenu}>
+                  Creative
+                </NavLink>
+              )}
             </nav>
             <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
               <span className="hidden text-slate-500 lg:inline">

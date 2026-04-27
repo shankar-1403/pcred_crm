@@ -16,6 +16,7 @@ import EliteAmbassadorBoard from './pages/EliteAmbassadorBoard'
 import AmbassadorBoard from './pages/AmbassadorBoard'
 import AmbassadorsList from './pages/AmbassadorsList'
 import Certificate from './pages/Certificate'
+import AdminCreative from './pages/AdminCreative'
 import { ROLES } from './constants'
 
 export default function App() {
@@ -122,10 +123,18 @@ export default function App() {
               }
             />
             <Route
-              path="ambassadors-list"
+              path="certificate"
               element={
                 <ProtectedRoute roles={[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR]}>
                   <Certificate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="creative"
+              element={
+                <ProtectedRoute roles={[ROLES.ADMIN]}>
+                  <AdminCreative />
                 </ProtectedRoute>
               }
             />
