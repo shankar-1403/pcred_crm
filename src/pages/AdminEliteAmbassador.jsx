@@ -198,6 +198,7 @@ export default function AdminEliteAmbassador() {
       //   password: passwordTrim,
       //   pan: panNorm,
       // })
+      setSalutationValue('')
       setEliteAmbassadorName('')
       setEliteAmbassadorEmail('')
       setEliteAmbassadorPassword('')

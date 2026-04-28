@@ -187,6 +187,7 @@ export default function AdminAmbassador() {
       //   password: passwordTrim,
       //   pan: panNorm,
       // })
+      setSalutationValue('')
       setAmbassadorName('')
       setAmbassadorEmail('')
       setAmbassadorPassword('')
