@@ -27,7 +27,7 @@ body {
 }
 
 /* Brand palette overrides (blue + red on deep black) */
-.bg-slate-950 {
+/* .bg-slate-950 {
   background-color: #05070d !important;
 }
 .bg-slate-900,
@@ -74,7 +74,7 @@ body {
 }
 .text-red-300 {
   color: #f2a1ad !important;
-}
+} */
 
 /*
  * Dark UI: browser default calendar/clock icons stay black on dark inputs.

@@ -39,13 +39,11 @@ function AdminCreative() {
         setFormError('')
 
         if (!user) {
-        setFormError('You must be logged in.')
+            setFormError('You must be logged in.')
         return
         }
         if (!isAdmin) {
-        setFormError(
-            `Current role is "${profile?.role ?? 'missing'}". Set users/${user.uid}/role to "admin" and sign out/in.`,
-        )
+            setFormError(`Current role is "${profile?.role ?? 'missing'}". Set users/${user.uid}/role to "admin" and sign out/in`)
         return
         }
 
@@ -64,11 +62,11 @@ function AdminCreative() {
             const newRef = push(ref(db, 'creatives'))
             await set(newRef, {
                 name,
-                fileUrl,
+                fileUrl:fileURL,
                 createdAt: Date.now(),
                 createdByAdminUid: user.uid,
             })
-            setProductName('');
+            setCreativeName('');
             setFile(null)
             setMessage('Product added.')
         } catch (err) {
@@ -120,7 +118,7 @@ function AdminCreative() {
                                 {creatives.length === 0 ? (
                                 <tr>
                                     <td colSpan={4} className="px-4 py-10 text-center text-slate-500">
-                                    You have no leads yet. Click New lead to add one.
+                                    You have no creatives yet. Click New creative to add one.
                                     </td>
                                 </tr>
                                 ) : (
@@ -174,7 +172,7 @@ function AdminCreative() {
                                 >
                                 {editingId ? 'Edit creative' : 'New creative'}
                                 </h2>
-                                <ModalCloseButton onClick={() => setModalOpen(false)} />
+                                <ModalCloseButton onClick={() => setOpen(false)} />
                             </div>
             
                             <form onSubmit={handleCreate} className="mt-6 space-y-4">
@@ -185,7 +183,7 @@ function AdminCreative() {
                 
                                 <div className="space-y-2 ">
                                     <label className="mb-4" htmlFor="profile">Upload</label>
-                                    <input id="profile" value={file} onChange={(e)=>setFile(e.target.value)} type="file" accept=".jpeg,.png,.jpg" className="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:shadow-sm file:transition cursor-pointer"/>
+                                    <input id="profile" onChange={(e)=>setFile(e.target.files[0])} type="file" accept=".jpeg,.png,.jpg" className="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:shadow-sm file:transition cursor-pointer"/>
                                 </div>
                 
                 
