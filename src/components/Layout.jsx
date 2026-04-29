@@ -130,6 +130,11 @@ export default function Layout() {
                   Sales Material
                 </NavLink>
               )}
+              {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                <NavLink to="/visiting-card" className={linkClass} onClick={closeMenu}>
+                  Visiting Card
+                </NavLink>
+              )}
             </nav>
             <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
               <span className="hidden text-slate-500 lg:inline">

@@ -27,7 +27,7 @@ function Certificate() {
     const newFont = async () => {
         const font = new FontFace(
             "QuattroCento",
-            "url(/fonts/quattrocento.ttf)"
+            "url(/fonts/Quattrocento-Regular.ttf)"
         );
 
         await font.load();
@@ -55,19 +55,19 @@ function Certificate() {
         
         // Adjusted position based on your image
         const x = canvas.width / 2;
-        const salutationX = 1150;
+        const salutationX = canvas.width / 2;
         const baseY = canvas.height * 0.48;
-        const marginTop = 152; 
+        const marginTop = 190; 
         const nameY = baseY + marginTop;
 
-        const gap = 138;
+        const gap = 160;
         const salutationY = nameY - gap;
         
         ctx.textAlign = "center";
 
         ctx.fillStyle = "#A27430";
-        ctx.font = "39px QuattroCento";
-        ctx.fillText(salutationName?.label || "", salutationX, salutationY);
+        ctx.font = "50px QuattroCento";
+        ctx.fillText(`This is to certify that ${salutationName?.label}` || "", salutationX, salutationY);
 
         ctx.fillStyle = "#000000";
         ctx.font = "150px GreatVibes";

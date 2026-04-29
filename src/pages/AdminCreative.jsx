@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import TablePagination from '../components/TablePagination';
-import { push, ref, set, update } from 'firebase/database';
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { push, ref, set, update, remove } from 'firebase/database';
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject  } from "firebase/storage";
 import { storage } from '../hooks/firebase';
 import { db } from '../lib/firebase';
 import { usePagination } from '../hooks/usePagination';
@@ -22,8 +22,8 @@ function AdminCreative() {
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState(emptyForm);
     const [editingId, setEditingId] = useState('');
+    const [deleteId, setDeleteId] = useState('');
     const [message, setMessage] = useState('');
-    const [creativeName, setCreativeName] = useState('');
     const [formError, setFormError] = useState('');
     const [file, setFile] = useState(null);
     const handleOpen = () => {
@@ -32,6 +32,16 @@ function AdminCreative() {
 
     const isAdmin = String(profile?.role ?? '').trim().toLowerCase() === ROLES.ADMIN
     const creativesTable = useMemo(() => creatives ?? [], [creatives])
+
+
+    function openEdit(creative) {
+        setEditingId(creative.id)
+        setForm({
+          name: creative.name ?? '',
+          updatedAt: Date.now(),
+        })
+        setOpen(true)
+    }
 
     async function handleCreate(e) {
         e.preventDefault()
@@ -47,32 +57,71 @@ function AdminCreative() {
         return
         }
 
-        const name = creativeName.trim()
+        const name = form.name.trim()
         if (!name) {
-        setFormError('Product name is required.')
-        return
+            setFormError('Creative name is required.')
+            return
         }
 
         setSaving(true)
+        const payload = {
+            name: form.name.trim(),
+        }
         try {
-            const fileRef = storageRef(storage, `creatives/${Date.now()}_${file.name}`);
-            await uploadBytes(fileRef, file);
+            if (editingId) {
+                await update(ref(db, `creatives/${editingId}`), payload)
+            } else {
+                const newRef = push(ref(db, 'creatives'))
 
-            const fileURL = await getDownloadURL(fileRef);
-            const newRef = push(ref(db, 'creatives'))
-            await set(newRef, {
-                name,
-                fileUrl:fileURL,
-                createdAt: Date.now(),
-                createdByAdminUid: user.uid,
-            })
-            setCreativeName('');
+                const filePath = `creatives/${Date.now()}_${file.name}`
+                const fileRef = storageRef(storage, filePath);
+                await uploadBytes(fileRef, file);
+
+                const fileURL = await getDownloadURL(fileRef);
+        
+                await set(newRef, {
+                    name:form.name,
+                    fileUrl:fileURL,
+                    filePath,
+                    createdAt: Date.now(),
+                    createdByAdminUid: user.uid,
+                })
+            }
+            setForm(emptyForm);
             setFile(null)
             setMessage('Product added.')
         } catch (err) {
             setFormError(err?.message ?? 'Could not add product.')
         } finally {
-            setSaving(false)
+            setOpen(false);
+            setSaving(false);
+        }
+    }
+
+    async function handleDelete(creativeId,creative) {
+        setMessage('')
+        setFormError('')
+        if (!isAdmin) {
+          setFormError('Only admin can delete creatives.')
+          return
+        }
+        const ok = window.confirm(
+          `Delete creative "${creativeId}"? This cannot be undone.`,
+        )
+        if (!ok) return
+    
+        setDeleteId(creativeId)
+        try {
+            if (creative.filePath) {
+                const fileRef = storageRef(storage, creative.filePath);
+                await deleteObject(fileRef);
+            }
+            await remove(ref(db, `creatives/${creativeId}`))
+            setMessage('Creative deleted.')
+        } catch (err) {
+            setFormError(err?.message ?? 'Could not delete creative.')
+        } finally {
+            setDeleteId('')
         }
     }
 
@@ -108,10 +157,10 @@ function AdminCreative() {
                         <table className="w-max min-w-full text-left text-xs sm:text-sm">
                             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
                                 <tr>
-                                <th className="px-4 py-2 font-medium whitespace-nowrap">Sr No.</th>
+                                <th className="px-4 py-2 font-medium whitespace-nowrap w-20">Sr No.</th>
                                 <th className="px-4 py-2 font-medium whitespace-nowrap">Creative name</th>
                                 <th className="px-4 py-2 font-medium whitespace-nowrap">File</th>
-                                <th className="px-4 py-2 font-medium whitespace-nowrap">Action</th>
+                                <th className="px-4 py-2 font-medium whitespace-nowrap w-50">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800">
@@ -122,11 +171,11 @@ function AdminCreative() {
                                     </td>
                                 </tr>
                                 ) : (
-                                creatives.map((creative) => (
+                                creatives.map((creative,index) => (
                                     <tr key={creative.id} className="text-slate-300">
-                                        <td className="whitespace-nowrap px-4 py-1 text-slate-400">{creative.company || '-'}</td>
-                                        <td className="whitespace-nowrap px-4 py-1 text-slate-400">{creative.clientName || '-'}</td>
-                                        <td className="whitespace-nowrap px-4 py-1 text-slate-400">{creative.file || '-'}</td>
+                                        <td className="whitespace-nowrap px-4 py-1 text-slate-400">{index+1 || '-'}</td>
+                                        <td className="whitespace-nowrap px-4 py-1 text-slate-400">{creative.name || '-'}</td>
+                                        <td className="whitespace-nowrap px-4 py-1 text-slate-400"><a href={creative.fileUrl || '-'} className='font-bold underline' target='_blank'>File URL</a></td>
                                         <td className="whitespace-nowrap px-4 py-1">
                                             <div className="flex flex-nowrap items-center gap-2">
                                                 <button
@@ -138,13 +187,11 @@ function AdminCreative() {
                                                     Edit
                                                 </button>
                                                 <button
-                                                    type="button"
-                                                    onClick={() => setViewLead(creative)}
-                                                    title="View details"
+                                                    onClick={() => handleDelete(creative.id,creative)}
+                                                    disabled={!isAdmin || deleteId === creative.id}
+                                                    title="Delete Creative"
                                                     className="rounded-lg border border-slate-600 px-2 py-1 text-sm text-slate-300 hover:bg-slate-800"
-                                                >
-                                                    View Details
-                                                </button>
+                                                >Delete</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -178,12 +225,12 @@ function AdminCreative() {
                             <form onSubmit={handleCreate} className="mt-6 space-y-4">
                                  <div className="space-y-2 ">
                                     <label className="mb-4" htmlFor="profile">Label</label>
-                                    <input id="label" value={creativeName} onChange={(e)=>setCreativeName(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"/>
+                                    <input id="label" value={form.name} onChange={(e)=>setForm((f) => ({ ...f, name: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"/>
                                 </div>
                 
                                 <div className="space-y-2 ">
                                     <label className="mb-4" htmlFor="profile">Upload</label>
-                                    <input id="profile" onChange={(e)=>setFile(e.target.files[0])} type="file" accept=".jpeg,.png,.jpg" className="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:shadow-sm file:transition cursor-pointer"/>
+                                    <input id="profile" onChange={(e)=>setFile(e.target.files[0])} type="file" accept=".jpeg,.png,.jpg,.webp" className="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:shadow-sm file:transition cursor-pointer"/>
                                 </div>
                 
                 
