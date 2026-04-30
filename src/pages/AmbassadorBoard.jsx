@@ -48,13 +48,17 @@ export default function AmbassadorBoard() {
   const { user, profile } = useAuth()
   const { leads, loading } = useLeads()
   const { usersById } = useUsers()
-  const { products, loading: productsLoading, error: productsError } =
-    useProducts()
+  const { products, loading: productsLoading, error: productsError } = useProducts()
   const { eliteAmbassador } = useEliteAmbassador()
   const { ambassador: ambassadorRows } = useAmbassador()
+
   const { statuses } = useStatuses()
 
   const ambassadorId = String(profile?.ambassadorId ?? '').trim()
+
+  const eliteambassadorId = ambassadorRows.find(
+    item => item.id === ambassadorId
+  )?.referredByUid
 
   const ambassadorOrgName = useMemo(() => {
     if (!ambassadorId) return ''
@@ -68,8 +72,7 @@ export default function AmbassadorBoard() {
   const [selectedAssignees, setSelectedAssignees] = useState([])
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false)
   const [selectedSalesAssignees, setSelectedSalesAssignees] = useState([])
-  const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] =
-    useState(false)
+  const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [leadSearch, setLeadSearch] = useState('')
   const [viewLead, setViewLead] = useState(null)
@@ -94,6 +97,8 @@ export default function AmbassadorBoard() {
     list = list.filter((l) => inDateRange(l.leadDate || '', fromDate, toDate))
     return list
   }, [myLeads, leadSearch, fromDate, toDate])
+
+  const managerName = eliteAmbassador.find(item=> item.id === eliteambassadorId)?.name
 
   const {
     page: tablePage,
@@ -400,18 +405,17 @@ export default function AmbassadorBoard() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex justify-end">
         <div>
-          <h1 className="text-2xl font-semibold text-white">My leads</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Create leads, set revenue details, and assign process or sales teammates.
-            {ambassadorOrgName ? (
-              <span className="block text-slate-500">Organization: {ambassadorOrgName}</span>
-            ) : null}
-          </p>
+          <p className='text-sm md:text-base'>Relationship Manager: <span className='text-blue-300'>{managerName}</span></p>
         </div>
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end sm:gap-4">
-          <div className="w-full sm:w-[260px]">
+      </div>
+      <div className="grid grid-cols-10 gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className='col-span-10 lg:col-span-3'>
+          <h1 className="text-2xl font-semibold text-white">My leads</h1>
+        </div>
+        <div className="flex flex-col md:flex-row justify-end col-span-10 lg:col-span-7 w-full gap-3">
+          <div>
             <label
               htmlFor="search-company-ambassador"
               className="block text-xs font-medium uppercase tracking-wide text-slate-500"
@@ -428,7 +432,7 @@ export default function AmbassadorBoard() {
             />
           </div>
 
-          <div className="w-full sm:w-auto">
+          <div>
             <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">
               From
             </label>
@@ -439,7 +443,7 @@ export default function AmbassadorBoard() {
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white"
             />
           </div>
-          <div className="w-full sm:w-auto">
+          <div>
             <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">
               To
             </label>
@@ -450,22 +454,26 @@ export default function AmbassadorBoard() {
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white"
             />
           </div>
-
-          <button
-            type="button"
-            onClick={exportCsv}
-            className="rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-slate-800"
-          >
-            Export CSV
-          </button>
-
-          <button
-            type="button"
-            onClick={openNew}
-            className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
-          >
-            New lead
-          </button>
+          <div className='flex w-full md:w-auto justify-end items-end gap-2'>
+            <div className='w-[50%] md:w-auto'>
+              <button
+                type="button"
+                onClick={exportCsv}
+                className="rounded-lg w-full border border-slate-600 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+              >
+                Export CSV
+              </button>
+            </div>
+            <div className='w-[50%] md:w-auto'>
+              <button
+                type="button"
+                onClick={openNew}
+                className="rounded-lg w-full bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+              >
+                New lead
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

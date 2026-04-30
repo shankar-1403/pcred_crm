@@ -5,6 +5,7 @@ import { ROLES } from '../constants'
 
 export function useUsers() {
   const [usersById, setUsersById] = useState({})
+  const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -13,6 +14,12 @@ export function useUsers() {
     const unsub = onValue(
       r,
       (snap) => {
+        const v = snap.val()
+        const list = v
+          ? Object.entries(v).map(([id, data]) => ({ id, ...data }))
+          : []
+        list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+        setUsers(list);
         setUsersById(snap.val() ?? {})
         setError(null)
         setLoading(false)
@@ -22,6 +29,7 @@ export function useUsers() {
           '[CRM] users read denied — rules must allow auth users to read /users (see database.rules.json).',
           err,
         )
+        setUsers([]);
         setUsersById({})
         setError(err)
         setLoading(false)
@@ -48,5 +56,5 @@ export function useUsers() {
     })
     .map(([uid, u]) => ({ uid, ...u }))
 
-  return { usersById, processUsers, salesUsers, loading, error }
+  return { users, usersById, processUsers, salesUsers, loading, error }
 }
