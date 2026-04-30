@@ -84,7 +84,7 @@ function AmbassadorCreative() {
                 </div>
                 <div className="max-w-full min-w-0">
                     <div className="overflow-x-auto">
-                        <div className="grid grid-cols-5 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             {creatives.map((item)=>(
                                 <div className='col-span-1'>
                                     <div className='border border-blue-600 rounded-2xl overflow-hidden'>

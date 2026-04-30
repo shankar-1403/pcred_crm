@@ -36,7 +36,7 @@ export default function Layout() {
                 className="h-10 object-contain mix-blend-screen"
               />
             </NavLink>
-            <div className="flex items-center gap-2 sm:hidden">
+            <div className="lg:hidden items-center gap-2 flex">
               <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-blue-300">
                 {ROLE_LABELS[role] ?? role}
               </span>
@@ -50,8 +50,118 @@ export default function Layout() {
                 {menuOpen ? 'Close' : 'Menu'}
               </button>
             </div>
-            <div className="hidden items-center justify-between gap-4 sm:flex w-full">
-            <nav className="flex flex-wrap gap-1">
+            <div className="hidden lg:flex items-center justify-between gap-4 w-full">
+              <nav className="flex flex-wrap gap-1">
+                {role === ROLES.ADMIN && (
+                  <NavLink to="/admin/users" className={linkClass} onClick={closeMenu}>
+                    User management
+                  </NavLink>
+                )}
+                {role === ROLES.ADMIN && (
+                  <NavLink to="/admin/products" className={linkClass} onClick={closeMenu}>
+                    Product master
+                  </NavLink>
+                )}
+                {role === ROLES.ADMIN && (
+                  <NavLink
+                    to="/admin/elite-ambassador"
+                    className={linkClass}
+                    onClick={closeMenu}
+                  >
+                    Elite ambassador master
+                  </NavLink>
+                )}
+                {role === ROLES.ADMIN && (
+                  <NavLink to="/admin/ambassador" className={linkClass} onClick={closeMenu}>
+                    Ambassador master
+                  </NavLink>
+                )}
+                {role === ROLES.ADMIN && (
+                  <NavLink to="/admin/statuses" className={linkClass} onClick={closeMenu}>
+                    Status master
+                  </NavLink>
+                )}
+                {role === ROLES.MANAGEMENT && (
+                  <NavLink to="/management" className={linkClass} onClick={closeMenu}>
+                    All leads
+                  </NavLink>
+                )}
+                {role === ROLES.SALES && (
+                  <NavLink to="/sales" className={linkClass} onClick={closeMenu}>
+                    My leads
+                  </NavLink>
+                )}
+                {role === ROLES.PROCESS && (
+                  <NavLink to="/process" className={linkClass} onClick={closeMenu}>
+                    Assigned leads
+                  </NavLink>
+                )}
+                {role === ROLES.ELITE_AMBASSADOR && (
+                  <NavLink
+                    to="/elite-ambassador"
+                    className={linkClass}
+                    onClick={closeMenu}
+                  >
+                    Elite ambassador dashboard
+                  </NavLink>
+                )}
+                {role === ROLES.AMBASSADOR && (
+                  <NavLink to="/ambassador" className={linkClass} onClick={closeMenu}>
+                    Ambassador dashboard
+                  </NavLink>
+                )}
+                {[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.ELITE_AMBASSADOR].includes(role) && (
+                    <NavLink to="/ambassadors-list" className={linkClass} onClick={closeMenu}>
+                      Ambassadors List
+                    </NavLink>
+                  )}
+                {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                  <NavLink to="/certificate" className={linkClass} onClick={closeMenu}>
+                    Certificate
+                  </NavLink>
+                )}
+                {[ROLES.ADMIN].includes(role) && (
+                  <NavLink to="/creative" className={linkClass} onClick={closeMenu}>
+                    Creative
+                  </NavLink>
+                )}
+                {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                  <NavLink to="/sales-material" className={linkClass} onClick={closeMenu}>
+                    Sales Material
+                  </NavLink>
+                )}
+                {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                  <NavLink to="/visiting-card" className={linkClass} onClick={closeMenu}>
+                    Visiting Card
+                  </NavLink>
+                )}
+              </nav>
+              <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
+                <span className="hidden text-slate-500 lg:inline">
+                  {profile?.displayName ?? profile?.email}
+                </span>
+                <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-blue-300">
+                  {ROLE_LABELS[role] ?? role}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMenu()
+                    logout()
+                  }}
+                  className="rounded-lg border border-slate-600 px-3 py-1.5 text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-800"
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      {menuOpen && (
+        <div className="fixed inset-x-0 top-16 z-40 px-3 lg:hidden">
+          <div className="mx-auto max-w-[1400px] space-y-3 rounded-xl border border-slate-800 bg-slate-900/95 p-3 shadow-2xl">
+            <nav className="grid gap-1">
               {role === ROLES.ADMIN && (
                 <NavLink to="/admin/users" className={linkClass} onClick={closeMenu}>
                   User management
@@ -133,91 +243,6 @@ export default function Layout() {
               {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
                 <NavLink to="/visiting-card" className={linkClass} onClick={closeMenu}>
                   Visiting Card
-                </NavLink>
-              )}
-            </nav>
-            <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
-              <span className="hidden text-slate-500 lg:inline">
-                {profile?.displayName ?? profile?.email}
-              </span>
-              <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-blue-300">
-                {ROLE_LABELS[role] ?? role}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  closeMenu()
-                  logout()
-                }}
-                className="rounded-lg border border-slate-600 px-3 py-1.5 text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-800"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-          </div>
-        </div>
-      </header>
-      {menuOpen && (
-        <div className="fixed inset-x-0 top-16 z-40 px-3 sm:hidden">
-          <div className="mx-auto max-w-[1400px] space-y-3 rounded-xl border border-slate-800 bg-slate-900/95 p-3 shadow-2xl">
-            <nav className="grid gap-1">
-              {role === ROLES.ADMIN && (
-                <NavLink to="/admin/users" className={linkClass} onClick={closeMenu}>
-                  User management
-                </NavLink>
-              )}
-              {role === ROLES.ADMIN && (
-                <NavLink to="/admin/products" className={linkClass} onClick={closeMenu}>
-                  Product master
-                </NavLink>
-              )}
-              {role === ROLES.ADMIN && (
-                <NavLink
-                  to="/admin/elite-ambassador"
-                  className={linkClass}
-                  onClick={closeMenu}
-                >
-                  Elite ambassador master
-                </NavLink>
-              )}
-              {role === ROLES.ADMIN && (
-                <NavLink to="/admin/ambassador" className={linkClass} onClick={closeMenu}>
-                  Ambassador master
-                </NavLink>
-              )}
-              {role === ROLES.ADMIN && (
-                <NavLink to="/admin/statuses" className={linkClass} onClick={closeMenu}>
-                  Status master
-                </NavLink>
-              )}
-              {role === ROLES.MANAGEMENT && (
-                <NavLink to="/management" className={linkClass} onClick={closeMenu}>
-                  All leads
-                </NavLink>
-              )}
-              {role === ROLES.SALES && (
-                <NavLink to="/sales" className={linkClass} onClick={closeMenu}>
-                  My leads
-                </NavLink>
-              )}
-              {role === ROLES.PROCESS && (
-                <NavLink to="/process" className={linkClass} onClick={closeMenu}>
-                  Assigned leads
-                </NavLink>
-              )}
-              {role === ROLES.ELITE_AMBASSADOR && (
-                <NavLink
-                  to="/elite-ambassador"
-                  className={linkClass}
-                  onClick={closeMenu}
-                >
-                  Elite ambassador dashboard
-                </NavLink>
-              )}
-              {role === ROLES.AMBASSADOR && (
-                <NavLink to="/ambassador" className={linkClass} onClick={closeMenu}>
-                  Ambassador dashboard
                 </NavLink>
               )}
             </nav>
