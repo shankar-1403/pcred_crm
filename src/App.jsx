@@ -1,4 +1,12 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -19,7 +27,33 @@ import Certificate from './pages/Certificate'
 import AdminCreative from './pages/AdminCreative'
 import AmbassadorVisiting from './pages/AmbassadorVisiting'
 import AmbassadorCreative from './pages/AmbassadorCreative'
+import Form from './pages/Form'
 import { ROLES } from './constants'
+
+function LegacyLeadLoansRedirect() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  useEffect(() => {
+    const raw = location.search.slice(1)
+    let id = ''
+    if (raw.includes('=')) {
+      const params = new URLSearchParams(location.search)
+      id = (params.get('uid') || params.get('id') || '').trim()
+    } else if (raw) {
+      id = raw.split('&')[0].trim()
+    }
+    if (id) {
+      navigate(`/lead/loan/${encodeURIComponent(id)}`, { replace: true })
+    } else {
+      navigate('/', { replace: true })
+    }
+  }, [location.search, navigate])
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-400">
+      Redirecting…
+    </div>
+  )
+}
 
 export default function App() {
   return (
@@ -27,6 +61,9 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/lead/loans" element={<LegacyLeadLoansRedirect />} />
+          <Route path="/lead/loan/:id" element={<Form />} />
+
           <Route
             path="/"
             element={

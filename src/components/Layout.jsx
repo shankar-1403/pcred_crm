@@ -14,6 +14,7 @@ const linkClass = ({ isActive }) =>
 
 export default function Layout() {
   const { profile, logout } = useAuth()
+  const [textCopied, setTextCopied] = useState("");
   const role = String(profile?.role ?? '').trim().toLowerCase()
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -25,8 +26,17 @@ export default function Layout() {
     setProfileOpen(false)
   }
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(`${import.meta.env.VITE_HOST}/loans/${profile.uid}`)
-    alert("Copied!")
+    const uid = profile?.uid
+    if (!uid) return
+    const base =
+      (typeof import.meta.env.VITE_HOST === 'string' && import.meta.env.VITE_HOST.trim()) ||
+      window.location.origin
+    const url = `${base.replace(/\/$/, '')}/lead/loan/${encodeURIComponent(uid)}`
+    await navigator.clipboard.writeText(url)
+    setTextCopied("Copied Successfully")
+    setTimeout(()=>{
+      setTextCopied("")
+    },3000)
   }
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -145,6 +155,9 @@ export default function Layout() {
                 )}
               </nav>
               <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
+                {textCopied &&
+                  <span className='text-green-500 text-sm'>{textCopied}</span>
+                }
                 {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
                   <button onClick={handleCopy} className='cursor-pointer' title='Magic Link'>
                     <IconLinkFilled size={20} color='#ffffff'/>

@@ -7,10 +7,10 @@ export default function ProtectedRoute({ children, roles }) {
   const { user, profile, profileIssue, loading, refreshProfile, logout } = useAuth()
   const location = useLocation()
   const signingOutMissingProfileRef = useRef(false)
-
   useEffect(() => {
     if (!user || profileIssue !== 'missing_profile') return
     if (signingOutMissingProfileRef.current) return
+
     signingOutMissingProfileRef.current = true
     logout().finally(() => {
       signingOutMissingProfileRef.current = false

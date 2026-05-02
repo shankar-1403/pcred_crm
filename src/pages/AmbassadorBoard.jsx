@@ -405,7 +405,7 @@ export default function AmbassadorBoard() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end rounded-xl border border-slate-800 bg-slate-900/40 p-2">
         <div>
           <p className='text-sm md:text-base'>Relationship Manager: <span className='text-blue-300'>{managerName}</span></p>
         </div>
