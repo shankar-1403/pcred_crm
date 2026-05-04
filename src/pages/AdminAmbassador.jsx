@@ -160,6 +160,7 @@ export default function AdminAmbassador() {
         name,
         ROLES.AMBASSADOR,
         {
+          salutation: salutation || null,
           pan: panNorm,
           email: emailTrim,
           phoneNo: phoneStr || null,

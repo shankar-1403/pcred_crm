@@ -167,10 +167,10 @@ export default function AdminEliteAmbassador() {
       newUid = await createUserByAdmin(
         authEmail,
         passwordTrim,
-        salutation,
         name,
         ROLES.ELITE_AMBASSADOR,
         {
+          salutation: salutation || null,
           pan: panNorm,
           email: emailTrim,
           phoneNo: phoneStr || null,
