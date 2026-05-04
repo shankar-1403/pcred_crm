@@ -227,7 +227,7 @@ export default function ManagementBoard() {
 
   function nameFor(uid) {
     const u = usersById[uid]
-    return u?.displayName || u?.email || uid.slice(0, 8)
+    return u?.displayName || u?.email || uid?.slice(0, 8)
   }
 
   function productNameFor(productId) {
@@ -408,10 +408,12 @@ export default function ManagementBoard() {
       .map((lead) => [
         eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
         ambassadorNameFor(lead.ambassadorId, lead.ambassadorName),
+        lead.viaName,
         lead.company || '',
         lead.clientPhoneNo || '',
         labelForLeadStatus(statusLabelByValue, lead.status),
         productNameFor(lead.productId),
+        lead.bankName,
         nameFor(lead.createdBy),
         assignedUids(lead.assignedTo).map((uid) => nameFor(uid)).join(', '),
         formatAmountForCsv(lead.totalAmount),
@@ -427,10 +429,12 @@ export default function ManagementBoard() {
       [
         'Elite ambassador',
         'Ambassador',
+        'Connector Name',
         'Company',
         'Phone No.',
         'Status',
         'Product',
+        'Bank Name',
         'Sales Owner',
         'Process Team',
         'Required Amount',

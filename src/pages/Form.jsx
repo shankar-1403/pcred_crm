@@ -1,20 +1,160 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { State, City } from "country-state-city";
 import { useProducts } from '../hooks/useProducts';
+import { push, ref, set, update } from 'firebase/database';
+import { useAmbassador } from '../hooks/useAmbassador';
+import { useEliteAmbassador } from '../hooks/useEliteAmbassador';
+import { db } from '../lib/firebase'
+import { labelForLeadStatus } from '../lib/statusLabels';
+import { useStatuses } from '../hooks/useStatuses';
+import { statusLabelMapFromStatuses } from '../lib/statusLabels';
+
+const emptyForm = {
+  clientName: '',
+  clientPhoneNo: '',
+  clientEmail: '',
+  company: '',
+  state:'',
+  city: '',
+  productId:'',
+  totalAmount:'',
+  description: '',
+};
 
 function Form() {
+    const {ambassador} = useAmbassador();
+    const {eliteAmbassador} = useEliteAmbassador();
+    const {statuses} = useStatuses(); 
     const [selectedState, setSelectedState] = useState("");
-    const [selectedProducts, setSelectedProducts] = useState("");
     const [cities, setCities] = useState([]);
+    const [saving, setSaving] = useState(false);
+    const [form, setForm] = useState(emptyForm);
+    const [message, setMessage] = useState("");
+    const [errorMessage, setErrorMessage] = useState("");
     const { products } = useProducts();
     const states = State.getStatesOfCountry("IN");
+    const uid = window.location.href.split("/")[5];
+
+    function productNameFor(productId) {
+        if (!productId) return '-'
+        const product = products.find((p) => p.id === productId)
+        return product?.name || productId
+    }
+
+    const statusLabelByValue = useMemo(
+        () => statusLabelMapFromStatuses(statuses),
+        [statuses],
+    )
+
+    const ambassador_id = ambassador.map((data)=>{
+        return data.id;
+    })
+    const elite_ambassador_id = eliteAmbassador.map((data)=>{
+        return data.id;
+    })
+
+    const ambassadorData = ambassador.find((data) => uid === data.id);
+    const ambassadorName = ambassadorData?.name;
+    
+    const eliteAmbassadorData = eliteAmbassador.find((data)=> uid === data.id);
+    const eliteAmbassadorName =  eliteAmbassadorData?.name;
+
+    const label = () => {
+        if (ambassador_id.includes(uid)){
+            return "ambassadorId"
+        }else if (elite_ambassador_id.includes(uid)) {
+            return "eliteAmbassadorId"
+        } else {
+            return "createdBy"
+        }
+    }
+
+    const name = () => {
+        if (ambassador_id.includes(uid)){
+            return `${ambassadorName} (Ambassador)`
+        }else if (elite_ambassador_id.includes(uid)) {
+            return `${eliteAmbassadorName} (Elite Ambassador)`
+        }
+    }
 
     const handleStateChange = (e) => {
         const isoCode = e.target.value;
+        const selected = states.find((s) => s.isoCode === isoCode);
         setSelectedState(isoCode);
+        setForm((f) => ({ ...f, state: selected?.name, city: "" }));
         const stateCities = City.getCitiesOfState("IN", isoCode);
         setCities(stateCities);
     };
+
+    function sendTelegramMessage() {
+        const BOT_TOKEN = import.meta.env.VITE_BOT_TOKEN
+        const CHAT_ID = "-1003871644587"
+        const message = `
+          Created through a magic link by ${[name()]}
+    
+          Hello Team,
+    
+          Here are new lead details:
+          
+          Company: ${form.company || '-'}
+          Client Name: ${form.clientName || '-'}
+          Product: ${productNameFor(form.productId)}
+          Amount: ₹${Number(form.totalAmount || 0).toLocaleString('en-IN')}
+          Status: ${labelForLeadStatus(statusLabelByValue, form.status) || 'New'}
+          Remarks : ${form.description}
+
+          Thank you.
+        `
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: message,
+            parse_mode: "Markdown"
+          })
+        })
+        .then(res => res.json())
+        .then(data => console.log("Sent:", data))
+        .catch(err => console.error("Error:", err))
+    }
+
+    async function saveLead(e) {
+        e.preventDefault()
+        if(!form.clientName && !form.clientPhoneNo && !form.clientEmail && !form.company && !form.city && !form.productId && !form.totalAmount){
+            setErrorMessage("All fields are required")
+            return
+        }
+        setSaving(true)
+        try {
+            const payload = {
+                clientName: form.clientName.trim(),
+                clientPhoneNo: form.clientPhoneNo.trim(),
+                clientEmail: form.clientEmail.trim(),
+                company: form.company.trim(),
+                location: `${form.state.trim()}, ${form.city.trim()}`,
+                description: form.description.trim(),
+                [label()] : uid,
+                productId: form.productId || null,
+                totalAmount: form.totalAmount || '',
+            }
+          
+            const newRef = push(ref(db, 'leads'))
+            await set(newRef, {
+                ...payload,
+                createdAt: new Date().toISOString().split("T")[0],
+                leadDate: new Date().toISOString().split("T")[0]
+            })
+            setMessage("Form Submitted Successfully")
+            setSelectedState("")
+            setForm(emptyForm)
+            sendTelegramMessage()
+        } finally {
+          setSaving(false)
+        }
+    }
 
     const services = [
         { name: "Capital Market Advisory", href: "https://www.pcred.org/capitalmarket.html" },
@@ -26,9 +166,8 @@ function Form() {
     ];
 
     const metrics = [
-        { val: "₹322cr", label: "Disbursed" },
-        { val: "16+", label: "Years" },
-        { val: "1600+", label: "Clients" },
+        { val: "5+", label: "Years" },
+        { val: "5000+", label: "Clients" },
     ];
 
     const contacts = [
@@ -103,22 +242,26 @@ function Form() {
 
                     <div className="w-full lg:w-1/2 p-4">
                         <h1 className="text-2xl font-semibold text-white">Loan in Minutes</h1>
-                        <form action="" className='py-3 flex flex-col gap-2'>
+                        <form onSubmit={saveLead} className='py-3 flex flex-col gap-2'>
                             <div>
-                                <label htmlFor="name">Full Name</label>
-                                <input type="text" className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
+                                <label htmlFor="name">Full Name <span className='text-red-600 text-sm'>*</span></label>
+                                <input value={form.clientName} onChange={(e) =>setForm((f) => ({ ...f, clientName: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
                             </div>
                             <div>
-                                <label htmlFor="mobile_no">Mobile No.</label>
-                                <input type="number" className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
+                                <label htmlFor="company_name">Company Name <span className='text-red-600 text-sm'>*</span></label>
+                                <input value={form.company} onChange={(e) =>setForm((f) => ({ ...f, company: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
                             </div>
                             <div>
-                                <label htmlFor="email">Email</label>
-                                <input type="email" className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
+                                <label htmlFor="mobile_no">Mobile No. <span className='text-red-600 text-sm'>*</span></label>
+                                <input type="number" value={form.clientPhoneNo} onChange={(e) =>setForm((f) => ({ ...f, clientPhoneNo: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
                             </div>
                             <div>
-                                <label htmlFor="state">State</label>
-                                <select className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' onChange={handleStateChange} defaultValue="">
+                                <label htmlFor="email">Email <span className='text-red-600 text-sm'>*</span></label>
+                                <input type="email" value={form.clientEmail} onChange={(e) =>setForm((f) => ({ ...f, clientEmail: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
+                            </div>
+                            <div>
+                                <label htmlFor="state">State <span className='text-red-600 text-sm'>*</span></label>
+                                <select value={selectedState} onChange={handleStateChange} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white'>
                                     <option value="" disabled>-- select state --</option>
                                     {states.map((state) => (
                                         <option key={state.isoCode} value={state.isoCode}>
@@ -128,8 +271,8 @@ function Form() {
                                 </select>
                             </div>
                             <div>
-                                <label htmlFor="city">City</label>
-                                <select className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' disabled={!selectedState}>
+                                <label htmlFor="city">City <span className='text-red-600 text-sm'>*</span></label>
+                                <select value={form.city} onChange={(e) =>setForm((f) => ({ ...f, city: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' disabled={!selectedState}>
                                     <option value="">-- select city --</option>
                                     {cities.map((city) => (
                                         <option key={city.name} value={city.name}>
@@ -139,8 +282,8 @@ function Form() {
                                 </select>
                             </div>
                             <div>
-                                <label htmlFor="products">Products</label>
-                                <select className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white'>
+                                <label htmlFor="products">Products <span className='text-red-600 text-sm'>*</span></label>
+                                <select value={form.productId} onChange={(e) =>setForm((f) => ({ ...f, productId: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white'>
                                     <option value="">-- select products --</option>
                                     {products.map((item) => (
                                         <option key={item.id} value={item.id}>
@@ -150,19 +293,18 @@ function Form() {
                                 </select>
                             </div>
                             <div>
-                                <label htmlFor="amount">Amount</label>
-                                <input type="number" className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
+                                <label htmlFor="amount">Amount <span className='text-red-600 text-sm'>*</span></label>
+                                <input type="number" value={form.totalAmount} onChange={(e) =>setForm((f) => ({ ...f, totalAmount: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
                             </div>
                             <div>
                                 <label htmlFor="remarks">Remarks</label>
-                                <textarea className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
+                                <textarea  value={form.description} onChange={(e) =>setForm((f) => ({ ...f, description: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
                             </div>
-                            <button
-                                type="submit"
-                                className="mt-2 w-full bg-blue-800 hover:bg-blue-700 active:scale-[0.98] text-blue-100 font-semibold text-sm py-2.5 rounded-lg transition-colors tracking-wide"
-                            >
-                                Submit →
-                            </button>
+                            <button type="submit" className="mt-2 w-full bg-blue-800 hover:bg-blue-700 active:scale-[0.98] text-blue-100 font-semibold text-sm py-2.5 rounded-lg transition-colors tracking-wide cursor-pointer" disabled={saving}>{saving ? 'Submitting' : 'Submit'}</button>
+                            <div>
+                                {errorMessage && <span className='text-red-500 text-sm'>{errorMessage}</span>}
+                                {message && <span className='text-green-500 text-sm'>{message}</span>}
+                            </div>
                         </form>
                     </div>
 

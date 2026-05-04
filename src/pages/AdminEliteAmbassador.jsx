@@ -130,7 +130,7 @@ export default function AdminEliteAmbassador() {
     }
     const salutation = salutationValue.trim()
     const name = eliteAmbassadorName.trim()
-    const phoneNo = eliteAmbassadorPhone
+    const phoneNo = eliteAmbassadorPhone.trim()
     const emailTrim = eliteAmbassadorEmail.trim()
     const passwordTrim = eliteAmbassadorPassword
 
