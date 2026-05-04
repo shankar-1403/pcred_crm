@@ -67,7 +67,7 @@ function Certificate() {
 
         ctx.fillStyle = "#A27430";
         ctx.font = "50px QuattroCento";
-        ctx.fillText(`This is to certify that ${salutationName?.label}` || "", salutationX, salutationY);
+        ctx.fillText(`This is to certify that ${salutationName?.label || ""}` || "", salutationX, salutationY);
 
         ctx.fillStyle = "#000000";
         ctx.font = "150px GreatVibes";
