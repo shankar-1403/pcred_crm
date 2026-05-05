@@ -158,11 +158,11 @@ export default function Layout() {
                 {textCopied &&
                   <span className='text-green-500 text-sm'>{textCopied}</span>
                 }
-                {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                {/* {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && ( */}
                   <button onClick={handleCopy} className='cursor-pointer' title='Magic Link'>
                     <IconLinkFilled size={20} color='#ffffff'/>
                   </button>
-                )}
+                {/* )} */}
                 <button type="button" onClick={() => setProfileOpen((v) => !v)} className='cursor-pointer rounded-full border border-blue-600 p-2 text-sm font-medium hidden lg:block transition-colors'>
                   <IconUserFilled size={20} className='white'/>
                 </button>
