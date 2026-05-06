@@ -341,7 +341,7 @@ export default function SalesBoard() {
         <div>
           <h1 className="text-2xl font-semibold text-white">My leads</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Create leads and assign one or more process teammates.
+            Create leads and assign one or more process teammates
           </p>
         </div>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end sm:gap-4">
@@ -385,21 +385,9 @@ export default function SalesBoard() {
             />
           </div>
 
-          <button
-            type="button"
-            onClick={exportCsv}
-            className="rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-slate-800"
-          >
-            Export CSV
-          </button>
+          <button type="button" onClick={exportCsv} className="rounded-lg border border-green-600/30 cursor-pointer px-4 py-2.5 text-sm font-semibold text-slate-200 bg-green-500/20 hover:bg-green-500/30">Export CSV</button>
 
-          <button
-            type="button"
-            onClick={openNew}
-            className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
-          >
-            New lead
-          </button>
+          <button type="button" onClick={openNew} className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500">New lead</button>
         </div>
       </div>
 

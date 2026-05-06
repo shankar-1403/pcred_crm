@@ -8,6 +8,7 @@ import { db } from '../lib/firebase'
 import { labelForLeadStatus } from '../lib/statusLabels';
 import { useStatuses } from '../hooks/useStatuses';
 import { statusLabelMapFromStatuses } from '../lib/statusLabels';
+import { useAuth } from '../context/AuthContext';
 
 const emptyForm = {
   clientName: '',
@@ -150,7 +151,7 @@ function Form() {
             setMessage("Form Submitted Successfully")
             setSelectedState("")
             setForm(emptyForm)
-            sendTelegramMessage()
+            // sendTelegramMessage()
         } finally {
           setSaving(false)
         }
@@ -238,10 +239,7 @@ function Form() {
         <>
             <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-2 max-w-6xl mx-auto my-10">
                 <div className="flex flex-col lg:flex-row lg:items-stretch">
-
-
                     <div className="w-full lg:w-1/2 p-4">
-                        <h1 className="text-2xl font-semibold text-white">Loan in Minutes</h1>
                         <form onSubmit={saveLead} className='py-3 flex flex-col gap-2'>
                             <div>
                                 <label htmlFor="name">Full Name <span className='text-red-600 text-sm'>*</span></label>

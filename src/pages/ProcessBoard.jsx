@@ -56,7 +56,7 @@ export default function ProcessBoard() {
     return leads.filter((l) => {
       const uids = assignedUids(l.assignedTo)
       return (
-        uids.includes(user.uid) || leadReferredToUser(l, user.uid)
+        uids.includes(user.uid) || l.createdBy === user?.uid || leadReferredToUser(l, user.uid)
       )
     })
   }, [leads, user])
@@ -287,7 +287,7 @@ export default function ProcessBoard() {
             <button
               type="button"
               onClick={exportCsv}
-              className="mt-5 rounded-lg border border-slate-600 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+              className="mt-5 rounded-lg bg-green-500/20 border border-green-500/30 cursor-pointer px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-green-500/30"
             >
               Export CSV
             </button>
@@ -336,7 +336,7 @@ export default function ProcessBoard() {
                       {products.find((p) => p.id === lead.productId)?.name || '-'}
                     </td>
                     <td className="px-4 py-1 text-slate-400 whitespace-nowrap">
-                      {labelForLeadStatus(statusLabelByValue, lead.status) ||'New'}
+                      <span className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">{labelForLeadStatus(statusLabelByValue, lead.status) ||'New'}</span>
                     </td>
                     <td className="px-4 py-1 text-xs text-slate-500 whitespace-nowrap">
                       {lead.leadDate || '-'}

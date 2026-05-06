@@ -1,12 +1,5 @@
 import { useEffect } from 'react'
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-} from 'react-router-dom'
+import {BrowserRouter,Navigate,Route,Routes,useLocation,useNavigate} from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -27,6 +20,8 @@ import Certificate from './pages/Certificate'
 import AdminCreative from './pages/AdminCreative'
 import AmbassadorVisiting from './pages/AmbassadorVisiting'
 import AmbassadorCreative from './pages/AmbassadorCreative'
+import AdminCategory from './pages/AdminCategory'
+import AdminServices from './pages/admin/AdminServices'
 import Form from './pages/Form'
 import { ROLES } from './constants'
 
@@ -110,6 +105,22 @@ export default function App() {
               element={
                 <ProtectedRoute roles={[ROLES.ADMIN]}>
                   <AdminStatuses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/category"
+              element={
+                <ProtectedRoute roles={[ROLES.ADMIN]}>
+                  <AdminCategory />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/services"
+              element={
+                <ProtectedRoute roles={[ROLES.ADMIN]}>
+                  <AdminServices />
                 </ProtectedRoute>
               }
             />

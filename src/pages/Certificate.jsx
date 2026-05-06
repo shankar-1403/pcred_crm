@@ -2,17 +2,29 @@ import React,{useRef,useState} from 'react';
 import {jsPDF} from 'jspdf';
 import { useAuth } from '../context/AuthContext';
 import { useAmbassador } from '../hooks/useAmbassador';
+import { useEliteAmbassador } from '../hooks/useEliteAmbassador';
 import certificate from "../../public/certificate.png";
 import { SALUTATIONS } from '../lib/salutation';
 
 function Certificate() {
     const { profile, user } = useAuth();
     const {ambassador} = useAmbassador();
+    const {eliteAmbassador} = useEliteAmbassador();
     const name = profile.displayName;
-    const matchedUser = ambassador.find(item => item.id === profile.uid);
+    const uid = profile.uid;
 
-    const salutation = matchedUser?.salutation;
-    const salutationName = SALUTATIONS.find(item => item.id === salutation);
+    const ambassador_id = ambassador.find((data)=>{
+        return data.id;
+    })
+    const elite_ambassador_id = eliteAmbassador.find((data)=>{
+        return data.id;
+    })
+
+    const ambassadorData = ambassador.find((data) => uid === data.id);
+    const eliteAmbassadorData = eliteAmbassador.find((data)=> uid === data.id);
+
+    const salutationValue = ambassadorData?.salutation || eliteAmbassadorData?.salutation;
+    const salutationName = SALUTATIONS.find(item => item.id == salutationValue);
 
     const loadFont = async () => {
         const font = new FontFace(

@@ -58,6 +58,7 @@ export default function Layout() {
               <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-blue-300">
                 {ROLE_LABELS[role] ?? role}
               </span>
+             
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
@@ -138,6 +139,16 @@ export default function Layout() {
                     Certificate
                   </NavLink>
                 )}
+                {role === ROLES.ADMIN && (
+                  <NavLink to="/admin/category" className={linkClass} onClick={closeMenu}>
+                    Category
+                  </NavLink>
+                )}
+                {role === ROLES.ADMIN && (
+                  <NavLink to="/admin/services" className={linkClass} onClick={closeMenu}>
+                    Services
+                  </NavLink>
+                )}
                 {[ROLES.ADMIN].includes(role) && (
                   <NavLink to="/creative" className={linkClass} onClick={closeMenu}>
                     Creative
@@ -153,30 +164,30 @@ export default function Layout() {
                     Visiting Card
                   </NavLink>
                 )}
+                
               </nav>
               <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
                 {textCopied &&
                   <span className='text-green-500 text-sm'>{textCopied}</span>
                 }
-                {/* {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && ( */}
-                  <button onClick={handleCopy} className='cursor-pointer' title='Magic Link'>
-                    <IconLinkFilled size={20} color='#ffffff'/>
-                  </button>
-                {/* )} */}
+                <button onClick={handleCopy} className='cursor-pointer flex items-center gap-1 text-sm bg-slate-800 text-blue-300 py-1 px-3 hover:underline rounded-2xl' title='Solutions Link'>
+                  Solutions Link
+                  <IconLinkFilled size={15} color='#ffffff'/>
+                </button>
                 <button type="button" onClick={() => setProfileOpen((v) => !v)} className='cursor-pointer rounded-full border border-blue-600 p-2 text-sm font-medium hidden lg:block transition-colors'>
                   <IconUserFilled size={20} className='white'/>
                 </button>
                 {profileOpen && (
                   <>
                     <div className="fixed inset-x-0 top-16 left-300 z-40 p-2">
-                      <div className="flex flex-col space-y-3 w-70 rounded-xl border border-slate-800 bg-slate-900/95 p-3 shadow-2xl">
+                      <div className="flex flex-col space-y-1 w-70 rounded-xl border border-slate-800 bg-slate-900/95 p-3 shadow-2xl">
                         <span className="w-full text-center text-lg font-bold">
                           {profile?.displayName ?? profile?.email}
                         </span>
                         <span className="w-full text-center">
                           {ROLE_LABELS[role] ?? role}
                         </span>
-                        <button type="button" onClick={() => {closeMenu(),logout()}} className="rounded-lg border border-red-500/50 px-2 py-1 text-slate-300 bg-red-500/20 cursor-pointer transition-colors hover:border-slate-500 hover:bg-slate-800">
+                        <button type="button" onClick={() => {closeMenu(),logout()}} className="rounded-lg border border-red-500/50 px-2 py-1 text-white bg-red-500/20 cursor-pointer transition-colors hover:border-slate-500 hover:bg-slate-800">
                           Sign out
                         </button>
                       </div>
@@ -219,6 +230,11 @@ export default function Layout() {
               {role === ROLES.ADMIN && (
                 <NavLink to="/admin/statuses" className={linkClass} onClick={closeMenu}>
                   Status master
+                </NavLink>
+              )}
+              {role === ROLES.ADMIN && (
+                <NavLink to="/admin/category" className={linkClass} onClick={closeMenu}>
+                  Category
                 </NavLink>
               )}
               {role === ROLES.MANAGEMENT && (
@@ -275,6 +291,10 @@ export default function Layout() {
                   Visiting Card
                 </NavLink>
               )}
+              <button onClick={handleCopy} className='cursor-pointer flex justify-center items-center gap-1 text-sm text-center bg-slate-800 text-blue-300 py-2 px-3 hover:underline rounded-2xl' title='Solutions Link'>
+                Solutions Link
+                <IconLinkFilled size={14} color='#ffffff'/>
+              </button>
             </nav>
             <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">
               <span className="truncate text-xs text-slate-400">
@@ -294,7 +314,7 @@ export default function Layout() {
           </div>
         </div>
       )}
-      <main className="mx-auto min-w-0 max-w-[1400px] px-3 pb-5 pt-24 sm:px-4 sm:pb-8 sm:pt-28">
+      <main className="mx-auto min-w-0 max-w-350 px-3 pb-5 pt-24 sm:px-4 sm:pb-8 sm:pt-28">
         <Outlet />
       </main>
     </div>

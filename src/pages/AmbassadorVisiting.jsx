@@ -6,21 +6,31 @@ import businessOne from "../../public/business_1.png";
 import businessTwoSmall from "../../public/business_2_small.png";
 import businessTwoBig from "../../public/business_2_big.png";
 import { SALUTATIONS } from '../lib/salutation';
-
+import { useEliteAmbassador } from '../hooks/useEliteAmbassador';
 
 function AmbassadorVisiting() {
     const { profile, user } = useAuth();
     const {ambassador} = useAmbassador();
+    const {eliteAmbassador} = useEliteAmbassador();
     const name = profile.displayName;
     const nameLength = profile.displayName.length;
     const email = profile.email;
     const phone = profile.phoneNo;
+    const uid = profile.uid;
     const roleName = profile.role;
     const role = roleName === "elite_ambassador" ? "Elite Ambassador" : "Ambassador";
-    const matchedUser = ambassador.find(item => item.id === profile.uid);
+    const ambassador_id = ambassador.find((data)=>{
+        return data.id;
+    })
+    const elite_ambassador_id = eliteAmbassador.find((data)=>{
+        return data.id;
+    })
 
-    const salutation = matchedUser?.salutation;
-    const salutationName = SALUTATIONS.find(item => item.id === salutation);
+    const ambassadorData = ambassador.find((data) => uid === data.id);
+    const eliteAmbassadorData = eliteAmbassador.find((data)=> uid === data.id);
+
+    const salutationValue = ambassadorData?.salutation || eliteAmbassadorData?.salutation;
+    const salutationName = SALUTATIONS.find(item => item.id == salutationValue);
 
     const loadFont = async () => {
         const font = new FontFace(
