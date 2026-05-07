@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
 import { useAmbassador } from '../hooks/useAmbassador'
 import { useProducts } from '../hooks/useProducts'
+import { useCategory } from '../hooks/useCategory'
+import { useServices } from '../hooks/useServices'
 import { useStatuses } from '../hooks/useStatuses'
 import { assignedUids } from '../lib/leads'
 import {
@@ -30,6 +32,8 @@ export default function LeadDetailsModal({
     role === ROLES.ELITE_AMBASSADOR || role === ROLES.AMBASSADOR
 
   const { products } = useProducts()
+  const { category } = useCategory()
+  const { services } = useServices()
   const { eliteAmbassador } = useEliteAmbassador()
   const { ambassador: ambassadorRows } = useAmbassador()
   const { statuses } = useStatuses()
@@ -56,7 +60,9 @@ export default function LeadDetailsModal({
   const processedBy = assignees.length
     ? assignees.map((uid) => userName(uid)).join(', ')
     : 'Unassigned'
-  const productName = getProductName(lead.productId, products)
+  const productName = getProductName(lead.productId, products) || "-"
+  const categoryName = getCategoryName(lead.categoryId, category) || "-"
+  const serviceName = getServiceName(lead.serviceId, services) || "-"
   const eliteAmbassadorOrgName = getEliteAmbassadorOrgName(
     lead.eliteAmbassadorId,
     lead.eliteAmbassadorName,
@@ -116,6 +122,8 @@ export default function LeadDetailsModal({
                 <Row label="Bank Name" value={lead.bankName || '—'} />
               )}
               <Row label="Product" value={productName} />
+              <Row label="Category" value={categoryName} />
+              <Row label="Service" value={serviceName} />
               {isRestrictedExternalRole ? null : (
                 <Row
                   label="One Pager Link"
@@ -217,6 +225,18 @@ function getProductName(productId, products) {
   if (!productId) return 'N/A'
   const item = products.find((p) => p.id === productId)
   return item?.name?.trim() || productId
+}
+
+function getCategoryName(categoryId, category) {
+  if (!categoryId) return 'N/A'
+  const item = category.find((s) => s.id === categoryId)
+  return item?.name?.trim() || categoryId
+}
+
+function getServiceName(serviceId, services) {
+  if (!serviceId) return 'N/A'
+  const item = services.find((s) => s.id === serviceId)
+  return item?.name?.trim() || serviceId
 }
 
 function getEliteAmbassadorOrgName(orgId, fallbackName, eliteAmbassadorRows) {

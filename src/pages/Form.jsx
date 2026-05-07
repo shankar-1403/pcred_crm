@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react';
 import { State, City } from "country-state-city";
 import { useProducts } from '../hooks/useProducts';
 import { push, ref, set, update } from 'firebase/database';
 import { useAmbassador } from '../hooks/useAmbassador';
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador';
-import { db } from '../lib/firebase'
+import { db } from '../lib/firebase';
 import { labelForLeadStatus } from '../lib/statusLabels';
 import { useStatuses } from '../hooks/useStatuses';
 import { statusLabelMapFromStatuses } from '../lib/statusLabels';
 import { useAuth } from '../context/AuthContext';
+import { useCategory } from '../hooks/useCategory';
+import { useServices } from '../hooks/useServices';
 
 const emptyForm = {
   clientName: '',
@@ -17,7 +19,8 @@ const emptyForm = {
   company: '',
   state:'',
   city: '',
-  productId:'',
+  categoryId:'',
+  serviceId:'',
   totalAmount:'',
   description: '',
 };
@@ -26,7 +29,11 @@ function Form() {
     const {ambassador} = useAmbassador();
     const {eliteAmbassador} = useEliteAmbassador();
     const {statuses} = useStatuses(); 
+    const {category} = useCategory();
+    const {services} = useServices();
     const [selectedState, setSelectedState] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState("");
+    const [selectedService, setSelectedService] = useState([]);
     const [cities, setCities] = useState([]);
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState(emptyForm);
@@ -35,17 +42,6 @@ function Form() {
     const { products } = useProducts();
     const states = State.getStatesOfCountry("IN");
     const uid = window.location.href.split("/")[5];
-
-    function productNameFor(productId) {
-        if (!productId) return '-'
-        const product = products.find((p) => p.id === productId)
-        return product?.name || productId
-    }
-
-    const statusLabelByValue = useMemo(
-        () => statusLabelMapFromStatuses(statuses),
-        [statuses],
-    )
 
     const ambassador_id = ambassador.map((data)=>{
         return data.id;
@@ -87,59 +83,44 @@ function Form() {
         setCities(stateCities);
     };
 
-    function sendTelegramMessage() {
-        const BOT_TOKEN = import.meta.env.VITE_BOT_TOKEN
-        const CHAT_ID = "-1003871644587"
-        const message = `
-          Created through a magic link by ${[name()]}
-    
-          Hello Team,
-    
-          Here are new lead details:
-          
-          Company: ${form.company || '-'}
-          Client Name: ${form.clientName || '-'}
-          Product: ${productNameFor(form.productId)}
-          Amount: ₹${Number(form.totalAmount || 0).toLocaleString('en-IN')}
-          Status: ${labelForLeadStatus(statusLabelByValue, form.status) || 'New'}
-          Remarks : ${form.description}
-
-          Thank you.
-        `
-        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            chat_id: CHAT_ID,
-            text: message,
-            parse_mode: "Markdown"
-          })
-        })
-        .then(res => res.json())
-        .then(data => console.log("Sent:", data))
-        .catch(err => console.error("Error:", err))
+    const handleCategoryChange = (e) => {
+        const value = e.target.value;
+        const selected = category.find((s) => s.id === value);
+        setSelectedCategory(selected);
+        setForm((f) => ({ ...f, categoryId: selected?.id}));
+        const serviceData = services.filter((s) => s?.category === value);
+        setSelectedService(serviceData);
     }
 
     async function saveLead(e) {
         e.preventDefault()
-        if(!form.clientName && !form.clientPhoneNo && !form.clientEmail && !form.company && !form.city && !form.productId && !form.totalAmount){
-            setErrorMessage("All fields are required")
-            return
+        
+        if(form.categoryId === "-Os1EruiNYLx2XjzRUdF"){
+            if(!form.clientName || !form.clientPhoneNo || !form.clientEmail || !form.company || !form.city || !form.categoryId ||!form.productId || !form.totalAmount){
+                setErrorMessage("Please fill all the required details in *")
+                return
+            }
+        } else {
+            if(!form.clientName || !form.clientPhoneNo || !form.clientEmail || !form.company || !form.city || !form.categoryId || !form.serviceId ){
+                setErrorMessage("Please fill all the required details in *")
+                return
+            }
         }
+
         setSaving(true)
         try {
             const payload = {
                 clientName: form.clientName.trim(),
+                company: form.company.trim(),
                 clientPhoneNo: form.clientPhoneNo.trim(),
                 clientEmail: form.clientEmail.trim(),
-                company: form.company.trim(),
                 location: `${form.state.trim()}, ${form.city.trim()}`,
-                description: form.description.trim(),
-                [label()] : uid,
+                categoryId: form.categoryId || null,
+                serviceId: form.serviceId || null,
                 productId: form.productId || null,
                 totalAmount: form.totalAmount || '',
+                description: form.description.trim(),
+                [label()] : uid,
             }
           
             const newRef = push(ref(db, 'leads'))
@@ -151,24 +132,36 @@ function Form() {
             setMessage("Form Submitted Successfully")
             setSelectedState("")
             setForm(emptyForm)
-            // sendTelegramMessage()
         } finally {
           setSaving(false)
         }
     }
 
-    const services = [
-        { name: "Capital Market Advisory", href: "https://www.pcred.org/capitalmarket.html" },
-        { name: "Credit Rating Optimization", href: "https://www.pcred.org/creditrating.html" },
-        { name: "Debt Advisory", href: "https://www.pcred.org/debtadvisory.html" },
-        { name: "Virtual CFO Services", href: "https://www.pcred.org/virtualcfo.html" },
-        { name: "Risk Management", href: "https://www.pcred.org/riskmanagement.html" },
-        { name: "IPO Advisory", href: "https://www.pcred.org/ipoadvisory.html" },
-    ];
+    useEffect(() => {
+        if (!message) return;
+    
+        const timer = setTimeout(() => {
+          setMessage('');
+        }, 5000);
+    
+        return () => clearTimeout(timer);
+    }, [message]);
+    
+    useEffect(() => {
+        if (!errorMessage) return;
+    
+        const timer = setTimeout(() => {
+          setErrorMessage('');
+        }, 5000);
+    
+        return () => clearTimeout(timer);
+    }, [errorMessage]);
 
     const metrics = [
-        { val: "5+", label: "Years" },
-        { val: "5000+", label: "Clients" },
+        { val: "5000+", label: "Entrepreneurs Connected" },
+        { val: "20+", label: "States Covered" },
+        { val: "100+", label: "Startups Supported" },
+        { val: "200+", label: "Business Empowered" },
     ];
 
     const contacts = [
@@ -237,9 +230,23 @@ function Form() {
 
     return (
         <>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-2 max-w-6xl mx-auto my-10">
+            <div className='py-2 px-4 lg:hidden'>
+                <div className="grid grid-cols-3">
+                    <div className='flex justify-center'>
+                        <img src="/pcred-logo-og.png" alt="PCRED" className="h-16 md:h-25 w-auto object-contain"/>
+                    </div>
+                    <div className='flex justify-center'>
+                        <img src="/ecb-logo.webp" alt="PCRED" className="h-16 md:h-25 w-auto object-contain"/>
+                    </div>
+                    <div className='flex justify-center'>
+                        <img src="/insurath.png" alt="PCRED" className="h-16 md:h-25 w-auto object-contain"/>
+                    </div>
+                </div>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-2 max-w-6xl mx-auto lg:my-10">
                 <div className="flex flex-col lg:flex-row lg:items-stretch">
                     <div className="w-full lg:w-1/2 p-4">
+                        
                         <form onSubmit={saveLead} className='py-3 flex flex-col gap-2'>
                             <div>
                                 <label htmlFor="name">Full Name <span className='text-red-600 text-sm'>*</span></label>
@@ -280,20 +287,46 @@ function Form() {
                                 </select>
                             </div>
                             <div>
-                                <label htmlFor="products">Products <span className='text-red-600 text-sm'>*</span></label>
-                                <select value={form.productId} onChange={(e) =>setForm((f) => ({ ...f, productId: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white'>
-                                    <option value="">-- select products --</option>
-                                    {products.map((item) => (
+                                <label htmlFor="category">Category <span className='text-red-600 text-sm'>*</span></label>
+                                <select value={form.categoryId} onChange={handleCategoryChange} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white'>
+                                    <option value="">-- select category --</option>
+                                    {category.map((item) => (
                                         <option key={item.id} value={item.id}>
                                             {item.name}
                                         </option>
                                     ))}
                                 </select>
                             </div>
-                            <div>
-                                <label htmlFor="amount">Amount <span className='text-red-600 text-sm'>*</span></label>
-                                <input type="number" value={form.totalAmount} onChange={(e) =>setForm((f) => ({ ...f, totalAmount: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
-                            </div>
+                            {form.categoryId === "-Os1EruiNYLx2XjzRUdF" ?
+                                <>
+                                    <div>
+                                        <label htmlFor="products">Products <span className='text-red-600 text-sm'>*</span></label>
+                                        <select value={form.productId} onChange={(e) =>setForm((f) => ({ ...f, productId: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' disabled={!form.categoryId}>
+                                            <option value="">-- select product --</option>
+                                            {products.map((item) => (
+                                                <option key={item.id} value={item.id}>
+                                                    {item.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="amount">Amount <span className='text-red-600 text-sm'>*</span></label>
+                                        <input type="number" value={form.totalAmount} onChange={(e) =>setForm((f) => ({ ...f, totalAmount: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
+                                    </div>
+                                </> : 
+                                <div>
+                                    <label htmlFor="service">Services <span className='text-red-600 text-sm'>*</span></label>
+                                    <select value={form.serviceId} onChange={(e) =>setForm((f) => ({ ...f, serviceId: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' disabled={!form.categoryId}>
+                                        <option value="">-- select service --</option>
+                                        {selectedService.map((item) => (
+                                            <option key={item.id} value={item.id}>
+                                                {item.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            }
                             <div>
                                 <label htmlFor="remarks">Remarks</label>
                                 <textarea  value={form.description} onChange={(e) =>setForm((f) => ({ ...f, description: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white' />
@@ -309,56 +342,29 @@ function Form() {
                     <div className="w-full lg:w-1/2 p-4 flex flex-col">
                         <div className="flex flex-col bg-[#111827] rounded-xl border border-slate-800 overflow-hidden h-full min-h-full">
 
-                            <div className="p-6 border-b border-slate-800">
-                                <img
-                                    src="/pcred-logo-og.png"
-                                    alt="PCRED"
-                                    className="h-25 w-auto object-contain mb-4"
-                                />
-                                <p className="text-[15px] tracking-[2px] uppercase text-slate-500 mt-0.5 mb-3">
-                                    Corporate Advisory Services
-                                </p>
-                                <p className="text-[13px] text-slate-500 leading-relaxed">
-                                    PCRED stands at the forefront of financial advisory, offering sophisticated solutions tailored to the complex demands of modern enterprises. With a commitment to excellence and innovation, we help businesses achieve unmatched financial clarity and operational efficiency.
-                                </p>
-                            </div>
-
-
-                            <div className="grid grid-cols-3 gap-2 p-4 border-b border-slate-800">
-                                {metrics.map((m) => (
-                                    <div key={m.label} className="bg-slate-900 border border-slate-800 rounded-lg py-3 text-center">
-                                        <span className="block text-base font-bold text-blue-400">{m.val}</span>
-                                        <span className="block text-[10px] text-slate-500 mt-1">{m.label}</span>
+                            <div className="p-2 md:p-6 border-b border-slate-800">
+                                <div className="grid grid-cols-3">
+                                    <div className='flex justify-center'>
+                                        <img src="/pcred-logo-og.png" alt="PCRED" className="h-16 md:h-25 w-auto object-contain"/>
                                     </div>
-                                ))}
-                            </div>
-
-
-                            <div className="p-4 flex-1">
-                                <p className="text-[15px] tracking-[2px] uppercase text-slate-600 font-semibold mb-2">
-                                    Our Services
-                                </p>
-
-                                <div className="grid grid-cols-2 gap-2">
-                                    {services.map((s) => (
-                                        <a
-                                            key={s.name}
-                                            href={s.href}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="flex items-center gap-2 bg-slate-900 hover:bg-blue-950/30 border border-slate-800 hover:border-blue-900 rounded-lg px-3 py-2 transition-colors no-underline"
-                                        >
-                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-800 shrink-0" />
-                                            <span className="text-[11px] text-slate-400 leading-snug">
-                                                {s.name}
-                                            </span>
-                                        </a>
-                                    ))}
+                                    <div className='flex justify-center'>
+                                        <img src="/ecb-logo.webp" alt="ECB" className="h-16 md:h-25 w-auto object-contain"/>
+                                    </div>
+                                    <div className='flex justify-center'>
+                                        <img src="/insurath.png" alt="Insurath" className="h-16 md:h-25 w-auto object-contain"/>
+                                    </div>
                                 </div>
                             </div>
 
-
-                            <div className="p-4 border-b border-slate-800">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-2 md:p-6 border-b border-slate-800">
+                                {metrics.map((m) => (
+                                    <div key={m.label} className="bg-slate-900 border border-slate-800 rounded-lg py-3 px-6 text-center">
+                                        <span className="block text-base font-bold text-blue-400">{m.val}</span>
+                                        <span className="block text-[10px] text-white mt-1">{m.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="p-2 md:p-6 border-b border-slate-800">
                                 <p className="text-[15px] tracking-[2px] uppercase text-slate-600 font-semibold mb-2">
                                     Get in Touch
                                 </p>
@@ -368,13 +374,14 @@ function Form() {
                                         <a
                                             key={c.label}
                                             href={c.href}
+                                            target='_blank'
                                             rel="noreferrer"
                                             className="flex items-center gap-2.5 no-underline"
                                         >
                                             <div className="w-6 h-6 rounded bg-blue-950/40 border border-blue-900/30 flex items-center justify-center shrink-0">
                                                 {c.icon}
                                             </div>
-                                            <span className="text-[12px] text-slate-400">{c.label}</span>
+                                            <span className="text-[12px] text-white">{c.label}</span>
                                         </a>
                                     ))}
                                 </div>
