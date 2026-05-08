@@ -1,12 +1,24 @@
 import { initializeApp } from "firebase-admin/app";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onRequest, HttpsError } from "firebase-functions/v2/https";
 import { getAuth } from "firebase-admin/auth";
 
 initializeApp()
 
-export const updateUserByAdmin = onCall(async (request) => {
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+export const updateUserByAdmin = onRequest(async (req,res) => {
+  if (req.method === 'OPTIONS') {
+    res.set(corsHeaders)
+    res.status(204).send('')
+    return
+  }
   try {
-    const { uid, email, password, displayName } = request.data;
+    res.set(corsHeaders)
+    const { uid, email, password, displayName } = req.body;
 
     const updateData = {};
 
@@ -16,34 +28,38 @@ export const updateUserByAdmin = onCall(async (request) => {
 
     await getAuth().updateUser(uid, updateData);
 
-    return {
+    res.status(200).json({
       success: true,
-    };
+    })
   } catch (err) {
     console.error(err);
 
-    throw new HttpsError(
-      "internal",
-      err.message || "Failed to update user"
-    );
+    res.status(500).json({
+      error: error.message,
+    })
   }
 });
 
-export const deleteUserByAdmin = onCall(async (request) => {
+export const deleteUserByAdmin = onRequest(async (req,res) => {
+  if (req.method === 'OPTIONS') {
+    res.set(corsHeaders)
+    res.status(204).send('')
+    return
+  }
   try {
-    const { uid } = request.data;
+    res.set(corsHeaders)
+    const { uid } = req.body;
 
     await getAuth().deleteUser(uid);
 
-    return {
+    res.status(200).json({
       success: true,
-    };
+    })
   } catch (err) {
     console.error(err);
 
-    throw new HttpsError(
-      "internal",
-      err.message || "Failed to delete user"
-    );
+    res.status(500).json({
+      error: error.message,
+    })
   }
 });

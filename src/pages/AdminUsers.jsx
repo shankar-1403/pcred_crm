@@ -178,16 +178,21 @@ export default function AdminUsers() {
 
     setSavingEdit(true)
     try {
-      const updateUserByAdmin = httpsCallable(
-        functions,
-        'updateUserByAdmin',
+      await fetch(
+        'https://us-central1-crm-lead-b18f5.cloudfunctions.net/updateUserByAdmin',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uid: editingUid,
+            email: nextEmail,
+            password: nextPassword || undefined,
+            displayName: nextDisplayName,
+          }),
+        },
       )
-      await updateUserByAdmin({
-        uid: editingUid,
-        email: nextEmail,
-        password: nextPassword || undefined,
-        displayName: nextDisplayName,
-      })
 
       await update(ref(db, `users/${editingUid}`), {
         displayName: nextDisplayName,
