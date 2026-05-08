@@ -115,6 +115,11 @@ export default function Layout() {
                     Assigned leads
                   </NavLink>
                 )}
+                {role === ROLES.EMPLOYEES && (
+                  <NavLink to="/employee-dashbaord" className={linkClass} onClick={closeMenu}>
+                    My leads
+                  </NavLink>
+                )}
                 {role === ROLES.ELITE_AMBASSADOR && (
                   <NavLink
                     to="/elite-ambassador"
@@ -154,7 +159,7 @@ export default function Layout() {
                     Creative
                   </NavLink>
                 )}
-                {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
                   <NavLink to="/sales-material" className={linkClass} onClick={closeMenu}>
                     Sales Material
                   </NavLink>
@@ -252,6 +257,11 @@ export default function Layout() {
                   Assigned leads
                 </NavLink>
               )}
+              {role === ROLES.EMPLOYEES && (
+                <NavLink to="/employee-dashboard" className={linkClass} onClick={closeMenu}>
+                  My leads
+                </NavLink>
+              )}
               {role === ROLES.ELITE_AMBASSADOR && (
                 <NavLink
                   to="/elite-ambassador"
@@ -276,12 +286,17 @@ export default function Layout() {
                   Certificate
                 </NavLink>
               )}
+              {role === ROLES.ADMIN && (
+                <NavLink to="/admin/services" className={linkClass} onClick={closeMenu}>
+                  Services
+                </NavLink>
+              )}
               {[ROLES.ADMIN].includes(role) && (
                 <NavLink to="/creative" className={linkClass} onClick={closeMenu}>
                   Creative
                 </NavLink>
               )}
-              {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+              {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
                 <NavLink to="/sales-material" className={linkClass} onClick={closeMenu}>
                   Sales Material
                 </NavLink>
@@ -291,10 +306,12 @@ export default function Layout() {
                   Visiting Card
                 </NavLink>
               )}
-              <button onClick={handleCopy} className='cursor-pointer flex justify-center items-center gap-1 text-sm text-center bg-slate-800 text-blue-300 py-2 px-3 hover:underline rounded-2xl' title='Solutions Link'>
-                Solutions Link
-                <IconLinkFilled size={14} color='#ffffff'/>
-              </button>
+              {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
+                <button onClick={handleCopy} className='cursor-pointer flex justify-center items-center gap-1 text-sm text-center bg-slate-800 text-blue-300 py-2 px-3 hover:underline rounded-2xl' title='Solutions Link'>
+                  Solutions Link
+                  <IconLinkFilled size={14} color='#ffffff'/>
+                </button>
+              )}
             </nav>
             <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">
               <span className="truncate text-xs text-slate-400">

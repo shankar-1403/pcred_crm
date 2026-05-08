@@ -182,19 +182,19 @@ export default function AdminServices() {
                 <tbody className="divide-y divide-slate-800">
                 {loading ? (
                     <tr>
-                        <td colSpan={3} className="px-4 py-8 text-center text-slate-500">
+                        <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
                             Loading categories...
                         </td>
                     </tr>
                 ) : error ? (
                     <tr>
-                        <td colSpan={3} className="px-4 py-8 text-center text-slate-500">
+                        <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
                             Could not read categories.
                         </td>
                     </tr>
                 ) : serviceTable.length === 0 ? (
                     <tr>
-                        <td colSpan={3} className="px-4 py-8 text-center text-slate-500">
+                        <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
                             No categories yet.
                         </td>
                     </tr>

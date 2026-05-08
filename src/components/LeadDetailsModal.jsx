@@ -224,19 +224,19 @@ function totalRevenue(lead) {
 function getProductName(productId, products) {
   if (!productId) return 'N/A'
   const item = products.find((p) => p.id === productId)
-  return item?.name?.trim() || productId
+  return item?.name?.trim()
 }
 
 function getCategoryName(categoryId, category) {
   if (!categoryId) return 'N/A'
   const item = category.find((s) => s.id === categoryId)
-  return item?.name?.trim() || categoryId
+  return item?.name?.trim()
 }
 
 function getServiceName(serviceId, services) {
   if (!serviceId) return 'N/A'
   const item = services.find((s) => s.id === serviceId)
-  return item?.name?.trim() || serviceId
+  return item?.name?.trim()
 }
 
 function getEliteAmbassadorOrgName(orgId, fallbackName, eliteAmbassadorRows) {

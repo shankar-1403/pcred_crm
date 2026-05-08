@@ -15,14 +15,14 @@ const teamRoleOptionsCreate = [
   ROLES.MANAGEMENT,
   ROLES.SALES,
   ROLES.PROCESS,
+  ROLES.EMPLOYEES,
 ]
 
 const EDIT_ROLE_ORDER = [
   ROLES.MANAGEMENT,
   ROLES.SALES,
   ROLES.PROCESS,
-  ROLES.ELITE_AMBASSADOR,
-  ROLES.AMBASSADOR,
+  ROLES.EMPLOYEES,
 ]
 
 function teamRoleOptionsForEdit(currentRole) {
@@ -41,13 +41,13 @@ export default function AdminUsers() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
-  const [role, setRole] = useState(ROLES.SALES)
+  const [role, setRole] = useState()
   const [submitting, setSubmitting] = useState(false)
   const [deletingUid, setDeletingUid] = useState('')
   const [editingUid, setEditingUid] = useState('')
   const [editForm, setEditForm] = useState({
     displayName: '',
-    role: ROLES.SALES,
+    role: '',
     eliteAmbassadorId: '',
     ambassadorId: '',
   })
@@ -100,7 +100,7 @@ export default function AdminUsers() {
       setEmail('')
       setPassword('')
       setDisplayName('')
-      setRole(ROLES.SALES)
+      setRole()
     } catch (err) {
       setError(err?.message || 'Could not create user')
     } finally {
@@ -155,9 +155,7 @@ export default function AdminUsers() {
     setEditingUid(u?.uid || '')
     setEditForm({
       displayName: u?.displayName ?? '',
-      role: String(u?.role ?? ROLES.SALES).trim().toLowerCase(),
-      eliteAmbassadorId: u?.eliteAmbassadorId ?? '',
-      ambassadorId: u?.ambassadorId ?? '',
+      role: String(u?.role).trim().toLowerCase(),
     })
     setEditPassword('')
   }
@@ -174,8 +172,6 @@ export default function AdminUsers() {
 
     const nextRole = String(editForm.role ?? '').trim().toLowerCase()
     const nextDisplayName = String(editForm.displayName ?? '').trim()
-    let nextEliteAmbassadorId = String(editForm.eliteAmbassadorId ?? '').trim()
-    let nextAmbassadorId = String(editForm.ambassadorId ?? '').trim()
     const nextPassword = String(editPassword ?? '').trim()
 
     setSavingEdit(true)
@@ -224,9 +220,6 @@ export default function AdminUsers() {
       await update(ref(db, `users/${editingUid}`), {
         displayName: nextDisplayName,
         role: nextRole,
-        eliteAmbassadorId:
-          nextRole === ROLES.ELITE_AMBASSADOR ? nextEliteAmbassadorId || null : null,
-        ambassadorId: nextRole === ROLES.AMBASSADOR ? nextAmbassadorId || null : null,
         updatedAt: Date.now(),
         updatedByAdminUid: user?.uid ?? null,
       })
@@ -351,7 +344,7 @@ export default function AdminUsers() {
 
       <section className="max-w-full min-w-0 rounded-xl border border-slate-800 bg-slate-900/40 [-webkit-overflow-scrolling:touch]">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[780px] table-auto text-left text-xs sm:text-sm">
+          <table className="w-full min-w-195 table-auto text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Name</th>

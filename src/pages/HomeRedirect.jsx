@@ -10,6 +10,7 @@ export default function HomeRedirect() {
   if (r === ROLES.MANAGEMENT) return <Navigate to="/management" replace />
   if (r === ROLES.SALES) return <Navigate to="/sales" replace />
   if (r === ROLES.PROCESS) return <Navigate to="/process" replace />
+  if (r === ROLES.EMPLOYEES) return <Navigate to="/employee-dashboard" replace />
   if (r === ROLES.ELITE_AMBASSADOR)
     return <Navigate to="/elite-ambassador" replace />
   if (r === ROLES.AMBASSADOR) return <Navigate to="/ambassador" replace />

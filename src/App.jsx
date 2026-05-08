@@ -22,6 +22,7 @@ import AmbassadorVisiting from './pages/AmbassadorVisiting'
 import AmbassadorCreative from './pages/AmbassadorCreative'
 import AdminCategory from './pages/AdminCategory'
 import AdminServices from './pages/admin/AdminServices'
+import Employees from './pages/Employees'
 import Form from './pages/Form'
 import { ROLES } from './constants'
 
@@ -199,8 +200,16 @@ export default function App() {
             <Route
               path="sales-material"
               element={
-                <ProtectedRoute roles={[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR]}>
+                <ProtectedRoute roles={[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.SALES,ROLES.PROCESS,ROLES.EMPLOYEES]}>
                   <AmbassadorCreative />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="employee-dashboard"
+              element={
+                <ProtectedRoute roles={[ROLES.EMPLOYEES]}>
+                  <Employees />
                 </ProtectedRoute>
               }
             />
