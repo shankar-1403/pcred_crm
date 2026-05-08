@@ -9,6 +9,7 @@ import { ROLE_LABELS, ROLES } from '../constants'
 import { useAuth } from '../context/AuthContext'
 import { useUsers } from '../hooks/useUsers'
 import { db, functions } from '../lib/firebase'
+import { auth } from '../lib/firebase'
 
 /** Team roles assignable when creating a user (elite / ambassador logins use their master screens). */
 const teamRoleOptionsCreate = [
@@ -41,15 +42,14 @@ export default function AdminUsers() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
-  const [role, setRole] = useState()
+  const [role, setRole] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deletingUid, setDeletingUid] = useState('')
   const [editingUid, setEditingUid] = useState('')
   const [editForm, setEditForm] = useState({
     displayName: '',
+    email:'',
     role: '',
-    eliteAmbassadorId: '',
-    ambassadorId: '',
   })
   const [editPassword, setEditPassword] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
@@ -100,7 +100,7 @@ export default function AdminUsers() {
       setEmail('')
       setPassword('')
       setDisplayName('')
-      setRole()
+      setRole('')
     } catch (err) {
       setError(err?.message || 'Could not create user')
     } finally {
@@ -155,6 +155,7 @@ export default function AdminUsers() {
     setEditingUid(u?.uid || '')
     setEditForm({
       displayName: u?.displayName ?? '',
+      email: u?.email ?? '',
       role: String(u?.role).trim().toLowerCase(),
     })
     setEditPassword('')
@@ -171,54 +172,26 @@ export default function AdminUsers() {
     if (!editingUid) return
 
     const nextRole = String(editForm.role ?? '').trim().toLowerCase()
+    const nextEmail = String(editForm.email ?? '').trim().toLowerCase()
     const nextDisplayName = String(editForm.displayName ?? '').trim()
     const nextPassword = String(editPassword ?? '').trim()
 
     setSavingEdit(true)
     try {
-      if (nextRole === ROLES.ELITE_AMBASSADOR && !nextEliteAmbassadorId) {
-        const existing = usersById?.[editingUid]
-        const recordName =
-          nextDisplayName ||
-          String(existing?.email ?? '').split('@')[0] ||
-          'Elite ambassador'
-        nextEliteAmbassadorId = editingUid
-        await set(ref(db, `elite_ambassador/${editingUid}`), {
-          name: recordName,
-          referredByUid: null,
-          createdAt: Date.now(),
-          createdByAdminUid: user?.uid ?? null,
-        })
-      }
-
-      if (nextRole === ROLES.AMBASSADOR && !nextAmbassadorId) {
-        const existing = usersById?.[editingUid]
-        const recordName =
-          nextDisplayName ||
-          String(existing?.email ?? '').split('@')[0] ||
-          'Ambassador'
-        nextAmbassadorId = editingUid
-        await set(ref(db, `ambassador/${editingUid}`), {
-          name: recordName,
-          referredByUid: null,
-          createdAt: Date.now(),
-          createdByAdminUid: user?.uid ?? null,
-        })
-      }
-
-      if (nextPassword) {
-        const updateUserPasswordByAdmin = httpsCallable(
-          functions,
-          'updateUserPasswordByAdmin',
-        )
-        await updateUserPasswordByAdmin({
-          uid: editingUid,
-          password: nextPassword,
-        })
-      }
+      const updateUserByAdmin = httpsCallable(
+        functions,
+        'updateUserByAdmin',
+      )
+      await updateUserByAdmin({
+        uid: editingUid,
+        email: nextEmail,
+        password: nextPassword || undefined,
+        displayName: nextDisplayName,
+      })
 
       await update(ref(db, `users/${editingUid}`), {
         displayName: nextDisplayName,
+        email: nextEmail,
         role: nextRole,
         updatedAt: Date.now(),
         updatedByAdminUid: user?.uid ?? null,
@@ -230,13 +203,11 @@ export default function AdminUsers() {
       const code = err?.code
       const details = err?.details
       const msg = err?.message || 'Could not update user.'
-      if (code === 'functions/internal' || String(msg).toLowerCase() === 'internal') {
-        setError(
-          'Cloud Function error (often: updateUserPasswordByAdmin is not deployed yet). Deploy functions: firebase deploy --only functions',
-        )
-      } else {
-        setError([code, details, msg].filter(Boolean).join(' — '))
-      }
+      setError(
+        [code, details, msg]
+          .filter(Boolean)
+          .join(' — '),
+      )
     } finally {
       setSavingEdit(false)
     }
@@ -262,24 +233,6 @@ export default function AdminUsers() {
           .
         </p>
       </div>
-
-      <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-sm">
-        <p className="text-slate-400">
-          Current UID:{' '}
-          <code className="font-mono text-blue-300">{user?.uid || '—'}</code>
-        </p>
-        <p className="mt-1 text-slate-400">
-          Current role:{' '}
-          <code className="text-blue-300">{profile?.role || 'missing'}</code>
-        </p>
-        {!isAdmin && (
-          <p className="mt-2 rounded-lg border border-amber-800/70 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
-            This account cannot create users yet. Set role to{' '}
-            <code>admin</code> at <code>users/{user?.uid}</code>, publish rules,
-            then sign out/in.
-          </p>
-        )}
-      </section>
 
       <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
         <h2 className="text-lg font-medium text-white">Create account</h2>
@@ -321,6 +274,7 @@ export default function AdminUsers() {
               onChange={(e) => setRole(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
             >
+              <option value="">-- select --</option>
               {teamRoleOptionsCreate.map((r) => (
                 <option key={r} value={r}>
                   {ROLE_LABELS[r]}
@@ -448,6 +402,20 @@ export default function AdminUsers() {
                   value={editForm.displayName}
                   onChange={(e) =>
                     setEditForm((f) => ({ ...f, displayName: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300">
+                  Email Id
+                </label>
+                <input
+                  type="text"
+                  value={editForm.email}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, email: e.target.value }))
                   }
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 />
