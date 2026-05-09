@@ -11,7 +11,6 @@ import { useUsers } from '../hooks/useUsers'
 import { db, functions } from '../lib/firebase'
 import { auth } from '../lib/firebase'
 
-/** Team roles assignable when creating a user (elite / ambassador logins use their master screens). */
 const teamRoleOptionsCreate = [
   ROLES.MANAGEMENT,
   ROLES.SALES,
@@ -126,12 +125,20 @@ export default function AdminUsers() {
 
     setDeletingUid(targetUid)
     try {
-      const deleteUserByAdmin = httpsCallable(functions, 'deleteUserByAdmin')
-      await deleteUserByAdmin({ uid: targetUid })
+      await fetch(
+        'https://us-central1-crm-lead-b18f5.cloudfunctions.net/deleteUserByAdmin',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uid: targetUid,
+          }),
+        },
+      )
       setMessage('User deleted from Authentication and Database.')
     } catch (err) {
-      // Fallback for Spark plan / function not deployed / CORS from missing endpoint.
-      // Still remove profile row so deleted users cannot access app screens.
       try {
         await remove(ref(db, `users/${targetUid}`))
         setMessage(

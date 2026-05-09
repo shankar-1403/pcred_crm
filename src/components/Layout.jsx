@@ -175,10 +175,12 @@ export default function Layout() {
                 {textCopied &&
                   <span className='text-green-500 text-sm'>{textCopied}</span>
                 }
-                <button onClick={handleCopy} className='cursor-pointer flex items-center gap-1 text-sm bg-slate-800 text-blue-300 py-1 px-3 hover:underline rounded-2xl' title='Solutions Link'>
-                  Solutions Link
-                  <IconLinkFilled size={15} color='#ffffff'/>
-                </button>
+                {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
+                  <button onClick={handleCopy} className='cursor-pointer flex items-center gap-1 text-sm bg-slate-800 text-blue-300 py-1 px-3 hover:underline rounded-2xl' title='Solutions Link'>
+                    Solutions Link
+                    <IconLinkFilled size={15} color='#ffffff'/>
+                  </button>
+                )}
                 <button type="button" onClick={() => setProfileOpen((v) => !v)} className='cursor-pointer rounded-full border border-blue-600 p-2 text-sm font-medium hidden lg:block transition-colors'>
                   <IconUserFilled size={20} className='white'/>
                 </button>
