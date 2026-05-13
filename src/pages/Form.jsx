@@ -292,7 +292,7 @@ function Form() {
 
     return (
         <>
-            <div className='bg-gray-100 py-10'>
+            <div className='bg-gray-100 py-10 h-auto'>
                 <div className="p-2">
                     <div className="py-2 shadow-lg rounded-xl bg-white border border-gray-400/20 lg:hidden">
                         <div className="grid grid-cols-3">
@@ -311,7 +311,7 @@ function Form() {
                 <div className="rounded-xl p-2 max-w-6xl mx-auto">
                     <div className="flex flex-col lg:flex-row gap-6 lg:items-stretch">
                         <div className="w-full bg-white border border-gray-400/40 rounded-2xl lg:w-1/2 py-4 px-6">
-                            
+                            <h1 className='text-black text-xl font-bold mb-4 text-center underline'>ECB MSME Form</h1>
                             <form onSubmit={saveLead} className='flex flex-col gap-2'>
                                 <div>
                                     <label className='text-black' htmlFor="name">Full Name <span className='text-red-600 text-sm'>*</span></label>
@@ -401,13 +401,13 @@ function Form() {
 
                                 <div className="p-2 md:p-6 shadow-lg hidden lg:block rounded-xl bg-white border border-gray-400/20">
                                     <div className="grid grid-cols-3">
-                                        <div className='flex justify-center'>
+                                        <div className='flex justify-center items-center'>
                                             <img src="/pcred-logo-og.png" alt="PCRED" className="h-16 md:h-25 w-auto object-contain"/>
                                         </div>
-                                        <div className='flex justify-center'>
-                                            <img src="/ecb-logo.webp" alt="ECB" className="h-16 md:h-25 w-auto object-contain"/>
+                                        <div className='flex justify-center items-center'>
+                                            <img src="/ecb-logo.webp" alt="ECB" className="h-16 md:h-14 w-auto object-contain"/>
                                         </div>
-                                        <div className='flex justify-center'>
+                                        <div className='flex justify-center items-center'>
                                             <img src="/insurath.png" alt="Insurath" className="h-16 md:h-25 w-auto object-contain"/>
                                         </div>
                                     </div>
@@ -415,9 +415,9 @@ function Form() {
 
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-2 md:p-6 shadow-lg rounded-xl bg-[#172742] border border-gray-400/20">
                                     {metrics.map((m) => (
-                                        <div key={m.label} className="border border-white rounded-lg py-3 px-6 text-center">
-                                            <span className="block text-base font-bold text-amber-500">{m.val}</span>
-                                            <span className="block text-[10px] text-white mt-1">{m.label}</span>
+                                        <div key={m.label} className="border border-white rounded-lg py-3 px-5 text-center">
+                                            <span className="block text-lg font-bold text-amber-500">{m.val}</span>
+                                            <span className="block text-xs text-white mt-1 whitespace-wrap">{m.label}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -438,7 +438,7 @@ function Form() {
                                                 <div className="w-6 h-6 rounded bg-amber-500/20 border border-blue-900/30 flex items-center justify-center shrink-0">
                                                     {c.icon}
                                                 </div>
-                                                <span className="text-[12px] text-white">{c.label}</span>
+                                                <span className="text-sm text-white">{c.label}</span>
                                             </a>
                                         ))}
                                     </div>

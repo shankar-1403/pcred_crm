@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { IconChevronDown } from '@tabler/icons-react'
 
 function normalize(text) {
@@ -15,7 +15,11 @@ export default function SearchableDropdown({
 }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [openUpward, setOpenUpward] = useState(false)
+
   const dropdownRef = useRef(null)
+  const buttonRef = useRef(null)
+  const searchInputRef = useRef(null)
 
   const filteredOptions = useMemo(() => {
     const q = normalize(search)
@@ -30,6 +34,24 @@ export default function SearchableDropdown({
   const selectedOption = options.find(
     (option) => option.value === value,
   )
+
+  useEffect(() => {
+    if (open && buttonRef.current) {
+      const rect =
+        buttonRef.current.getBoundingClientRect()
+
+      const dropdownHeight = 260
+      const spaceBelow =
+        window.innerHeight - rect.bottom
+
+      setOpenUpward(spaceBelow < dropdownHeight)
+
+      // Auto focus search input
+      setTimeout(() => {
+        searchInputRef.current?.focus()
+      }, 0)
+    }
+  }, [open])
 
   function onSelect(optionValue) {
     handleChange({
@@ -47,12 +69,17 @@ export default function SearchableDropdown({
       className={`relative ${className}`}
       ref={dropdownRef}
       onBlur={(e) => {
-        if (!dropdownRef.current?.contains(e.relatedTarget)) {
+        if (
+          !dropdownRef.current?.contains(
+            e.relatedTarget,
+          )
+        ) {
           setOpen(false)
         }
       }}
     >
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className="mt-1 flex w-full items-center justify-between rounded-lg border border-gray-400 bg-white px-3 py-2 text-white"
@@ -67,13 +94,20 @@ export default function SearchableDropdown({
           {selectedOption?.label || placeholder}
         </span>
 
-        <IconChevronDown size={16} color='gray'/>
+        <IconChevronDown size={16} color="gray" />
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-lg border border-slate-400 bg-white shadow-xl">
+        <div
+          className={`absolute z-50 w-full overflow-hidden rounded-lg border border-slate-400 bg-white shadow-xl ${
+            openUpward
+              ? 'bottom-full mb-2'
+              : 'top-full mt-2'
+          }`}
+        >
           <div className="border-b border-gray-400 p-2">
             <input
+              ref={searchInputRef}
               type="text"
               value={search}
               onChange={(e) =>

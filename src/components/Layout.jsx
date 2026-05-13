@@ -176,8 +176,8 @@ export default function Layout() {
                   <span className='text-green-500 text-sm'>{textCopied}</span>
                 }
                 {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
-                  <button onClick={handleCopy} className='cursor-pointer flex items-center gap-1 text-sm bg-slate-800 text-blue-300 py-1 px-3 hover:underline rounded-2xl' title='Solutions Link'>
-                    Solutions Link
+                  <button onClick={handleCopy} className='cursor-pointer flex items-center gap-1 text-sm bg-slate-800 text-blue-300 py-1 px-3 hover:underline rounded-2xl' title='ECB MSME Link'>
+                    ECB MSME Link
                     <IconLinkFilled size={15} color='#ffffff'/>
                   </button>
                 )}
@@ -309,8 +309,8 @@ export default function Layout() {
                 </NavLink>
               )}
               {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
-                <button onClick={handleCopy} className='cursor-pointer flex justify-center items-center gap-1 text-sm text-center bg-slate-800 text-blue-300 py-2 px-3 hover:underline rounded-2xl' title='Solutions Link'>
-                  Solutions Link
+                <button onClick={handleCopy} className='cursor-pointer flex justify-center items-center gap-1 text-sm text-center bg-slate-800 text-blue-300 py-2 px-3 hover:underline rounded-2xl' title='ECB MSME Link'>
+                  ECB MSME Link
                   <IconLinkFilled size={14} color='#ffffff'/>
                 </button>
               )}
