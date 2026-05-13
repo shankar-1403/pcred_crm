@@ -13,6 +13,8 @@ import { useCategory } from '../hooks/useCategory';
 import { useServices } from '../hooks/useServices';
 import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect';
 import SearchableDropdown from '../components/SearchSelect';
+import { useUsers } from '../hooks/useUsers';
+import { formatAmountForCsv } from '../lib/csv';
 
 const emptyForm = {
   clientName: '',
@@ -28,6 +30,7 @@ const emptyForm = {
 };
 
 function Form() {
+    const { users } = useUsers();
     const {ambassador} = useAmbassador();
     const {eliteAmbassador} = useEliteAmbassador();
     const {statuses} = useStatuses(); 
@@ -77,6 +80,24 @@ function Form() {
     
     const eliteAmbassadorData = eliteAmbassador.find((data)=> uid === data.id);
     const eliteAmbassadorName =  eliteAmbassadorData?.name;
+
+    const usersData = users.find((data) => uid === data.id)
+    const emailId = usersData?.email;
+
+    function getProductName(id){
+        const data = products.find((item)=> id === item.id)
+        return data?.name
+    }
+
+    function getCategoryName(id){
+        const data = category.find((item)=> id === item.id)
+        return data?.name
+    }
+
+    function getServiceName(id){
+        const data = services.find((item)=> id === item.id)
+        return data?.name
+    }
 
     const label = () => {
         if (ambassador_id.includes(uid)){
@@ -151,6 +172,24 @@ function Form() {
                 createdAt: new Date().toISOString().split("T")[0],
                 leadDate: new Date().toISOString().split("T")[0]
             })
+            await fetch('https://us-central1-crm-lead-b18f5.cloudfunctions.net/sendMail', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name:payload?.clientName,
+                    company:payload.company,
+                    email:emailId,
+                    clientEmail:payload?.clientEmail,
+                    clientPhoneNo:payload?.clientPhoneNo,
+                    product:getProductName(payload?.product),
+                    category:getCategoryName(payload?.categoryId),
+                    service:getServiceName(payload?.serviceId),
+                    amount:formatAmountForCsv(payload?.totalAmount)
+                }),
+            });
+
             setMessage("Form Submitted Successfully")
             setSelectedState("")
             setSelectedCategory("")

@@ -72,7 +72,7 @@ export default function TypeaheadMultiSelect({
       {label ? (
         <label
           htmlFor={id}
-          className="block text-xs font-medium uppercase tracking-wide text-slate-500"
+          className="block text-xs font-medium tracking-wide text-slate-500"
         >
           {label}
         </label>

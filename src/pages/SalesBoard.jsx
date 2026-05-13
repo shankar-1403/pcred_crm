@@ -6,6 +6,7 @@ import { useLeads } from '../hooks/useLeads'
 import { useUsers } from '../hooks/useUsers'
 import { useProducts } from '../hooks/useProducts'
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
+import { useAmbassador } from '../hooks/useAmbassador'
 import { useStatuses } from '../hooks/useStatuses'
 import { assignedUids, leadReferredToUser, toAssignedMap } from '../lib/leads'
 import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser} from '../lib/assignees'
@@ -16,12 +17,16 @@ import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
 import TablePagination from '../components/TablePagination'
+import SearchableDarkDropdown from '../components/SearchDarkSelect'
 import { usePagination } from '../hooks/usePagination'
 
 const emptyForm = {
   title: '',
-  viaEnabled: false,
+  sourceEnabled: false,
+  leadType:'',
   viaName: '',
+  eliteAmbassadorId: '',
+  ambassadorId: '',
   company: '',
   clientName: '',
   clientPhoneNo:'',
@@ -45,8 +50,8 @@ export default function SalesBoard() {
   const { usersById, processUsers, salesUsers, error: usersError } = useUsers()
   const { products, loading: productsLoading, error: productsError } = useProducts()
   const { eliteAmbassador } = useEliteAmbassador()
+  const { ambassador } = useAmbassador()
   const { statuses } = useStatuses()
-
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(emptyForm)
@@ -54,13 +59,14 @@ export default function SalesBoard() {
   const [selectedAssignees, setSelectedAssignees] = useState([])
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false)
   const [selectedSalesAssignees, setSelectedSalesAssignees] = useState([])
-  const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] =
-    useState(false)
+  const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [leadSearch, setLeadSearch] = useState('')
   const [viewLead, setViewLead] = useState(null)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [selectedEliteAmbassador, setSelectedEliteAmbassador] = useState([])
+  const [selectedAmbassador, setSelectedAmbassador] = useState([])
 
   const myLeads = useMemo(
     () =>
@@ -152,6 +158,15 @@ export default function SalesBoard() {
       resolveEliteAmbassadorName(orgId, fallbackName, eliteAmbassador) || '-'
     )
   }
+  const eliteAmbassadorOptions = eliteAmbassador.map((p) => ({
+    value: p.id,
+    label: p.name || p.id,
+  }))
+  
+  const ambassadorOptions = ambassador.map((a) => ({
+    value: a.id,
+    label: a.name || a.id,
+  }))
 
   function openNew() {
     setEditingId(null)
@@ -168,7 +183,10 @@ export default function SalesBoard() {
     setEditingId(lead.id)
     setForm({
       title: lead.title ?? '',
-      viaEnabled: Boolean(String(lead.viaName ?? '').trim()),
+      sourceEnabled: lead.sourceEnabled ?? '',
+      eliteAmbassadorId: lead.eliteAmbassadorId ?? '',
+      ambassadorId: lead.ambassadorId ?? '',
+      leadType:lead.leadType ?? '',
       viaName: lead.viaName ?? '',
       company: lead.company ?? '',
       clientName: lead.clientName ?? '',
@@ -230,7 +248,11 @@ export default function SalesBoard() {
 
       const payload = {
         title: form.title.trim(),
-        viaName: form.viaEnabled ? form.viaName.trim() : '',
+        sourceEnabled: form.sourceEnabled,
+        viaName: form.viaName.trim(),
+        leadType: form.leadType.trim(),
+        eliteAmbassadorId: form.eliteAmbassadorId,
+        ambassadorId: form.ambassadorId,
         company: form.company.trim(),
         clientName: form.clientName.trim(),
         clientPhoneNo: form.clientPhoneNo.trim(),
@@ -531,41 +553,117 @@ export default function SalesBoard() {
             <form onSubmit={saveLead} className="mt-6 space-y-4">
               <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-3">
                 <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={form.viaEnabled}
+                  <input type="checkbox" checked={form.sourceEnabled}
                     onChange={(e) =>
                       setForm((f) => ({
                         ...f,
-                        viaEnabled: e.target.checked,
-                        ...(e.target.checked ? {} : { viaName: '' }),
+                        sourceEnabled: e.target.checked,
                       }))
                     }
                     className="rounded border-slate-600 bg-slate-950 text-blue-600"
                   />
-                  <span>Via</span>
+                  <span>Source</span>
                 </label>
-                {form.viaEnabled && (
-                  <div>
-                    <label
-                      htmlFor="sales-lead-via-name"
-                      className="block text-xs font-medium text-slate-400"
-                    >
-                      Name
-                    </label>
-                    <input
-                      id="sales-lead-via-name"
-                      type="text"
-                      value={form.viaName}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, viaName: e.target.value }))
-                      }
-                      placeholder="Referrer or channel name"
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                    />
-                  </div>
+                {form.sourceEnabled && (
+                  <>
+                    <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-3">
+                      <div className="flex gap-4">
+                        <div>
+                          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
+                            <input
+                              type="radio"
+                              name='leadType'
+                              checked={form.leadType === "via"}
+                              onChange={(e) =>
+                                setForm((f) => ({
+                                  ...f,
+                                  leadType: "via",
+                                  ambassadorName: '' }),
+                                )
+                              }
+                              className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                            />
+                            <span>Via</span>
+                          </label>
+                        </div>
+                        <div>
+                          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
+                            <input
+                              type="radio"
+                              name='leadType'
+                              checked={form.leadType === "elite_ambassador"}
+                              onChange={(e) =>
+                                setForm((f) => ({
+                                  ...f,
+                                  leadType: "elite_ambassador",
+                                  viaName: '' }),
+                                )
+                              }
+                              className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                            />
+                            <span>Elite Ambassador</span>
+                          </label>
+                        </div>
+                        <div>
+                          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
+                            <input
+                              type="radio"
+                              name='leadType'
+                              checked={form.leadType === "ambassador"}
+                              onChange={(e) =>
+                                setForm((f) => ({
+                                  ...f,
+                                  leadType: "ambassador",
+                                  viaName: '' }),
+                                )
+                              }
+                              className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                            />
+                            <span>Ambassador</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      {form.leadType === "via" && (
+                        <>
+                          <div>
+                            <label htmlFor="sales-lead-via-name" className="block text-xs font-medium text-slate-400"> 
+                              Name
+                            </label>
+                            <input
+                              id="sales-lead-via-name"
+                              type="text"
+                              value={form.viaName}
+                              onChange={(e) =>
+                                setForm((f) => ({ ...f, viaName: e.target.value }))
+                              }
+                              placeholder="Referrer or channel name"
+                              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                            />
+                          </div>
+                        </>
+                      )}
+                      {form.leadType === "elite_ambassador" && (
+                        <div className='grid grid-cols-2'>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-400">Elite Ambassador</label>
+                            <SearchableDarkDropdown name={"eliteAmbassadorId"} options={eliteAmbassadorOptions} value={form.eliteAmbassadorId} handleChange={(e) => setForm((f) => ({ ...f, eliteAmbassadorId: e.target.value }))}/>
+                          </div>
+                        </div>
+                      )}
+                      {form.leadType === "ambassador" && (
+                        <div className='grid grid-cols-2'>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-400">Ambassador</label>
+                            <SearchableDarkDropdown name="ambassadorId" options={ambassadorOptions} value={form.ambassadorId} handleChange={(e)=>setForm((f) => ({ ...f,ambassadorId: e.target.value }))}/>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
+              
               <div>
                 <label className="block text-sm font-medium text-slate-300">
                   Company
