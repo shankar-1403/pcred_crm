@@ -42,6 +42,7 @@ export default function AdminUsers() {
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [role, setRole] = useState('')
+  const [phoneNo, setPhoneNo] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deletingUid, setDeletingUid] = useState('')
   const [editingUid, setEditingUid] = useState('')
@@ -49,6 +50,7 @@ export default function AdminUsers() {
     displayName: '',
     email:'',
     role: '',
+    phoneNo: '',
   })
   const [editPassword, setEditPassword] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
@@ -86,6 +88,7 @@ export default function AdminUsers() {
     }
     const emailTrim = email.trim()
     const displayTrim = displayName.trim()
+    const phoneTrim = phoneNo.trim()
     setSubmitting(true)
     try {
       const uid = await createUserByAdmin(
@@ -93,6 +96,7 @@ export default function AdminUsers() {
         password,
         displayTrim,
         role,
+        phoneTrim,
         {},
       )
       setMessage(`User created successfully. UID: ${uid}`)
@@ -163,6 +167,7 @@ export default function AdminUsers() {
     setEditForm({
       displayName: u?.displayName ?? '',
       email: u?.email ?? '',
+      phoneNo: u?.phoneNo ?? '',
       role: String(u?.role).trim().toLowerCase(),
     })
     setEditPassword('')
@@ -182,7 +187,7 @@ export default function AdminUsers() {
     const nextEmail = String(editForm.email ?? '').trim().toLowerCase()
     const nextDisplayName = String(editForm.displayName ?? '').trim()
     const nextPassword = String(editPassword ?? '').trim()
-
+    const nextPhoneNo = String(editForm.phoneNo ?? '').trim()
     setSavingEdit(true)
     try {
       await fetch(
@@ -197,6 +202,7 @@ export default function AdminUsers() {
             email: nextEmail,
             password: nextPassword || undefined,
             displayName: nextDisplayName,
+            phoneNo: nextPhoneNo,
           }),
         },
       )
@@ -205,6 +211,7 @@ export default function AdminUsers() {
         displayName: nextDisplayName,
         email: nextEmail,
         role: nextRole,
+        phoneNo: nextPhoneNo,
         updatedAt: Date.now(),
         updatedByAdminUid: user?.uid ?? null,
       })
@@ -248,7 +255,7 @@ export default function AdminUsers() {
 
       <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
         <h2 className="text-lg font-medium text-white">Create account</h2>
-        <form onSubmit={handleCreate} className="mt-4 grid gap-4 md:grid-cols-2">
+        <form onSubmit={handleCreate} className="mt-4 grid gap-4 md:grid-cols-3">
           <div>
             <label className="block text-sm font-medium text-slate-300">Email</label>
             <input
@@ -280,6 +287,16 @@ export default function AdminUsers() {
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-slate-300">Phone No</label>
+            <input
+              type="text"
+              value={phoneNo}
+              onChange={(e) => setPhoneNo(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+              maxLength={10}
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-slate-300">Team</label>
             <select
               value={role}
@@ -294,7 +311,7 @@ export default function AdminUsers() {
               ))}
             </select>
           </div>
-          <div className="md:col-span-2 flex flex-wrap items-center justify-end gap-3">
+          <div className="flex flex-wrap items-end justify-end gap-3">
             {error && <p className="text-sm text-red-300">{error}</p>}
             {message && <p className="text-sm text-emerald-300">{message}</p>}
             <button
@@ -432,7 +449,16 @@ export default function AdminUsers() {
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 />
               </div>
-
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Phone No</label>
+                <input
+                  type="text"
+                  value={editForm.phoneNo}
+                  onChange={(e) => setEditForm((f) => ({ ...f, phoneNo:e.target.value}))}
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                  maxLength={10}
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300">
                   Team
