@@ -359,15 +359,15 @@ export default function SalesBoard() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className='md:col-span-4 lg:col-span-2'>
           <h1 className="text-2xl font-semibold text-white">My leads</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-slate-400 text-nowrap">
             Create leads and assign one or more process teammates
           </p>
         </div>
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end sm:gap-4">
-          <div className="w-full sm:w-65">
+        <div className="md:col-span-4 lg:col-span-3 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 items-end w-full gap-3">
+          <div className="w-full">
             <label
               htmlFor="search-company-sales"
               className="block text-xs font-medium uppercase tracking-wide text-slate-500"
@@ -383,7 +383,6 @@ export default function SalesBoard() {
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
-
           <div className="w-full sm:w-auto">
             <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">
               From
@@ -406,10 +405,12 @@ export default function SalesBoard() {
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white"
             />
           </div>
-
-          <button type="button" onClick={exportCsv} className="rounded-lg border border-green-600/30 cursor-pointer px-4 py-2.5 text-sm font-semibold text-slate-200 bg-green-500/20 hover:bg-green-500/30">Export CSV</button>
-
-          <button type="button" onClick={openNew} className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500">New lead</button>
+          <div>
+            <button type="button" onClick={exportCsv} className="w-full rounded-lg border border-green-600/30 cursor-pointer px-4 py-2.5 text-sm font-semibold text-slate-200 bg-green-500/20 hover:bg-green-500/30">Export CSV</button>
+          </div>
+          <div>
+            <button type="button" onClick={openNew} className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500">New lead</button>
+          </div>
         </div>
       </div>
 

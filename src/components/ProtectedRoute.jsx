@@ -3,7 +3,21 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ProfileGateMessage from './ProfileGateMessage'
 
-export default function ProtectedRoute({ children, roles }) {
+function collectAllowedUids(uid, allowedUids) {
+  const out = []
+  if (typeof uid === 'string' && uid.trim()) out.push(uid.trim())
+  if (Array.isArray(allowedUids)) {
+    for (const u of allowedUids) {
+      const s = String(u ?? '').trim()
+      if (s) out.push(s)
+    }
+  } else if (typeof allowedUids === 'string' && allowedUids.trim()) {
+    out.push(allowedUids.trim())
+  }
+  return out
+}
+
+export default function ProtectedRoute({ children, roles, uid, allowedUids }) {
   const { user, profile, profileIssue, loading, refreshProfile, logout } = useAuth()
   const location = useLocation()
   const signingOutMissingProfileRef = useRef(false)
@@ -47,11 +61,18 @@ export default function ProtectedRoute({ children, roles }) {
   }
 
   const normalizedRole = String(profile.role ?? '').trim().toLowerCase()
-  if (
-    roles?.length &&
-    !roles.some((allowed) => allowed === normalizedRole)
-  ) {
-    return <Navigate to="/" replace />
+  const hasRoleGate = Boolean(roles?.length)
+  const uidList = collectAllowedUids(uid, allowedUids)
+  const hasUidGate = uidList.length > 0
+
+  if (hasRoleGate || hasUidGate) {
+    const roleOk =
+      !hasRoleGate || roles.some((allowed) => allowed === normalizedRole)
+    const uidOk =
+      hasUidGate && Boolean(profile.uid) && uidList.includes(profile.uid)
+    if (!roleOk && !uidOk) {
+      return <Navigate to="/" replace />
+    }
   }
 
   return children

@@ -236,8 +236,8 @@ export default function ProcessBoard() {
 
   return (
       <div className="min-w-0 space-y-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className='md:col-span-4 lg:col-span-2'>
             <h1 className="text-2xl font-semibold text-white">Assigned to {currentUserName}</h1>
             
             <p className="mt-1 text-sm text-slate-400">
@@ -245,52 +245,22 @@ export default function ProcessBoard() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 sm:w-[320px]">
-            <label
-              htmlFor="search-company-process"
-              className="block text-xs font-medium uppercase tracking-wide text-slate-500"
-            >
-              Search company
-            </label>
-            <input
-              id="search-company-process"
-              type="text"
-              value={leadSearch}
-              onChange={(e) => setLeadSearch(e.target.value)}
-              placeholder="Type company name..."
-              className="rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
-            />
-          </div>
-          <div className="flex gap-2">
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">
-                From
-              </label>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="mt-1 rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white"
-              />
+          <div className="md:col-span-4 lg:col-span-3 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 items-end w-full gap-3">
+            <div className="w-full">
+              <label htmlFor="search-company-process" className="block text-xs font-medium uppercase tracking-wide text-slate-500">Search company</label>
+              <input id="search-company-process" type="text" value={leadSearch} onChange={(e) => setLeadSearch(e.target.value)} placeholder="Type company name..." className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"/>
             </div>
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">
-                To
-              </label>
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="mt-1 rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white"
-              />
+            <div className="w-full">
+              <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">From</label>
+              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white"/>
             </div>
-            <button
-              type="button"
-              onClick={exportCsv}
-              className="mt-5 rounded-lg bg-green-500/20 border border-green-500/30 cursor-pointer px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-green-500/30"
-            >
-              Export CSV
-            </button>
+            <div className="w-full">
+              <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">To</label>
+              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-white"/>
+            </div>
+            <div className="w-full">
+              <button type="button" onClick={exportCsv} className="w-full rounded-lg bg-green-500/20 border border-green-500/30 cursor-pointer px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-green-500/30">Export CSV</button>
+            </div>
           </div>
         </div>
 

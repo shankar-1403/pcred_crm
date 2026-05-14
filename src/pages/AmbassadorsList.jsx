@@ -110,7 +110,7 @@ function AmbassadorsList() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    filterEliteAmbassador.map((data,index) => (
+                                    tablePageItems.map((data,index) => (
                                         <tr key={data.id} className="text-slate-300">
                                             <td className="whitespace-nowrap px-4 py-1 text-slate-400">{index + 1 || '-'}</td>
                                             <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.name || '-'}</td>

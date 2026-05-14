@@ -17,7 +17,6 @@ export default function AdminAmbassador() {
   const { ambassador, loading, error } = useAmbassador()
   const {eliteAmbassador} = useEliteAmbassador()
   const { usersById } = useUsers()
-  const isAdmin = String(profile?.role ?? '').trim().toLowerCase() === ROLES.ADMIN
 
   const [ambassadorName, setAmbassadorName] = useState('')
   const [ambassadorEmail, setAmbassadorEmail] = useState('')
@@ -110,12 +109,6 @@ export default function AdminAmbassador() {
 
     if (!user) {
       setFormError('You must be logged in.')
-      return
-    }
-    if (!isAdmin) {
-      setFormError(
-        `Current role is "${profile?.role ?? 'missing'}". Only admin can manage ambassadors.`,
-      )
       return
     }
 
@@ -218,10 +211,7 @@ export default function AdminAmbassador() {
   async function handleDelete(ambassadorId, label) {
     setMessage('')
     setFormError('')
-    if (!isAdmin) {
-      setFormError('Only admin can delete ambassadors.')
-      return
-    }
+
     const ok = window.confirm(
       `Delete ambassador "${label || ambassadorId}"? Ambassador users linked to this ID will stop matching leads until updated.`,
     )
@@ -264,11 +254,6 @@ export default function AdminAmbassador() {
         {error && (
           <p className="mt-2 text-sm text-red-300">
             Could not load ambassadors: {String(error?.message ?? error)}
-          </p>
-        )}
-        {!isAdmin && (
-          <p className="mt-2 rounded-lg border border-amber-800/70 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
-            This account cannot edit ambassadors. Sign in as admin.
           </p>
         )}
       </section>
@@ -381,7 +366,7 @@ export default function AdminAmbassador() {
           <div className="min-w-0 sm:col-span-2 lg:col-span-2 xl:col-span-1">
             <button
               type="submit"
-              disabled={submitting || !isAdmin}
+              disabled={submitting}
               className="w-full rounded-lg bg-blue-600 px-4 mt-6 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 lg:w-auto"
             >
               {submitting ? 'Saving…' : 'Add ambassador & account'}
@@ -439,7 +424,7 @@ export default function AdminAmbassador() {
                       <button
                         type="button"
                         onClick={() => handleDelete(a.id, a.name)}
-                        disabled={!isAdmin || deletingAmbassadorId === a.id}
+                        disabled={deletingAmbassadorId === a.id}
                         className="rounded-lg border border-red-800/60 px-3 py-1 text-xs text-red-300 hover:bg-red-950/40 disabled:opacity-50"
                       >
                         {deletingAmbassadorId === a.id ? 'Deleting…' : 'Delete'}

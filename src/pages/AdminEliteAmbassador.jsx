@@ -16,8 +16,6 @@ export default function AdminEliteAmbassador() {
   const { eliteAmbassador, loading, error } = useEliteAmbassador()
   const { usersById } = useUsers()
 
-  const isAdmin = String(profile?.role ?? '').trim().toLowerCase() === ROLES.ADMIN
-
   const [eliteAmbassadorName, setEliteAmbassadorName] = useState('')
   const [eliteAmbassadorEmail, setEliteAmbassadorEmail] = useState('')
   const [eliteAmbassadorPassword, setEliteAmbassadorPassword] = useState('')
@@ -122,12 +120,6 @@ export default function AdminEliteAmbassador() {
       setFormError('You must be logged in.')
       return
     }
-    if (!isAdmin) {
-      setFormError(
-        `Current role is "${profile?.role ?? 'missing'}". Only admin can manage elite ambassador.`,
-      )
-      return
-    }
     const salutation = salutationValue.trim()
     const name = eliteAmbassadorName.trim()
     const phoneNo = eliteAmbassadorPhone.trim()
@@ -228,10 +220,6 @@ export default function AdminEliteAmbassador() {
   async function handleDelete(eliteAmbassadorId, label) {
     setMessage('')
     setFormError('')
-    if (!isAdmin) {
-      setFormError('Only admin can delete elite ambassador.')
-      return
-    }
     const ok = window.confirm(
       `Delete elite ambassador "${label || eliteAmbassadorId}"? Elite ambassador users linked to this ID will stop matching leads until updated.`,
     )
@@ -274,11 +262,6 @@ export default function AdminEliteAmbassador() {
         {error && (
           <p className="mt-2 text-sm text-red-300">
             Could not load elite ambassadors: {String(error?.message ?? error)}
-          </p>
-        )}
-        {!isAdmin && (
-          <p className="mt-2 rounded-lg border border-amber-800/70 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
-            This account cannot edit elite ambassadors. Sign in as admin.
           </p>
         )}
       </section>
@@ -399,7 +382,7 @@ export default function AdminEliteAmbassador() {
           <div className="min-w-0 sm:col-span-2 lg:col-span-2 xl:col-span-1">
             <button
               type="submit"
-              disabled={submitting || !isAdmin}
+              disabled={submitting}
               className="w-full rounded-lg bg-blue-600 px-4 mt-6 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 lg:w-auto"
             >
               {submitting ? 'Saving…' : 'Add elite ambassador'}
@@ -457,7 +440,7 @@ export default function AdminEliteAmbassador() {
                       <button
                         type="button"
                         onClick={() => handleDelete(ea.id, ea.name)}
-                        disabled={!isAdmin || deletingEliteAmbassadorId === ea.id}
+                        disabled={deletingEliteAmbassadorId === ea.id}
                         className="rounded-lg border border-red-800/60 px-3 py-1 text-xs text-red-300 hover:bg-red-950/40 disabled:opacity-50"
                       >
                         {deletingEliteAmbassadorId === ea.id ? 'Deleting…' : 'Delete'}

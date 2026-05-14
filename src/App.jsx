@@ -88,7 +88,7 @@ export default function App() {
             <Route
               path="admin/elite-ambassador"
               element={
-                <ProtectedRoute roles={[ROLES.ADMIN]}>
+                <ProtectedRoute roles={[ROLES.ADMIN]} uid={'thy1xXKWoQXShRv3g31vuE180Uh1'}>
                   <AdminEliteAmbassador />
                 </ProtectedRoute>
               }
@@ -96,7 +96,7 @@ export default function App() {
             <Route
               path="admin/ambassador"
               element={
-                <ProtectedRoute roles={[ROLES.ADMIN]}>
+                <ProtectedRoute roles={[ROLES.ADMIN]} uid={'thy1xXKWoQXShRv3g31vuE180Uh1'}>
                   <AdminAmbassador />
                 </ProtectedRoute>
               }
