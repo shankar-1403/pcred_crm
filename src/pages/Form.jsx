@@ -228,8 +228,8 @@ function Form() {
 
     const contacts = [
         {
-            href: "mailto:info@pcred.org",
-            label: "info@pcred.org",
+            href: "mailto:ecb@ec-bharat.com",
+            label: "ecb@ec-bharat.com",
             icon: (
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FE9A00" strokeWidth="2">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -238,8 +238,8 @@ function Form() {
             ),
         },
         {
-            href: "tel:+912235120060",
-            label: "+91 22 35120060",
+            href: "tel:+918698217696",
+            label: "+91 86982 17696",
             icon: (
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FE9A00" strokeWidth="2">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.58 3.49 2 2 0 0 1 3.55 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.54a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -247,8 +247,8 @@ function Form() {
             ),
         },
         {
-            href: "https://www.pcred.org",
-            label: "www.pcred.org",
+            href: "https://ec-bharat.com/",
+            label: "www.ec-bharat.com",
             icon: (
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FE9A00" strokeWidth="2">
                     <circle cx="12" cy="12" r="10" />
@@ -260,7 +260,7 @@ function Form() {
 
     const socials = [
         {
-            href: "https://www.pcred.org",
+            href: "https://ec-bharat.com/",
             title: "Website",
             icon: (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2">
@@ -270,7 +270,7 @@ function Form() {
             ),
         },
         {
-            href: "mailto:info@pcred.org",
+            href: "mailto:ecb@ec-bharat.com",
             title: "Email",
             icon: (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2">
@@ -280,7 +280,7 @@ function Form() {
             ),
         },
         {
-            href: "tel:+912235120060",
+            href: "tel:+918698217696",
             title: "Call",
             icon: (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2">
@@ -388,7 +388,7 @@ function Form() {
                                     <label className='text-black' htmlFor="remarks">Remarks</label>
                                     <textarea  value={form.description} onChange={(e) =>setForm((f) => ({ ...f, description: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
                                 </div>
-                                <button type="submit" className="mt-2 w-full bg-blue-800 hover:bg-blue-700 active:scale-[0.98] text-blue-100 font-semibold text-sm py-2.5 rounded-lg transition-colors tracking-wide cursor-pointer" disabled={saving}>{saving ? 'Submitting' : 'Submit'}</button>
+                                <button type="submit" className="mt-2 w-full bg-[#172742] hover:bg-[#172742] active:scale-[0.98] text-white font-semibold text-sm py-2.5 rounded-lg transition-colors tracking-wide cursor-pointer" disabled={saving}>{saving ? 'Submitting' : 'Submit'}</button>
                                 <div>
                                     {errorMessage && <span className='text-red-500 text-sm'>{errorMessage}</span>}
                                     {message && <span className='text-green-500 text-sm'>{message}</span>}
@@ -401,15 +401,15 @@ function Form() {
 
                                 <div className="p-2 md:p-6 shadow-lg hidden lg:block rounded-xl bg-white border border-gray-400/20">
                                     <div className="grid grid-cols-3">
-                                        <div className='flex justify-center items-center'>
+                                        <a href='https://www.pcred.org/' className='flex justify-center items-center'>
                                             <img src="/pcred-logo-og.png" alt="PCRED" className="h-16 md:h-25 w-auto object-contain"/>
-                                        </div>
-                                        <div className='flex justify-center items-center'>
+                                        </a>
+                                        <a href='https://ec-bharat.com/' className='flex justify-center items-center'>
                                             <img src="/ecb-logo.webp" alt="ECB" className="h-16 md:h-14 w-auto object-contain"/>
-                                        </div>
-                                        <div className='flex justify-center items-center'>
+                                        </a>
+                                        <a href='https://insurath.com/' className='flex justify-center items-center'>
                                             <img src="/insurath.png" alt="Insurath" className="h-16 md:h-25 w-auto object-contain"/>
-                                        </div>
+                                        </a>
                                     </div>
                                 </div>
 
