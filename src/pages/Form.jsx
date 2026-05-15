@@ -302,7 +302,7 @@ function Form() {
                                 <img src="/pcred-logo-og.png" alt="PCRED" className="h-16 md:h-25 w-auto object-contain"/>
                             </div>
                             <div className='flex justify-center'>
-                                <img src="/ecb-logo.webp" alt="ECB" className="h-16 md:h-25 w-auto object-contain"/>
+                                <img src="/ecb-logo.webp" alt="ECB" className="h-16 md:h-14 w-auto object-contain"/>
                             </div>
                             <div className='flex justify-center'>
                                 <img src="/insurath.png" alt="Insurath" className="h-16 md:h-25 w-auto object-contain"/>
