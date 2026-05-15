@@ -26,6 +26,7 @@ const emptyForm = {
   categoryId:'',
   serviceId:'',
   totalAmount:'',
+  referred_by:'',
   description: '',
 };
 
@@ -162,6 +163,7 @@ function Form() {
                 serviceId: form.serviceId || null,
                 productId: form.productId || null,
                 totalAmount: form.totalAmount || '',
+                referred_by: form.referred_by || '',
                 description: form.description.trim(),
                 [label()] : uid,
             }
@@ -384,6 +386,10 @@ function Form() {
                                         />
                                     </div>
                                 }
+                                <div>
+                                    <label className='text-black' htmlFor="referred_by">Referred by</label>
+                                    <input value={form.referred_by} onChange={(e) =>setForm((f) => ({ ...f, referred_by: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
+                                </div>
                                 <div>
                                     <label className='text-black' htmlFor="remarks">Remarks</label>
                                     <textarea  value={form.description} onChange={(e) =>setForm((f) => ({ ...f, description: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
