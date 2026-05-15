@@ -71,6 +71,7 @@ function AmbassadorsList() {
                                     <th className="px-4 py-2 font-medium whitespace-nowrap w-10">Sr No.</th>
                                     <th className="px-4 py-2 font-medium whitespace-nowrap">Name</th>
                                     <th className="px-4 py-2 font-medium whitespace-nowrap">Phone No.</th>
+                                    <th className="px-4 py-2 font-medium whitespace-nowrap">ECB MSME Link</th>
                                 </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-800">
@@ -86,6 +87,7 @@ function AmbassadorsList() {
                                         <td className="whitespace-nowrap px-4 py-1 text-slate-400">{index + 1 || '-'}</td>
                                         <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.name || '-'}</td>
                                         <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.phoneNo || '-'}</td>
+                                        <td className="whitespace-nowrap px-4 py-1 text-slate-400">{import.meta.env.VITE_HOST}/lead/loan/{data.id || '-'}</td>
                                     </tr>
                                     ))
                                 )}
@@ -97,6 +99,7 @@ function AmbassadorsList() {
                                     <th className="px-4 py-2 font-medium whitespace-nowrap w-10">Sr No.</th>
                                     <th className="px-4 py-2 font-medium whitespace-nowrap">Name</th>
                                     <th className="px-4 py-2 font-medium whitespace-nowrap">Phone No.</th>
+                                    <th className="px-4 py-2 font-medium whitespace-nowrap">ECB MSME Link</th>
                                     {profile.role === 'ambassador' ? null : (
                                         <th className="px-4 py-2 font-medium whitespace-nowrap">Referred to</th>
                                     )}
@@ -105,7 +108,7 @@ function AmbassadorsList() {
                                 <tbody className="divide-y divide-slate-800">
                                 {filterEliteAmbassador.length === 0 ? (
                                     <tr>
-                                        <td colSpan={profile.role === 'ambassador' ? 3 : 4} className="px-4 py-10 text-center text-slate-500">
+                                        <td colSpan={profile.role === 'ambassador' ? 4 : 5} className="px-4 py-10 text-center text-slate-500">
                                             You have no {profile.role === "elite_ambassador" ? 'Ambassador' : 'Elite Ambassador'} yet.
                                         </td>
                                     </tr>
@@ -115,6 +118,7 @@ function AmbassadorsList() {
                                             <td className="whitespace-nowrap px-4 py-1 text-slate-400">{index + 1 || '-'}</td>
                                             <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.name || '-'}</td>
                                             <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.phoneNo || '-'}</td>
+                                            <td className="whitespace-nowrap px-4 py-1 text-slate-400">{import.meta.env.VITE_HOST}/lead/loan/{data.id || '-'}</td>
                                             {profile.role === 'ambassador' ? null : (
                                                 <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                                                     <button onClick={() => handleOpen(data)} className='border rounded-lg p-1 text-xs cursor-pointer border-accent'>View Names</button>
@@ -138,7 +142,7 @@ function AmbassadorsList() {
                     {modalOpen &&  
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
                             <div
-                            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto overflow-x-visible rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl sm:p-6"
+                            className="max-h-[90vh] w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl sm:p-6"
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="lead-modal-title-elite-ambassador"
@@ -146,32 +150,36 @@ function AmbassadorsList() {
                                 <div className="flex items-start justify-end gap-3">
                                     <ModalCloseButton onClick={() => setModalOpen(false)} />
                                 </div>
-                                <table className="w-max min-w-full text-left text-xs sm:text-sm">
-                                    <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
-                                    <tr>
-                                        <th className="px-4 py-2 font-medium whitespace-nowrap w-10">Sr No.</th>
-                                        <th className="px-4 py-2 font-medium whitespace-nowrap">Name</th>
-                                        <th className="px-4 py-2 font-medium whitespace-nowrap">Phone No.</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-800">
-                                    {referredTo.length === 0 ? (
+                                <div className='max-w-2xl overflow-x-auto'>
+                                    <table className="w-max min-w-full text-left text-xs sm:text-sm">
+                                        <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
                                         <tr>
-                                            <td colSpan={profile.role === 'ambassador' ? 3 : 4} className="px-4 py-10 text-center text-slate-500">
-                                                No Ambassador yet.
-                                            </td>
+                                            <th className="px-4 py-2 font-medium whitespace-nowrap w-10">Sr No.</th>
+                                            <th className="px-4 py-2 font-medium whitespace-nowrap">Name</th>
+                                            <th className="px-4 py-2 font-medium whitespace-nowrap">Phone No.</th>
+                                            <th className="px-4 py-2 font-medium whitespace-nowrap">ECB MSME Link</th>
                                         </tr>
-                                    ) : (
-                                        referredTo.map((data,index) => (
-                                            <tr key={data.id} className="text-slate-300">
-                                                <td className="whitespace-nowrap px-4 py-1 text-slate-400">{index + 1 || '-'}</td>
-                                                <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.name}</td>
-                                                <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.phoneNo || '-'}</td>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-800">
+                                        {referredTo.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={profile.role === 'ambassador' ? 3 : 4} className="px-4 py-10 text-center text-slate-500">
+                                                    No Ambassador yet.
+                                                </td>
                                             </tr>
-                                        ))
-                                    )}
-                                    </tbody>
-                                </table>
+                                        ) : (
+                                            referredTo.map((data,index) => (
+                                                <tr key={data.id} className="text-slate-300">
+                                                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">{index + 1 || '-'}</td>
+                                                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.name}</td>
+                                                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.phoneNo || '-'}</td>
+                                                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">{import.meta.env.VITE_HOST}/lead/loan/{data.id || '-'}</td>
+                                                </tr>
+                                            ))
+                                        )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     }
