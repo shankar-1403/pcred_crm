@@ -10,6 +10,7 @@ import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
 import { httpsCallable } from 'firebase/functions'
 import { SALUTATIONS } from '../lib/salutation'
+import ModalCloseButton from '../components/ModalCloseButton'
 
 export default function AdminEliteAmbassador() {
   const { user, profile, createUserByAdmin } = useAuth()
@@ -17,6 +18,7 @@ export default function AdminEliteAmbassador() {
   const { usersById } = useUsers()
 
   const [eliteAmbassadorName, setEliteAmbassadorName] = useState('')
+  const [eliteAmbassadorDob, setEliteAmbassadorDob] = useState('')
   const [eliteAmbassadorEmail, setEliteAmbassadorEmail] = useState('')
   const [eliteAmbassadorPassword, setEliteAmbassadorPassword] = useState('')
   const [eliteAmbassadorPhone, setEliteAmbassadorPhone] = useState('')
@@ -27,7 +29,16 @@ export default function AdminEliteAmbassador() {
   const [deletingEliteAmbassadorId, setDeletingEliteAmbassadorId] = useState('')
   const [message, setMessage] = useState('')
   const [formError, setFormError] = useState('')
-
+  const [modalError, setModalError] = useState('')
+  const [editingUid, setEditingUid] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [editForm, setEditForm] = useState({
+    name: '',
+    dob:'',
+    pan:'',
+    email:'',
+    phoneNo: '',
+  })
   const eliteAmbassadorTable = useMemo(() => eliteAmbassador ?? [], [eliteAmbassador])
 
   const {
@@ -57,15 +68,7 @@ export default function AdminEliteAmbassador() {
           .localeCompare(String(b.displayName || b.email || '').toLowerCase()),
       )
   }, [usersById])
-
-  useEffect(() => {
-    if (!user?.uid) {
-      setReferredByUid('')
-      return
-    }
-    setReferredByUid(user.uid)
-  }, [user?.uid])
-
+  
   function referredByLabel(uid) {
     if (!uid) return '—'
     const u = usersById[uid]
@@ -163,6 +166,7 @@ export default function AdminEliteAmbassador() {
         ROLES.ELITE_AMBASSADOR,
         {
           salutation: salutation || null,
+          dob: eliteAmbassadorDob,
           pan: panNorm,
           email: emailTrim,
           phoneNo: phoneStr || null,
@@ -175,6 +179,7 @@ export default function AdminEliteAmbassador() {
       await set(ref(db, `elite_ambassador/${newUid}`), {
         salutation,
         name,
+        dob: eliteAmbassadorDob,
         pan: panNorm,
         phoneNo: phoneStr || null,
         email:emailTrim,
@@ -192,11 +197,12 @@ export default function AdminEliteAmbassador() {
       // })
       setSalutationValue('')
       setEliteAmbassadorName('')
+      setEliteAmbassadorDob('')
       setEliteAmbassadorEmail('')
       setEliteAmbassadorPassword('')
       setEliteAmbassadorPan('')
       setEliteAmbassadorPhone('')
-      setReferredByUid(user.uid)
+      setReferredByUid('')
       setMessage(`Elite ambassador and login added. User UID: ${newUid}`)
     } catch (err) {
       if (eliteWritten && newUid) {
@@ -217,6 +223,78 @@ export default function AdminEliteAmbassador() {
     }
   }
 
+  function openEdit(ea) {
+    setMessage('')
+    setModalError('')
+    setEditingUid(ea?.id || '')
+    setEditForm({
+      name: ea?.name ?? '',
+      dob: ea?.dob ?? '',
+      email: ea?.email ?? '',
+      pan: ea?.pan ?? '',
+      phoneNo: ea?.phoneNo ?? '',
+    })
+  }
+
+  async function saveEdit(e) {
+    e.preventDefault()
+    setMessage('')
+    setModalError('')
+    
+    if (!editingUid) return
+
+    const nextDisplayName = String(editForm.name ?? '').trim()
+    const nextDob = String(editForm.dob ?? '').trim()
+    const nextEmail = String(editForm.email ?? '').trim()
+    const nextPan = String(editForm.pan ?? '').trim()
+    const nextPhoneNo = String(editForm.phoneNo ?? '').trim()
+    setSavingEdit(true)
+    try {
+      await fetch(
+        'https://us-central1-crm-lead-b18f5.cloudfunctions.net/updateUserByAdmin',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uid: editingUid,
+            displayName: nextDisplayName,
+            dob:nextDob,
+            email:nextEmail,
+            pan: nextPan,
+            email: nextEmail,
+            phoneNo: nextPhoneNo,
+          }),
+        },
+      )
+
+      await update(ref(db, `elite_ambassador/${editingUid}`), {
+        name: nextDisplayName,
+        dob: nextDob,
+        email:nextEmail,
+        pan: nextPan,
+        phoneNo: nextPhoneNo,
+        updatedAt: Date.now(),
+        updatedByAdminUid: user?.uid ?? null,
+      })
+
+      setMessage('User updated.')
+      setEditingUid('')
+    } catch (err) {
+      const code = err?.code
+      const details = err?.details
+      const msg = err?.message || 'Could not update user.'
+      setError(
+        [code, details, msg]
+          .filter(Boolean)
+          .join(' — '),
+      )
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
   async function handleDelete(eliteAmbassadorId, label) {
     setMessage('')
     setFormError('')
@@ -227,7 +305,20 @@ export default function AdminEliteAmbassador() {
 
     setDeletingEliteAmbassadorId(eliteAmbassadorId)
     try {
+      await fetch(
+        'https://us-central1-crm-lead-b18f5.cloudfunctions.net/deleteUserByAdmin',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uid: eliteAmbassadorId,
+          }),
+        },
+      )
       await remove(ref(db, `elite_ambassador/${eliteAmbassadorId}`))
+      await remove(ref(db, `users/${eliteAmbassadorId}`))
       setMessage('Elite ambassador deleted.')
     } catch (err) {
       setFormError(err?.message ?? 'Could not delete elite ambassador.')
@@ -272,10 +363,7 @@ export default function AdminEliteAmbassador() {
           Role for the new account is set to Elite ambassador and linked to the elite ambassador
           record below. Sign-in uses PAN and password; email is stored on the profile.
         </p>
-        <form
-          onSubmit={handleCreate}
-          className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-        >
+        <form onSubmit={handleCreate} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className='min-w-0'>
             <label className="block text-sm font-medium text-slate-300">Salutation</label>
             <select
@@ -305,6 +393,16 @@ export default function AdminEliteAmbassador() {
             />
           </div>
           <div className="min-w-0">
+            <label className="block text-sm font-medium text-slate-300">Date of birth</label>
+            <input
+              type="date"
+              required
+              value={eliteAmbassadorDob}
+              onChange={(e) => setEliteAmbassadorDob(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+            />
+          </div>
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-slate-300">
               Login email
             </label>
@@ -318,9 +416,7 @@ export default function AdminEliteAmbassador() {
             />
           </div>
           <div className="min-w-0">
-            <label className="block text-sm font-medium text-slate-300">
-              PAN (login ID)
-            </label>
+            <label className="block text-sm font-medium text-slate-300">PAN (login ID)</label>
             <input
               type="text"
               required
@@ -374,10 +470,6 @@ export default function AdminEliteAmbassador() {
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-slate-500">
-              Defaults to your account ({user?.uid?.slice(0, 8)}…). Pick another user to
-              attribute referrals differently.
-            </p>
           </div>
           <div className="min-w-0 sm:col-span-2 lg:col-span-2 xl:col-span-1">
             <button
@@ -398,7 +490,7 @@ export default function AdminEliteAmbassador() {
           <h2 className="text-sm font-semibold text-slate-300">Elite ambassadors</h2>
         </div>
         <div className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch]">
-          <table className="w-full min-w-[720px] table-auto text-left text-xs sm:text-sm">
+          <table className="w-full min-w-180 table-auto text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
@@ -437,14 +529,27 @@ export default function AdminEliteAmbassador() {
                       {ea.id}
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(ea.id, ea.name)}
-                        disabled={deletingEliteAmbassadorId === ea.id}
-                        className="rounded-lg border border-red-800/60 px-3 py-1 text-xs text-red-300 hover:bg-red-950/40 disabled:opacity-50"
-                      >
-                        {deletingEliteAmbassadorId === ea.id ? 'Deleting…' : 'Delete'}
-                      </button>
+                      <div className="flex gap-4">
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => openEdit(ea)}
+                            className="rounded-lg border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(ea.id, ea.name)}
+                            disabled={deletingEliteAmbassadorId === ea.id}
+                            className="rounded-lg border border-red-800/60 px-3 py-1 text-xs text-red-300 hover:bg-red-950/40 disabled:opacity-50 cursor-pointer"
+                          >
+                            {deletingEliteAmbassadorId === ea.id ? 'Deleting…' : 'Delete'}
+                          </button>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -462,7 +567,68 @@ export default function AdminEliteAmbassador() {
             onPageSizeChange={setTablePageSize}
           />
         ) : null}
+
       </section>
+      {editingUid && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Edit Elite Ambassador</h2>
+                  <p className="mt-1 text-xs text-slate-400">
+                    UID: <code className="font-mono text-slate-300">{editingUid}</code>
+                  </p>
+                </div>
+                <ModalCloseButton onClick={() => setEditingUid('')} />
+              </div>
+
+              <form onSubmit={saveEdit} className="mt-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">Display name</label>
+                  <input type="text" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">Date of birth</label>
+                  <input type="date" value={editForm.dob} onChange={(e) => setEditForm((f) => ({ ...f, dob: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"/>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">PAN</label>
+                  <input type="text" value={editForm.pan} onChange={(e) => setEditForm((f) => ({ ...f, pan: e.target.value }))}className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">Email Id</label>
+                  <input type="text" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">Phone No</label>
+                  <input type="text" value={editForm.phoneNo} onChange={(e) => setEditForm((f) => ({ ...f, phoneNo:e.target.value}))}className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" maxLength={10}/>
+                </div>
+                {modalError && <p className="text-sm text-red-300">{modalError}</p>}
+                {message && <p className="text-sm text-emerald-300">{message}</p>}
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingUid('')}
+                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
+                  >
+                    {savingEdit ? 'Saving…' : 'Save changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+      )}
     </div>
   )
 }

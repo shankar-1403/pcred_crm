@@ -41,6 +41,7 @@ export default function AdminUsers() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
+  const [designation, setDesignation] = useState('')
   const [role, setRole] = useState('')
   const [phoneNo, setPhoneNo] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -48,6 +49,7 @@ export default function AdminUsers() {
   const [editingUid, setEditingUid] = useState('')
   const [editForm, setEditForm] = useState({
     displayName: '',
+    designation:'',
     email:'',
     role: '',
     phoneNo: '',
@@ -88,6 +90,7 @@ export default function AdminUsers() {
     }
     const emailTrim = email.trim()
     const displayTrim = displayName.trim()
+    const designationTrim = designation.trim()
     const phoneTrim = phoneNo.trim()
     setSubmitting(true)
     try {
@@ -95,6 +98,7 @@ export default function AdminUsers() {
         emailTrim,
         password,
         displayTrim,
+        designationTrim,
         role,
         phoneTrim,
         {},
@@ -103,6 +107,7 @@ export default function AdminUsers() {
       setEmail('')
       setPassword('')
       setDisplayName('')
+      setDesignation('')
       setRole('')
     } catch (err) {
       setError(err?.message || 'Could not create user')
@@ -141,6 +146,7 @@ export default function AdminUsers() {
           }),
         },
       )
+      await remove(ref(db, `users/${targetUid}`))
       setMessage('User deleted from Authentication and Database.')
     } catch (err) {
       try {
@@ -166,6 +172,7 @@ export default function AdminUsers() {
     setEditingUid(u?.uid || '')
     setEditForm({
       displayName: u?.displayName ?? '',
+      designation: u?.designation ?? '',
       email: u?.email ?? '',
       phoneNo: u?.phoneNo ?? '',
       role: String(u?.role).trim().toLowerCase(),
@@ -186,6 +193,7 @@ export default function AdminUsers() {
     const nextRole = String(editForm.role ?? '').trim().toLowerCase()
     const nextEmail = String(editForm.email ?? '').trim().toLowerCase()
     const nextDisplayName = String(editForm.displayName ?? '').trim()
+    const nextDesignation = String(editForm.designation ?? '').trim()
     const nextPassword = String(editPassword ?? '').trim()
     const nextPhoneNo = String(editForm.phoneNo ?? '').trim()
     setSavingEdit(true)
@@ -202,6 +210,7 @@ export default function AdminUsers() {
             email: nextEmail,
             password: nextPassword || undefined,
             displayName: nextDisplayName,
+            designation: nextDesignation,
             phoneNo: nextPhoneNo,
           }),
         },
@@ -209,6 +218,7 @@ export default function AdminUsers() {
 
       await update(ref(db, `users/${editingUid}`), {
         displayName: nextDisplayName,
+        designation:nextDesignation,
         email: nextEmail,
         role: nextRole,
         phoneNo: nextPhoneNo,
@@ -255,11 +265,10 @@ export default function AdminUsers() {
 
       <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
         <h2 className="text-lg font-medium text-white">Create account</h2>
-        <form onSubmit={handleCreate} className="mt-4 grid gap-4 md:grid-cols-3">
+        <form onSubmit={handleCreate} className="mt-4 grid gap-4 md:grid-cols-4">
           <div>
             <label className="block text-sm font-medium text-slate-300">Email</label>
             <input
-              type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -269,7 +278,6 @@ export default function AdminUsers() {
           <div>
             <label className="block text-sm font-medium text-slate-300">Password</label>
             <input
-              type="password"
               required
               minLength={6}
               value={password}
@@ -283,6 +291,15 @@ export default function AdminUsers() {
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300">Designation</label>
+            <input
+              type="text"
+              value={designation}
+              onChange={(e) => setDesignation(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
             />
           </div>
@@ -311,9 +328,7 @@ export default function AdminUsers() {
               ))}
             </select>
           </div>
-          <div className="flex flex-wrap items-end justify-end gap-3">
-            {error && <p className="text-sm text-red-300">{error}</p>}
-            {message && <p className="text-sm text-emerald-300">{message}</p>}
+          <div className="mt-6">
             <button
               type="submit"
               disabled={submitting || !isAdmin}
@@ -321,6 +336,11 @@ export default function AdminUsers() {
             >
               {submitting ? 'Creating...' : 'Create user'}
             </button>
+            
+          </div>
+          <div>
+            {error && <p className="text-sm text-red-300">{error}</p>}
+            {message && <p className="text-sm text-emerald-300">{message}</p>}
           </div>
         </form>
       </section>
@@ -331,6 +351,7 @@ export default function AdminUsers() {
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Name</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Designation</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Email</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Team</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">UID</th>
@@ -340,13 +361,13 @@ export default function AdminUsers() {
             <tbody className="divide-y divide-slate-800">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
                     Loading users...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
                     No users found.
                   </td>
                 </tr>
@@ -356,6 +377,7 @@ export default function AdminUsers() {
                     <td className="px-4 py-1 text-white">
                       {u.displayName || u.email || '—'}
                     </td>
+                    <td className="px-4 py-1 text-slate-400">{u.designation || '—'}</td>
                     <td className="px-4 py-1 text-slate-400">{u.email || '—'}</td>
                     <td className="px-4 py-1 text-slate-400">
                       {ROLE_LABELS[u.role] || u.role || '—'}
@@ -431,6 +453,17 @@ export default function AdminUsers() {
                   value={editForm.displayName}
                   onChange={(e) =>
                     setEditForm((f) => ({ ...f, displayName: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Designation</label>
+                <input
+                  type="text"
+                  value={editForm.designation}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, designation: e.target.value }))
                   }
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 />
