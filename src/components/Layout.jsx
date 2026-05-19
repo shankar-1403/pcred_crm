@@ -172,26 +172,28 @@ export default function Layout() {
                     <IconLinkFilled size={15} color='#ffffff'/>
                   </button>
                 )}
-                <button type="button" onClick={() => setProfileOpen((v) => !v)} className='cursor-pointer rounded-full border border-blue-600 p-2 text-sm font-medium hidden lg:block transition-colors'>
-                  <IconUserFilled size={20} className='white'/>
-                </button>
-                {profileOpen && (
-                  <>
-                    <div className="fixed inset-x-0 top-16 left-300 z-40 p-2">
-                      <div className="flex flex-col space-y-1 w-70 rounded-xl border border-slate-800 bg-slate-900/95 p-3 shadow-2xl">
-                        <span className="w-full text-center text-lg font-bold">
-                          {profile?.displayName ?? profile?.email}
-                        </span>
-                        <span className="w-full text-center">
-                          {ROLE_LABELS[role] ?? role}
-                        </span>
-                        <button type="button" onClick={() => {closeMenu(),logout()}} className="rounded-lg border border-red-500/50 px-2 py-1 text-white bg-red-500/20 cursor-pointer transition-colors hover:border-slate-500 hover:bg-slate-800">
-                          Sign out
-                        </button>
+                <div className="relative inline-block">
+                  <button type="button" onClick={() => setProfileOpen((v) => !v)} className='cursor-pointer rounded-full border border-blue-600 p-2 text-sm font-medium hidden lg:block transition-colors'>
+                    <IconUserFilled size={20} className='white'/>
+                  </button>
+                  {profileOpen && (
+                    <>
+                      <div className="absolute top-14 w-70 right-0.5 z-40">
+                        <div className="relative flex flex-col space-y-1 rounded-xl border border-slate-800 bg-slate-900/95 p-3 shadow-2xl">
+                          <span className="w-full text-center text-lg font-bold">
+                            {profile?.displayName ?? profile?.email}
+                          </span>
+                          <span className="w-full text-center">
+                            {ROLE_LABELS[role] ?? role}
+                          </span>
+                          <button type="button" onClick={() => {closeMenu(),logout()}} className="rounded-lg border border-red-500/50 px-2 py-1 text-white bg-red-500/20 cursor-pointer transition-colors hover:border-slate-500 hover:bg-slate-800">
+                            Sign out
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
