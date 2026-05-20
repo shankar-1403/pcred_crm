@@ -38,6 +38,7 @@ export default function AdminEliteAmbassador() {
     pan:'',
     email:'',
     phoneNo: '',
+    password:'',
   })
   const eliteAmbassadorTable = useMemo(() => eliteAmbassador ?? [], [eliteAmbassador])
 
@@ -134,7 +135,7 @@ export default function AdminEliteAmbassador() {
       return
     }
     if (!emailTrim) {
-      setFormError('Email is required for the elite ambassador login.')
+      setFormError('Contact email is required (stored on profile; sign-in uses PAN).')
       return
     }
     const panNorm = normalizePan(eliteAmbassadorPan)
@@ -246,8 +247,17 @@ export default function AdminEliteAmbassador() {
     const nextDisplayName = String(editForm.name ?? '').trim()
     const nextDob = String(editForm.dob ?? '').trim()
     const nextEmail = String(editForm.email ?? '').trim()
-    const nextPan = String(editForm.pan ?? '').trim()
+    const nextPanRaw = String(editForm.pan ?? '').trim()
+    const panNorm = normalizePan(nextPanRaw)
     const nextPhoneNo = String(editForm.phoneNo ?? '').trim()
+    const nextPassword = String(editForm.password ?? '').trim()
+
+    if (!isValidPan(panNorm)) {
+      setModalError('PAN must be 10 characters in format ABCDE1234F (used for sign-in).')
+      return
+    }
+    const authEmail = panToAuthEmail(panNorm)
+
     setSavingEdit(true)
     try {
       await fetch(
@@ -260,11 +270,8 @@ export default function AdminEliteAmbassador() {
           body: JSON.stringify({
             uid: editingUid,
             displayName: nextDisplayName,
-            dob:nextDob,
-            email:nextEmail,
-            pan: nextPan,
-            email: nextEmail,
-            phoneNo: nextPhoneNo,
+            email: authEmail,
+            password: nextPassword || undefined,
           }),
         },
       )
@@ -272,11 +279,20 @@ export default function AdminEliteAmbassador() {
       await update(ref(db, `elite_ambassador/${editingUid}`), {
         name: nextDisplayName,
         dob: nextDob,
-        email:nextEmail,
-        pan: nextPan,
+        email: nextEmail,
+        pan: panNorm,
         phoneNo: nextPhoneNo,
         updatedAt: Date.now(),
         updatedByAdminUid: user?.uid ?? null,
+      })
+
+      await update(ref(db, `users/${editingUid}`), {
+        displayName: nextDisplayName,
+        dob: nextDob,
+        email: nextEmail,
+        pan: panNorm,
+        phoneNo: nextPhoneNo,
+        updatedAt: Date.now(),
       })
 
       setMessage('User updated.')
@@ -285,7 +301,7 @@ export default function AdminEliteAmbassador() {
       const code = err?.code
       const details = err?.details
       const msg = err?.message || 'Could not update user.'
-      setError(
+      setModalError(
         [code, details, msg]
           .filter(Boolean)
           .join(' — '),
@@ -404,7 +420,7 @@ export default function AdminEliteAmbassador() {
           </div>
           <div className="min-w-0">
             <label className="block text-sm font-medium text-slate-300">
-              Login email
+              Contact email
             </label>
             <input
               type="email"
@@ -593,19 +609,24 @@ export default function AdminEliteAmbassador() {
                   <input type="date" value={editForm.dob} onChange={(e) => setEditForm((f) => ({ ...f, dob: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"/>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300">PAN</label>
-                  <input type="text" value={editForm.pan} onChange={(e) => setEditForm((f) => ({ ...f, pan: e.target.value }))}className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                  <label className="block text-sm font-medium text-slate-300">PAN (login ID)</label>
+                  <input type="text" value={editForm.pan} onChange={(e) => setEditForm((f) => ({ ...f, pan: e.target.value.toUpperCase() }))} maxLength={10} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-white uppercase"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300">Email Id</label>
-                  <input type="text" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                  <label className="block text-sm font-medium text-slate-300">Contact email</label>
+                  <input type="email" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                   />
+                  <p className="mt-1 text-xs text-slate-500">Stored on the profile only. Sign-in stays PAN + password.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300">Phone No</label>
                   <input type="text" value={editForm.phoneNo} onChange={(e) => setEditForm((f) => ({ ...f, phoneNo:e.target.value}))}className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" maxLength={10}/>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">Password</label>
+                  <input type="text" value={editForm.password} onChange={(e) => setEditForm((f) => ({ ...f, password: e.target.value }))}className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"/>
                 </div>
                 {modalError && <p className="text-sm text-red-300">{modalError}</p>}
                 {message && <p className="text-sm text-emerald-300">{message}</p>}
