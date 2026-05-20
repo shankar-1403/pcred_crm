@@ -41,6 +41,21 @@ export function assignableSalesUsers(salesUsers, currentUid, usersById) {
   ]
 }
 
+export function assignableManagementUsers(managementUsers, currentUid, usersById) {
+  if (!currentUid) return managementUsers
+  if (managementUsers.some((u) => u.uid === currentUid)) return managementUsers
+  const me = usersById[currentUid]
+  return [
+    {
+      uid: currentUid,
+      displayName: me?.displayName,
+      email: me?.email,
+      isSelfOption: true,
+    },
+    ...managementUsers,
+  ]
+}
+
 /** Options for filtering leads by process assignee (includes Self when needed). */
 export function processUserFilterOptions(processUsers, currentUid, usersById) {
   const rest = processUsers.map((u) => ({

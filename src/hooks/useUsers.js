@@ -56,5 +56,14 @@ export function useUsers() {
     })
     .map(([uid, u]) => ({ uid, ...u }))
 
-  return { users, usersById, processUsers, salesUsers, loading, error }
+    const managementUsers = Object.entries(usersById)
+      .filter(([, u]) => {
+        const role = String(u?.role ?? '')
+          .trim()
+          .toLowerCase()
+        return role === ROLES.MANAGEMENT
+      })
+      .map(([uid, u]) => ({ uid, ...u }))
+
+  return { users, usersById, processUsers, salesUsers, managementUsers, loading, error }
 }
