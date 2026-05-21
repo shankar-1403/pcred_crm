@@ -329,6 +329,15 @@ function AmbassadorsList() {
                                     <th className="px-4 py-2 font-medium whitespace-nowrap">Phone No.</th>
                                     <th className="px-4 py-2 font-medium whitespace-nowrap">ECB MSME Link</th>
                                     {profile.uid === TARGET_UID ? 
+                                        <th className="px-4 py-2 font-medium whitespace-nowrap">PAN</th> : null
+                                    }
+                                    {profile.uid === TARGET_UID ? 
+                                        <th className="px-4 py-2 font-medium whitespace-nowrap">Email Id</th> : null
+                                    }
+                                    {profile.uid === TARGET_UID ? 
+                                        <th className="px-4 py-2 font-medium whitespace-nowrap">Date of Birth</th> : null
+                                    }
+                                    {profile.uid === TARGET_UID ? 
                                         <th className="px-4 py-2 font-medium whitespace-nowrap">Visiting Card</th> : null
                                     }
                                     {profile.uid === TARGET_UID ? 
@@ -353,6 +362,15 @@ function AmbassadorsList() {
                                             <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.name || '-'}</td>
                                             <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.phoneNo || '-'}</td>
                                             <td className="whitespace-nowrap px-4 py-1 text-slate-400">{import.meta.env.VITE_HOST}/lead/loan/{data.id || '-'}</td>
+                                            {profile.uid === TARGET_UID ? 
+                                                <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.pan || '-'}</td> : null
+                                            }
+                                            {profile.uid === TARGET_UID ? 
+                                                <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.email || '-'}</td> : null
+                                            }
+                                            {profile.uid === TARGET_UID ? 
+                                                <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.dob || '-'}</td> : null
+                                            }
                                             {profile.uid === TARGET_UID ? 
                                                 <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                                                     <button onClick={() => generateVisitingElite(data)} className='border rounded-lg p-1 text-xs cursor-pointer border-accent'>Visiting Card</button>
@@ -403,6 +421,15 @@ function AmbassadorsList() {
                                             <th className="px-4 py-2 font-medium whitespace-nowrap">Phone No.</th>
                                             <th className="px-4 py-2 font-medium whitespace-nowrap">ECB MSME Link</th>
                                             {profile.uid === TARGET_UID ? 
+                                                <th className="px-4 py-2 font-medium whitespace-nowrap">PAN</th> : null
+                                            }
+                                            {profile.uid === TARGET_UID ? 
+                                                <th className="px-4 py-2 font-medium whitespace-nowrap">Email Id</th> : null
+                                            }
+                                            {profile.uid === TARGET_UID ? 
+                                                <th className="px-4 py-2 font-medium whitespace-nowrap">Date of Birth</th> : null
+                                            }
+                                            {profile.uid === TARGET_UID ? 
                                                 <th className="px-4 py-2 font-medium whitespace-nowrap">Certificate</th> : null
                                             }
                                             {profile.uid === TARGET_UID ? 
@@ -424,6 +451,15 @@ function AmbassadorsList() {
                                                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.name}</td>
                                                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.phoneNo || '-'}</td>
                                                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">{import.meta.env.VITE_HOST}/lead/loan/{data.id || '-'}</td>
+                                                    {profile.uid === TARGET_UID ? 
+                                                        <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.pan || '-'}</td> : null
+                                                    }
+                                                    {profile.uid === TARGET_UID ? 
+                                                        <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.email || '-'}</td> : null
+                                                    }
+                                                    {profile.uid === TARGET_UID ? 
+                                                        <td className="whitespace-nowrap px-4 py-1 text-slate-400">{data.dob || '-'}</td> : null
+                                                    }
                                                     {profile.uid === TARGET_UID ? 
                                                         <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                                                             <button onClick={() => generateCertificate(data)} className='border rounded-lg p-1 text-xs cursor-pointer border-accent'>Certificate</button>

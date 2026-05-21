@@ -45,11 +45,38 @@ export default function SearchableDropdown({
         window.innerHeight - rect.bottom
 
       setOpenUpward(spaceBelow < dropdownHeight)
+    }
+  }, [open])
 
-      // Auto focus search input
-      setTimeout(() => {
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener(
+      'click',
+      handleClickOutside,
+    )
+
+    return () => {
+      document.removeEventListener(
+        'click',
+        handleClickOutside,
+      )
+    }
+  }, [])
+
+  // Mobile autofocus fix
+  useEffect(() => {
+    if (open) {
+      requestAnimationFrame(() => {
         searchInputRef.current?.focus()
-      }, 0)
+      })
     }
   }, [open])
 
@@ -68,20 +95,21 @@ export default function SearchableDropdown({
     <div
       className={`relative ${className}`}
       ref={dropdownRef}
-      onBlur={(e) => {
-        if (
-          !dropdownRef.current?.contains(
-            e.relatedTarget,
-          )
-        ) {
-          setOpen(false)
-        }
-      }}
     >
       <button
         ref={buttonRef}
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          const next = !open
+          setOpen(next)
+
+          // Direct mobile focus trigger
+          if (!open) {
+            setTimeout(() => {
+              searchInputRef.current?.focus()
+            }, 50)
+          }
+        }}
         className="mt-1 flex w-full items-center justify-between rounded-lg border border-gray-400 bg-white px-3 py-2 text-white"
       >
         <span
@@ -99,7 +127,7 @@ export default function SearchableDropdown({
 
       {open && (
         <div
-          className={`absolute z-50 w-full overflow-hidden rounded-lg border border-slate-400 bg-white shadow-xl ${
+          className={`absolute z-50 w-full rounded-lg border border-slate-400 bg-white shadow-xl ${
             openUpward
               ? 'bottom-full mb-2'
               : 'top-full mt-2'
@@ -110,6 +138,7 @@ export default function SearchableDropdown({
               ref={searchInputRef}
               type="text"
               value={search}
+              autoComplete="off"
               onChange={(e) =>
                 setSearch(e.target.value)
               }
@@ -118,7 +147,14 @@ export default function SearchableDropdown({
             />
           </div>
 
-          <div className="max-h-60 overflow-y-auto p-1">
+          <div
+            className="max-h-60 overflow-y-auto p-1"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y',
+              overscrollBehavior: 'contain',
+            }}
+          >
             {filteredOptions.length === 0 ? (
               <div className="px-3 py-2 text-sm text-slate-400">
                 No results found

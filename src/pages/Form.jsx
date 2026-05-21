@@ -48,6 +48,7 @@ function Form() {
     const { products } = useProducts();
     const states = State.getStatesOfCountry("IN");
     const uid = window.location.href.split("/")[5];
+
     const stateOptions = states.map((state) => ({
         value: state.isoCode,
         label: state.name,

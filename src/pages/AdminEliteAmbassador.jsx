@@ -33,6 +33,7 @@ export default function AdminEliteAmbassador() {
   const [editingUid, setEditingUid] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
   const [editForm, setEditForm] = useState({
+    salutation:'',
     name: '',
     dob:'',
     pan:'',
@@ -229,6 +230,7 @@ export default function AdminEliteAmbassador() {
     setModalError('')
     setEditingUid(ea?.id || '')
     setEditForm({
+      salutation: ea?.salutation ?? '',
       name: ea?.name ?? '',
       dob: ea?.dob ?? '',
       email: ea?.email ?? '',
@@ -244,6 +246,7 @@ export default function AdminEliteAmbassador() {
     
     if (!editingUid) return
 
+    const nextSalutation = String(editForm.salutation ?? '').trim()
     const nextDisplayName = String(editForm.name ?? '').trim()
     const nextDob = String(editForm.dob ?? '').trim()
     const nextEmail = String(editForm.email ?? '').trim()
@@ -277,6 +280,7 @@ export default function AdminEliteAmbassador() {
       )
 
       await update(ref(db, `elite_ambassador/${editingUid}`), {
+        salutation: nextSalutation,
         name: nextDisplayName,
         dob: nextDob,
         email: nextEmail,
@@ -600,8 +604,19 @@ export default function AdminEliteAmbassador() {
 
               <form onSubmit={saveEdit} className="mt-6 space-y-4">
                 <div>
+                  <label className="block text-sm font-medium text-slate-300">Salutation</label>
+                  <select value={editForm.salutation} onChange={(e) => setEditForm((f) => ({ ...f, salutation: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white">
+                    <option value="">-- select --</option>
+                    {SALUTATIONS.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-slate-300">Display name</label>
-                  <input type="text" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                  <input type="text" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                   />
                 </div>
                 <div>

@@ -5,4 +5,5 @@ export const SALUTATIONS = [
   { id: 3, label: "Mrs." },
   { id: 4, label: "Dr." },
   { id: 5, label: "Prof." },
+  { id: 6, label: "M/s." },
 ];

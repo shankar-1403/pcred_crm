@@ -1,32 +1,40 @@
 {
   "rules": {
     "users": {
-      ".read": "auth != null",
+      ".read": true,
       "$uid": {
-        ".write": "auth != null && (auth.uid === $uid || root.child('users/' + auth.uid + '/role').val() === 'admin')"
+        ".write": "auth != null && (auth.uid === $uid || root.child('users/' + auth.uid + '/role').val() === 'admin' || auth.uid === 'thy1xXKWoQXShRv3g31vuE180Uh1')"
       }
     },
     "leads": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": true,
+      ".write": true
     },
     "products": {
-      ".read": "auth != null",
+      ".read": true,
+      ".write": "auth != null && root.child('users/' + auth.uid + '/role').val() === 'admin'"
+    },
+    "category": {
+      ".read": true,
+      ".write": "auth != null && root.child('users/' + auth.uid + '/role').val() === 'admin'"
+    },
+    "services": {
+      ".read": true,
       ".write": "auth != null && root.child('users/' + auth.uid + '/role').val() === 'admin'"
     },
     "statuses": {
-      ".read": "auth != null",
+      ".read": true,
       ".write": "auth != null && root.child('users/' + auth.uid + '/role').val() === 'admin'"
     },
-    "partners": {
-      ".read": "auth != null",
-      ".write": "auth != null"
-    },
     "elite_ambassador": {
-      ".read": "auth != null",
+      ".read": true,
       ".write": "auth != null"
     },
     "ambassador": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "creatives": {
       ".read": "auth != null",
       ".write": "auth != null"
     }
