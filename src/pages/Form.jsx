@@ -223,10 +223,9 @@ function Form() {
     }, [errorMessage]);
 
     const metrics = [
-        { val: "5000+", label: "Entrepreneurs Connected" },
-        { val: "20+", label: "States Covered" },
+        { val: "10 Lakh+", label: "Entrepreneurs Connected" },
         { val: "100+", label: "Startups Supported" },
-        { val: "200+", label: "Business Empowered" },
+        { val: "50K+", label: "Business Empowered" },
     ];
 
     const contacts = [
@@ -234,7 +233,7 @@ function Form() {
             href: "mailto:ecb@ec-bharat.com",
             label: "ecb@ec-bharat.com",
             icon: (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FE9A00" strokeWidth="2">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dac9eb" strokeWidth="2">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                     <polyline points="22,6 12,13 2,6" />
                 </svg>
@@ -244,7 +243,7 @@ function Form() {
             href: "tel:+918698217696",
             label: "+91 86982 17696",
             icon: (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FE9A00" strokeWidth="2">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dac9eb" strokeWidth="2">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.58 3.49 2 2 0 0 1 3.55 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.54a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
                 </svg>
             ),
@@ -253,7 +252,7 @@ function Form() {
             href: "https://ec-bharat.com/",
             label: "www.ec-bharat.com",
             icon: (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FE9A00" strokeWidth="2">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dac9eb" strokeWidth="2">
                     <circle cx="12" cy="12" r="10" />
                     <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                 </svg>
@@ -295,166 +294,184 @@ function Form() {
 
     return (
         <>
-            <div className='bg-gray-100 py-10 h-auto'>
-                <div className="p-2">
-                    <div className="py-2 shadow-lg rounded-xl bg-white border border-gray-400/20 lg:hidden">
-                        <div className="grid grid-cols-3">
-                            <div className='flex justify-center'>
-                                <img src="/pcred-logo-og.png" alt="PCRED" className="h-16 md:h-25 w-auto object-contain"/>
-                            </div>
-                            <div className='flex justify-center'>
-                                <img src="/ecb-logo.webp" alt="ECB" className="h-16 md:h-14 w-auto object-contain"/>
-                            </div>
-                            <div className='flex justify-center'>
-                                <img src="/insurath.png" alt="Insurath" className="h-16 md:h-25 w-auto object-contain"/>
+            <div className='bg-white py-4 h-auto relative'>
+                <div
+                    className="absolute inset-0 opacity-15"
+                    style={{
+                    backgroundImage: 'radial-gradient(circle at 20% 40%, rgb(30, 92, 174) 0%, transparent 45%), radial-gradient(circle at 80% 60%, rgb(38, 77, 115) 0%, transparent 45%), radial-gradient(circle at 55% 80%, rgb(208, 186, 222) 0%, transparent 35%)',}}
+                />
+                <div className='relative'>
+                    <div className="px-2 mb-4 lg:hidden">
+                        <div className='bg-[#dac9eb] shadow-xl rounded-2xl border-2 border-[#dac9eb]/20 px-6 py-3'>
+                            <p className='text-[#143973] text-xl font-bold'><span style={{ fontFamily: "GreatVibes" }} className='text-4xl'>Namaste</span> !</p>
+                            <p className='text-[#143973] text-lg font-semibold'>Welcome to the ECB Ecosystem, your one-stop platform for end-to-end solutions.</p>
+                        </div>
+                    </div>
+                    <div className="px-2 mb-2 lg:hidden">
+                        <div className="py-2 shadow-xl rounded-xl border border-[#dac9eb]/20 bg-white">
+                            <div className="grid grid-cols-3">
+                                <div className='flex justify-center items-center'>
+                                    <img src="/pcred_logo_og.webp" alt="PCRED" className="h-18 md:h-26 object-contain"/>
+                                </div>
+                                <div className='flex justify-center items-center'>
+                                    <img src="/ecb-logo.webp" alt="ECB" className="h-10 md:h-18 object-contain"/>
+                                </div>
+                                <div className='flex justify-center items-center'>
+                                    <img src="/insurath.png" alt="Insurath" className="h-16 md:h-25 object-contain"/>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div className="rounded-xl p-2 max-w-6xl mx-auto">
-                    <div className="flex flex-col lg:flex-row gap-6 lg:items-stretch">
-                        <div className="w-full bg-white border border-gray-400/40 rounded-2xl lg:w-1/2 py-4 px-6">
-                            <h1 className='text-black text-xl font-bold mb-4 text-center underline'>ECB MSME Form</h1>
-                            <form onSubmit={saveLead} className='flex flex-col gap-2'>
-                                <div>
-                                    <label className='text-black' htmlFor="name">Full Name <span className='text-red-600 text-sm'>*</span></label>
-                                    <input value={form.clientName} onChange={(e) =>setForm((f) => ({ ...f, clientName: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
-                                </div>
-                                <div>
-                                    <label className='text-black' htmlFor="company">Company Name <span className='text-red-600 text-sm'>*</span></label>
-                                    <input value={form.company} onChange={(e) =>setForm((f) => ({ ...f, company: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
-                                </div>
-                                <div>
-                                    <label className='text-black' htmlFor="clientPhoneNo">Mobile No. <span className='text-red-600 text-sm'>*</span></label>
-                                    <input type="number" value={form.clientPhoneNo} onChange={(e) =>setForm((f) => ({ ...f, clientPhoneNo: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' maxLength={10}/>
-                                </div>
-                                <div>
-                                    <label className='text-black' htmlFor="email">Email <span className='text-red-600 text-sm'>*</span></label>
-                                    <input type="email" value={form.clientEmail} onChange={(e) =>setForm((f) => ({ ...f, clientEmail: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
-                                </div>
-                                <div>
-                                    <label className='text-black' htmlFor="state">State <span className='text-red-600 text-sm'>*</span></label>
-                                    <SearchableDropdown
-                                        placeholder="Search State…"
-                                        options={stateOptions}
-                                        value={selectedState}
-                                        handleChange={handleStateChange}
-                                    />
-                                </div>
-                                <div>
-                                    <label className='text-black' htmlFor="city">City <span className='text-red-600 text-sm'>*</span></label>
-                                    <SearchableDropdown
-                                        placeholder="Search City…"
-                                        options={citiesOptions}
-                                        value={form.city}
-                                        handleChange={(e) =>setForm((f) => ({ ...f, city: e.target.value }))}
-                                    />
-                                </div>
-                                <div>
-                                    <label className='text-black' htmlFor="category">Category <span className='text-red-600 text-sm'>*</span></label>
-                                    <SearchableDropdown
-                                        placeholder="Search Category…"
-                                        options={categoryOptions}
-                                        value={selectedCategory}
-                                        handleChange={handleCategoryChange}
-                                    />
-                                </div>
-                                {selectedCategory === "-Os1EruiNYLx2XjzRUdF" ?
-                                    <>
-                                        <div>
-                                            <label className='text-black' htmlFor="products">Products <span className='text-red-600 text-sm'>*</span></label>
-                                            <select value={form.productId} onChange={(e) =>setForm((f) => ({ ...f, productId: e.target.value }))} className='appearance-none mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' disabled={!selectedCategory}>
-                                                <option value="">-- select product --</option>
-                                                {products.map((item) => (
-                                                    <option key={item.id} value={item.id}>
-                                                        {item.name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className='text-black' htmlFor="amount">Amount <span className='text-red-600 text-sm'>*</span></label>
-                                            <input type="number" value={form.totalAmount} onChange={(e) =>setForm((f) => ({ ...f, totalAmount: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
-                                        </div>
-                                    </> : 
-                                    <div>
-                                        <label className='text-black' htmlFor="service">Services <span className='text-red-600 text-sm'>*</span></label>
+                    <div className="rounded-xl p-2 max-w-6xl mx-auto">
+                        <div className='hidden lg:block bg-[#dac9eb] shadow-xl rounded-2xl border-2 border-[#dac9eb]/20 mb-6 px-6 py-3'>
+                            <p className='text-[#143973] text-4xl'><span style={{ fontFamily: "GreatVibes" }} className='text-4xl font-bold'>Namaste</span> !</p>
+                            <p className='text-[#143973] text-lg font-semibold'>Welcome to the ECB Ecosystem, your one-stop platform for end-to-end solutions.</p>
+                        </div>
+                        <div className="flex flex-col lg:flex-row gap-6 lg:items-stretch">
+                            <div className="w-full bg-white shadow-xl rounded-2xl border-2 border-[#143973]/20 lg:w-1/2 py-4 px-3 md:px-6">
+                                <h1 className='text-[#143973] text-xl font-bold underline'>ECB MSME Form</h1>
+                                <p className='mb-4 text-[#143973]'>Share your business requirements and discover solutions designed for MSME growth.</p>
+                                <form onSubmit={saveLead} className='grid grid-cols-2 md:grid-cols-2 lg:grid-cols-1 gap-2'>
+                                    <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                        <label className='text-black' htmlFor="name">Full Name <span className='text-red-600 text-sm'>*</span></label>
+                                        <input value={form.clientName} onChange={(e) =>setForm((f) => ({ ...f, clientName: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
+                                    </div>
+                                    <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                        <label className='text-black' htmlFor="company">Company Name <span className='text-red-600 text-sm'>*</span></label>
+                                        <input value={form.company} onChange={(e) =>setForm((f) => ({ ...f, company: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
+                                    </div>
+                                    <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                        <label className='text-black' htmlFor="clientPhoneNo">Mobile No. <span className='text-red-600 text-sm'>*</span></label>
+                                        <input type="number" value={form.clientPhoneNo} onChange={(e) =>setForm((f) => ({ ...f, clientPhoneNo: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' maxLength={10}/>
+                                    </div>
+                                    <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                        <label className='text-black' htmlFor="email">Email <span className='text-red-600 text-sm'>*</span></label>
+                                        <input type="email" value={form.clientEmail} onChange={(e) =>setForm((f) => ({ ...f, clientEmail: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
+                                    </div>
+                                    <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                        <label className='text-black' htmlFor="state">State <span className='text-red-600 text-sm'>*</span></label>
                                         <SearchableDropdown
-                                            placeholder="Search Service…"
-                                            options={selectedService}
-                                            value={form.serviceId}
-                                            handleChange={(e) =>setForm((f) => ({ ...f, serviceId: e.target.value }))}
+                                            placeholder="Search State…"
+                                            options={stateOptions}
+                                            value={selectedState}
+                                            handleChange={handleStateChange}
                                         />
                                     </div>
-                                }
-                                <div>
-                                    <label className='text-black' htmlFor="referred_by">Referred by</label>
-                                    <input value={form.referred_by} onChange={(e) =>setForm((f) => ({ ...f, referred_by: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
-                                </div>
-                                <div>
-                                    <label className='text-black' htmlFor="remarks">Remarks</label>
-                                    <textarea  value={form.description} onChange={(e) =>setForm((f) => ({ ...f, description: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
-                                </div>
-                                <button type="submit" className="mt-2 w-full bg-[#172742] hover:bg-[#172742] active:scale-[0.98] text-white font-semibold text-sm py-2.5 rounded-lg transition-colors tracking-wide cursor-pointer" disabled={saving}>{saving ? 'Submitting' : 'Submit'}</button>
-                                <div>
-                                    {errorMessage && <span className='text-red-500 text-sm'>{errorMessage}</span>}
-                                    {message && <span className='text-green-500 text-sm'>{message}</span>}
-                                </div>
-                            </form>
-                        </div>
+                                    <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                        <label className='text-black' htmlFor="city">City <span className='text-red-600 text-sm'>*</span></label>
+                                        <SearchableDropdown
+                                            placeholder="Search City…"
+                                            options={citiesOptions}
+                                            value={form.city}
+                                            handleChange={(e) =>setForm((f) => ({ ...f, city: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                        <label className='text-black' htmlFor="category">Category <span className='text-red-600 text-sm'>*</span></label>
+                                        <SearchableDropdown
+                                            placeholder="Search Category…"
+                                            options={categoryOptions}
+                                            value={selectedCategory}
+                                            handleChange={handleCategoryChange}
+                                        />
+                                    </div>
+                                    {selectedCategory === "-Os1EruiNYLx2XjzRUdF" ?
+                                        <>
+                                            <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                                <label className='text-black' htmlFor="products">Products <span className='text-red-600 text-sm'>*</span></label>
+                                                <select value={form.productId} onChange={(e) =>setForm((f) => ({ ...f, productId: e.target.value }))} className='appearance-none mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' disabled={!selectedCategory}>
+                                                    <option value="">-- select product --</option>
+                                                    {products.map((item) => (
+                                                        <option key={item.id} value={item.id}>
+                                                            {item.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                                <label className='text-black' htmlFor="amount">Amount <span className='text-red-600 text-sm'>*</span></label>
+                                                <input type="number" value={form.totalAmount} onChange={(e) =>setForm((f) => ({ ...f, totalAmount: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
+                                            </div>
+                                        </> : 
+                                        <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                            <label className='text-black' htmlFor="service">Services <span className='text-red-600 text-sm'>*</span></label>
+                                            <SearchableDropdown
+                                                placeholder="Search Service…"
+                                                options={selectedService}
+                                                value={form.serviceId}
+                                                handleChange={(e) =>setForm((f) => ({ ...f, serviceId: e.target.value }))}
+                                            />
+                                        </div>
+                                    }
+                                    <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                        <label className='text-black' htmlFor="referred_by">Referred by</label>
+                                        <input value={form.referred_by} onChange={(e) =>setForm((f) => ({ ...f, referred_by: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
+                                    </div>
+                                    <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                        <label className='text-black' htmlFor="remarks">Remarks</label>
+                                        <textarea  value={form.description} onChange={(e) =>setForm((f) => ({ ...f, description: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
+                                    </div>
+                                    <div className='col-span-2'>
+                                        <button type="submit" className="mt-2 w-full bg-[#143973] hover:bg-[#143973] active:scale-[0.98] text-white font-semibold text-sm py-2.5 rounded-lg transition-colors tracking-wide cursor-pointer" disabled={saving}>{saving ? 'Submitting' : 'Submit'}</button>
+                                    </div>
+                                    <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                        {errorMessage && <span className='text-red-500 text-sm'>{errorMessage}</span>}
+                                        {message && <span className='text-green-500 text-sm'>{message}</span>}
+                                    </div>
+                                </form>
+                            </div>
 
-                        <div className="w-full lg:w-1/2 flex flex-col">
-                            <div className="flex flex-col gap-4 rounded-xloverflow-hidden h-full min-h-full">
-
-                                <div className="p-2 md:p-6 shadow-lg hidden lg:block rounded-xl bg-white border border-gray-400/20">
-                                    <div className="grid grid-cols-3">
-                                        <a href='https://www.pcred.org/' className='flex justify-center items-center'>
-                                            <img src="/pcred-logo-og.png" alt="PCRED" className="h-16 md:h-25 w-auto object-contain"/>
-                                        </a>
-                                        <a href='https://ec-bharat.com/' className='flex justify-center items-center'>
+                            <div className="w-full lg:w-1/2 flex flex-col gap-6">
+                                <div className="p-2 md:p-6 shadow-xl hidden lg:block rounded-xl bg-white border-2 border-[#143973]/20">
+                                    <div className='grid grid-cols-3'>
+                                        <a href='https://ec-bharat.com/' className='flex justify-center items-center border-r'>
                                             <img src="/ecb-logo.webp" alt="ECB" className="h-16 md:h-14 w-auto object-contain"/>
                                         </a>
+                                        <a href='https://www.pcred.org/' className='flex justify-center items-center border-r'>
+                                            <img src="/pcred_logo_og.webp" alt="PCRED" className="h-16 md:h-21 w-auto object-contain"/>
+                                        </a>
                                         <a href='https://insurath.com/' className='flex justify-center items-center'>
-                                            <img src="/insurath.png" alt="Insurath" className="h-16 md:h-25 w-auto object-contain"/>
+                                            <img src="/insurath.png" alt="Insurath" className="h-16 md:h-18 w-auto object-contain"/>
                                         </a>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-2 md:p-6 shadow-lg rounded-xl bg-[#172742] border border-gray-400/20">
+                                <div className="grid grid-cols-3 md:grid-cols-3 gap-2 p-2 md:p-6 shadow-lg rounded-xl bg-[#143973] border border-[#dac9eb]/20">
                                     {metrics.map((m) => (
-                                        <div key={m.label} className="border border-white rounded-lg py-3 px-5 text-center">
-                                            <span className="block text-lg font-bold text-amber-500">{m.val}</span>
+                                        <div key={m.label} className="border border-[#dac9eb] rounded-lg py-3 px-1 md:px-8 text-center">
+                                            <span className="block text-lg font-bold text-[#dac9eb]">{m.val}</span>
                                             <span className="block text-xs text-white mt-1 whitespace-wrap">{m.label}</span>
                                         </div>
                                     ))}
                                 </div>
-                                <div className="p-2 md:p-6 shadow-lg rounded-xl bg-[#172742]">
-                                    <p className="text-[15px] tracking-[2px] uppercase text-slate-300 font-semibold mb-2">
+                                <div className="p-2 md:p-6 shadow-lg rounded-xl bg-[#143973]">
+                                    <p className="text-[15px] tracking-[2px] uppercase text-white font-semibold mb-2">
                                         Get in Touch
                                     </p>
 
                                     <div className="rounded-lg flex flex-col gap-2.5">
                                         {contacts.map((c) => (
-                                            <a
-                                                key={c.label}
-                                                href={c.href}
-                                                target='_blank'
-                                                rel="noreferrer"
-                                                className="flex items-center gap-2.5 no-underline"
-                                            >
-                                                <div className="w-6 h-6 rounded bg-amber-500/20 border border-blue-900/30 flex items-center justify-center shrink-0">
-                                                    {c.icon}
-                                                </div>
-                                                <span className="text-sm text-white">{c.label}</span>
-                                            </a>
+                                            <div>
+                                                <a
+                                                    key={c.label}
+                                                    href={c.href}
+                                                    target='_blank'
+                                                    rel="noreferrer"
+                                                    className="flex items-center gap-2.5 no-underline"
+                                                >
+                                                    <div className="w-6 h-6 rounded bg-[#dac9eb]/20 border border-blue-900/30 flex items-center justify-center shrink-0">
+                                                        {c.icon}
+                                                    </div>
+                                                    <span className="text-sm text-white">{c.label}</span>
+                                                </a>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
-
                             </div >
-                        </div >
 
-                    </div >
+                        </div >
+                    </div>
                 </div>
             </div>
         </>

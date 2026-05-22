@@ -137,3 +137,14 @@ input[type='datetime-local']::-moz-calendar-picker-indicator {
 .crm-thin-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgb(100 116 139);
 }
+
+@font-face {
+  font-family: 'GreatVibes';
+  src: url('/fonts/GreatVibes-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.font-great-vibes {
+  font-family: 'GreatVibes', cursive;
+}
