@@ -7,6 +7,7 @@ import { useProducts } from '../hooks/useProducts'
 import { useCategory } from '../hooks/useCategory'
 import { useServices } from '../hooks/useServices'
 import { useStatuses } from '../hooks/useStatuses'
+import { SOURCES } from '../lib/source'
 import { assignedUids } from '../lib/leads'
 import {
   resolveAmbassadorName,
@@ -29,7 +30,7 @@ export default function LeadDetailsModal({
   const { profile } = useAuth()
   const role = String(profile?.role ?? '').trim().toLowerCase()
   const isRestrictedExternalRole =
-    role === ROLES.ELITE_AMBASSADOR || role === ROLES.AMBASSADOR
+    role === ROLES.ELITE_AMBASSADOR || role === ROLES.AMBASSADOR || role === ROLES.EMPLOYEES
 
   const { products } = useProducts()
   const { category } = useCategory()
@@ -109,10 +110,9 @@ export default function LeadDetailsModal({
               ) : null}
               <Row label="Status" value={statusLabel} />
               <Row label="Date" value={lead.leadDate || '—'} />
-              <Row
-                label="Updated status date"
-                value={lead.updatedStatusDate || '—'}
-              />
+              <Row label="Updated status date" value={lead.updatedStatusDate || '—'}/>
+              <Row label="Referred by" value={lead.referred_by || '—'}/>
+              <Row label="Source" value={getSourceName(lead.sourceId, SOURCES) || '—'}/>
             </section>
 
             <section className="space-y-3">
@@ -225,6 +225,12 @@ function getProductName(productId, products) {
   if (!productId) return 'N/A'
   const item = products.find((p) => p.id === productId)
   return item?.name?.trim()
+}
+
+function getSourceName(sourceId, sources) {
+  if (!sourceId) return 'N/A'
+  const item = sources.find((s) => s.id === sourceId)
+  return item?.label?.trim()
 }
 
 function getCategoryName(categoryId, category) {

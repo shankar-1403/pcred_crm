@@ -29,10 +29,10 @@ export default function Employees() {
     const { leads, loading } = useLeads()
     const { usersById } = useUsers()
     const [leadSearch, setLeadSearch] = useState('')
-    const [viewLead, setViewLead] = useState(null)
     const [fromDate, setFromDate] = useState('')
     const [toDate, setToDate] = useState('')
     const [editLeadId, setEditLeadId] = useState(null)
+    const [viewLead, setViewLead] = useState(null)
     const [editForm, setEditForm] = useState({
         company: '',
         clientName: '',
@@ -174,6 +174,7 @@ export default function Employees() {
                     <th className="px-4 py-2 font-medium whitespace-nowrap">Service</th>
                     <th className="px-4 py-2 font-medium whitespace-nowrap">Status</th>
                     <th className="px-4 py-2 font-medium whitespace-nowrap">Lead date</th>
+                    <th className="px-4 py-2 font-medium whitespace-nowrap">Action</th>
                 </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
@@ -202,6 +203,18 @@ export default function Employees() {
                             <span className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">{labelForLeadStatus(statusLabelByValue, lead.status) ||'New'}</span>
                         </td>
                         <td className="px-4 py-1 text-xs text-slate-500 whitespace-nowrap">{lead.leadDate || '-'}</td>
+                        <td className="whitespace-nowrap px-4 py-1">
+                            <div className="flex flex-nowrap items-center gap-2">
+                                <button
+                                type="button"
+                                onClick={() => setViewLead(lead)}
+                                title="View details"
+                                className="rounded-lg border border-slate-600 px-2 py-1 text-sm text-slate-300 hover:bg-slate-800"
+                                >
+                                View Details
+                                </button>
+                            </div>
+                        </td>
                     </tr>
                     ))
                 )}
@@ -216,6 +229,19 @@ export default function Employees() {
             onPageChange={setTablePage}
             onPageSizeChange={setTablePageSize}
             />
+            {viewLead && (
+                <LeadDetailsModal
+                    lead={viewLead}
+                    usersById={usersById}
+                    showPartner={Boolean(
+                    viewLead.eliteAmbassadorId ||
+                        viewLead.eliteAmbassadorName ||
+                        viewLead.ambassadorId ||
+                        viewLead.ambassadorName,
+                    )}
+                    onClose={() => setViewLead(null)}
+                />
+            )}
         </div>
     </div>
   )

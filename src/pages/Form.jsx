@@ -15,6 +15,7 @@ import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect';
 import SearchableDropdown from '../components/SearchSelect';
 import { useUsers } from '../hooks/useUsers';
 import { formatAmountForCsv } from '../lib/csv';
+import { SOURCES } from '../lib/source';
 
 const emptyForm = {
   clientName: '',
@@ -26,6 +27,7 @@ const emptyForm = {
   categoryId:'',
   serviceId:'',
   totalAmount:'',
+  sourceId:'',
   referred_by:'',
   description: '',
 };
@@ -164,6 +166,7 @@ function Form() {
                 serviceId: form.serviceId || null,
                 productId: form.productId || null,
                 totalAmount: form.totalAmount || '',
+                sourceId: form.sourceId,
                 referred_by: form.referred_by || '',
                 description: form.description.trim(),
                 [label()] : uid,
@@ -224,6 +227,7 @@ function Form() {
 
     const metrics = [
         { val: "10 Lakh+", label: "Entrepreneurs Connected" },
+        { val: "20+", label: "States Covered" },
         { val: "100+", label: "Startups Supported" },
         { val: "50K+", label: "Business Empowered" },
     ];
@@ -404,6 +408,17 @@ function Form() {
                                         </div>
                                     }
                                     <div className='col-span-2 md:col-span-1 lg:col-span-2'>
+                                        <label className='text-black' htmlFor="source">How did you hear about ECB?  <span className='text-red-600 text-sm'>*</span></label>
+                                        <select value={form.sourceId} onChange={(e) =>setForm((f) => ({ ...f, sourceId: e.target.value }))} className='appearance-none mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black'>
+                                            <option value="">-- select source --</option>
+                                            {SOURCES.map((item) => (
+                                                <option key={item.id} value={item.id}>
+                                                    {item.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className='col-span-2 md:col-span-1 lg:col-span-2'>
                                         <label className='text-black' htmlFor="referred_by">Referred by</label>
                                         <input value={form.referred_by} onChange={(e) =>setForm((f) => ({ ...f, referred_by: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
                                     </div>
@@ -436,9 +451,9 @@ function Form() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-3 md:grid-cols-3 gap-2 p-2 md:p-6 shadow-lg rounded-xl bg-[#143973] border border-[#dac9eb]/20">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 p-2 md:p-6 shadow-lg rounded-xl bg-[#143973] border border-[#dac9eb]/20">
                                     {metrics.map((m) => (
-                                        <div key={m.label} className="border border-[#dac9eb] rounded-lg py-3 px-1 md:px-8 text-center">
+                                        <div key={m.label} className="border border-[#dac9eb] rounded-lg py-3 px-1 md:px-5 text-center">
                                             <span className="block text-lg font-bold text-[#dac9eb]">{m.val}</span>
                                             <span className="block text-xs text-white mt-1 whitespace-wrap">{m.label}</span>
                                         </div>

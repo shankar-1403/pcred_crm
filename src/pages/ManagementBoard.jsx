@@ -224,6 +224,7 @@ export default function ManagementBoard() {
     totalPages: tableTotalPages,
     pageItems: tablePageItems,
   } = usePagination(filtered)
+  console.log(tablePageItems);
 
   function nameFor(uid) {
     const u = usersById[uid]
@@ -714,6 +715,7 @@ export default function ManagementBoard() {
           <table className="min-w-max w-full text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
+                <th className="px-4 py-2 font-medium">Sr No.</th>
                 <th className="px-4 py-2 font-medium">Elite ambassador</th>
                 <th className="px-4 py-2 font-medium">Ambassador</th>
                 <th className="px-4 py-2 font-medium">Company</th>
@@ -759,10 +761,11 @@ export default function ManagementBoard() {
                   </td>
                 </tr>
               ) : (
-                tablePageItems.map((lead) => {
+                tablePageItems.map((lead,index) => {
                   const assignees = assignedUids(lead.assignedTo)
                   return (
                     <tr key={lead.id} className="text-slate-300">
+                      <td className="px-4 py-1 text-slate-400">{index+1}</td>
                       <td className="px-4 py-1">
                         {eliteAmbassadorNameFor(
                           lead.eliteAmbassadorId,
