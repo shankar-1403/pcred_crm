@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { useUsers } from '../hooks/useUsers'
 import { db, functions } from '../lib/firebase'
 import { auth } from '../lib/firebase'
+import { SALUTATIONS } from '../lib/salutation'
 
 const teamRoleOptionsCreate = [
   ROLES.MANAGEMENT,
@@ -38,6 +39,7 @@ export default function AdminUsers() {
   const { usersById, loading } = useUsers()
   const isAdmin = String(profile?.role ?? '').trim().toLowerCase() === ROLES.ADMIN
 
+  const [salutation, setSalutation] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -48,6 +50,7 @@ export default function AdminUsers() {
   const [deletingUid, setDeletingUid] = useState('')
   const [editingUid, setEditingUid] = useState('')
   const [editForm, setEditForm] = useState({
+    salutation:'',
     displayName: '',
     designation:'',
     email:'',
@@ -88,6 +91,7 @@ export default function AdminUsers() {
       )
       return
     }
+    const salutationTrim = salutation.trim()
     const emailTrim = email.trim()
     const displayTrim = displayName.trim()
     const designationTrim = designation.trim()
@@ -95,6 +99,7 @@ export default function AdminUsers() {
     setSubmitting(true)
     try {
       const uid = await createUserByAdmin(
+        salutationTrim,
         emailTrim,
         password,
         displayTrim,
@@ -171,6 +176,7 @@ export default function AdminUsers() {
     setError('')
     setEditingUid(u?.uid || '')
     setEditForm({
+      salutation: u.salutation ?? '',
       displayName: u?.displayName ?? '',
       designation: u?.designation ?? '',
       email: u?.email ?? '',
@@ -190,6 +196,7 @@ export default function AdminUsers() {
     }
     if (!editingUid) return
 
+    const nextSalutation = String(editForm.salutation ?? '').trim()
     const nextRole = String(editForm.role ?? '').trim().toLowerCase()
     const nextEmail = String(editForm.email ?? '').trim().toLowerCase()
     const nextDisplayName = String(editForm.displayName ?? '').trim()
@@ -207,6 +214,7 @@ export default function AdminUsers() {
           },
           body: JSON.stringify({
             uid: editingUid,
+            salutation: nextSalutation,
             email: nextEmail,
             password: nextPassword || undefined,
             displayName: nextDisplayName,
@@ -217,6 +225,7 @@ export default function AdminUsers() {
       )
 
       await update(ref(db, `users/${editingUid}`), {
+        salutation: nextSalutation,
         displayName: nextDisplayName,
         designation:nextDesignation,
         email: nextEmail,
@@ -240,6 +249,11 @@ export default function AdminUsers() {
     } finally {
       setSavingEdit(false)
     }
+  }
+
+  function salutationLabel(salutationId) {
+    const salutationData = SALUTATIONS.find((f) => f.id == salutationId)
+    return salutationData?.label;
   }
 
   return (
@@ -266,6 +280,19 @@ export default function AdminUsers() {
       <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
         <h2 className="text-lg font-medium text-white">Create account</h2>
         <form onSubmit={handleCreate} className="mt-4 grid gap-4 md:grid-cols-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300">Salutation</label>
+            <select
+              value={editForm.salutation}
+              onChange={(e) => setSalutation(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+            >
+              <option value={""}>-- select --</option>
+              {SALUTATIONS.map((salutation) => (
+                <option key={salutation.id} value={salutation.id}>{salutation.label}</option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="block text-sm font-medium text-slate-300">Email</label>
             <input
@@ -375,7 +402,7 @@ export default function AdminUsers() {
                 tablePageItems.map((u) => (
                   <tr key={u.uid} className="text-slate-300">
                     <td className="px-4 py-1 text-white">
-                      {u.displayName || u.email || '—'}
+                      {salutationLabel(u.salutation)} {u.displayName || u.email || '—'}
                     </td>
                     <td className="px-4 py-1 text-slate-400">{u.designation || '—'}</td>
                     <td className="px-4 py-1 text-slate-400">{u.email || '—'}</td>
@@ -444,6 +471,22 @@ export default function AdminUsers() {
             </div>
 
             <form onSubmit={saveEdit} className="mt-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Salutation</label>
+                <select
+                  value={editForm.salutation}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, salutation: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                >
+                  <option value={""}>-- select --</option>
+                  {SALUTATIONS.map((salutation) => (
+                    <option key={salutation.id} value={salutation.id}>{salutation.label}</option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-300">
                   Display name

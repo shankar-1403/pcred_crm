@@ -176,7 +176,7 @@ export default function App() {
             <Route
               path="certificate"
               element={
-                <ProtectedRoute roles={[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR]}>
+                <ProtectedRoute roles={[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR]}>
                   <Certificate />
                 </ProtectedRoute>
               }
@@ -192,7 +192,7 @@ export default function App() {
             <Route
               path="visiting-card"
               element={
-                <ProtectedRoute roles={[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR]}>
+                <ProtectedRoute roles={[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR]}>
                   <AmbassadorVisiting />
                 </ProtectedRoute>
               }

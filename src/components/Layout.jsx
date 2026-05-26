@@ -121,7 +121,7 @@ export default function Layout() {
                     Ambassadors List
                   </NavLink>
                 )}
-                {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
                   <NavLink to="/certificate" className={linkClass} onClick={closeMenu}>
                     Certificate
                   </NavLink>
@@ -141,14 +141,14 @@ export default function Layout() {
                     Creative
                   </NavLink>
                 )}
+                {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                  <NavLink to="/visiting-card" className={linkClass} onClick={closeMenu}>
+                    Visiting Card
+                  </NavLink>
+                )}
                 {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
                   <NavLink to="/sales-material" className={linkClass} onClick={closeMenu}>
                     Sales Material
-                  </NavLink>
-                )}
-                {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
-                  <NavLink to="/visiting-card" className={linkClass} onClick={closeMenu}>
-                    Visiting Card
                   </NavLink>
                 )}
                 {(role === ROLES.ADMIN || profile?.uid === "thy1xXKWoQXShRv3g31vuE180Uh1") && (

@@ -5,9 +5,11 @@ import { useAmbassador } from '../hooks/useAmbassador';
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador';
 import certificate from "../../public/certificate.png";
 import { SALUTATIONS } from '../lib/salutation';
+import { useUsers } from '../hooks/useUsers';
 
 function Certificate() {
     const { profile, user } = useAuth();
+    const {users} = useUsers();
     const {ambassador} = useAmbassador();
     const {eliteAmbassador} = useEliteAmbassador();
     const name = profile.displayName;
@@ -21,9 +23,10 @@ function Certificate() {
     })
 
     const ambassadorData = ambassador.find((data) => uid === data.id);
+    const employeeData = users.find((data) => uid === data.id);
     const eliteAmbassadorData = eliteAmbassador.find((data)=> uid === data.id);
 
-    const salutationValue = ambassadorData?.salutation || eliteAmbassadorData?.salutation;
+    const salutationValue = employeeData?.salutation || ambassadorData?.salutation || eliteAmbassadorData?.salutation;
     const salutationName = SALUTATIONS.find(item => item.id == salutationValue);
 
     const loadFont = async () => {

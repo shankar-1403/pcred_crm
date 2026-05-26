@@ -7,9 +7,11 @@ import businessTwoSmall from "../../public/business_2_small.png";
 import businessTwoBig from "../../public/business_2_big.png";
 import { SALUTATIONS } from '../lib/salutation';
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador';
+import { useUsers } from '../hooks/useUsers';
 
 function AmbassadorVisiting() {
     const { profile, user } = useAuth();
+    const {users} = useUsers();
     const {ambassador} = useAmbassador();
     const {eliteAmbassador} = useEliteAmbassador();
     const name = profile.displayName;
@@ -18,7 +20,8 @@ function AmbassadorVisiting() {
     const phone = profile.phoneNo;
     const uid = profile.uid;
     const roleName = profile.role;
-    const role = roleName === "elite_ambassador" ? "Elite Ambassador" : "Ambassador";
+    const designation = profile.designation
+    const role = roleName === "elite_ambassador" ? "Elite Ambassador" : roleName === "ambassador" ? "Ambassador" : designation;
     const ambassador_id = ambassador.find((data)=>{
         return data.id;
     })
@@ -27,9 +30,10 @@ function AmbassadorVisiting() {
     })
 
     const ambassadorData = ambassador.find((data) => uid === data.id);
+    const employeeData = users.find((data) => uid === data.id);
     const eliteAmbassadorData = eliteAmbassador.find((data)=> uid === data.id);
 
-    const salutationValue = ambassadorData?.salutation || eliteAmbassadorData?.salutation;
+    const salutationValue = employeeData?.salutation || ambassadorData?.salutation || eliteAmbassadorData?.salutation;
     const salutationName = SALUTATIONS.find(item => item.id == salutationValue);
 
     const loadFont = async () => {
@@ -89,7 +93,7 @@ function AmbassadorVisiting() {
         ctx.fillStyle = "#ffffff";
         ctx.font = "38px Myriad";
 
-        const x2 = nameLength > 20 ? 455 : 592;
+        const x2 = nameLength > 20 ? 455 : 589;
         const baseY2 = canvas.height * 0.26;
         const y2 = canvas.height * 0.35;
         const x3 = 95;
