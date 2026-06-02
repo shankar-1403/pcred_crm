@@ -49,7 +49,7 @@ function Form() {
     const [errorMessage, setErrorMessage] = useState("");
     const { products } = useProducts();
     const states = State.getStatesOfCountry("IN");
-    const uid = window.location.href.split("/")[5];
+    const uid = window.location.href.split("?")[0].split("/")[5];
 
     const stateOptions = states.map((state) => ({
         value: state.isoCode,
@@ -427,7 +427,7 @@ function Form() {
                                         <textarea  value={form.description} onChange={(e) =>setForm((f) => ({ ...f, description: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-black' />
                                     </div>
                                     <div className='col-span-2'>
-                                        <button type="submit" className="mt-2 w-full bg-[#143973] hover:bg-[#143973] active:scale-[0.98] text-white font-semibold text-sm py-2.5 rounded-lg transition-colors tracking-wide cursor-pointer" disabled={saving}>{saving ? 'Submitting' : 'Submit'}</button>
+                                        <button type="submit" className="mt-2 w-full bg-[#143973] hover:bg-[#143973] active:scale-[0.98] text-neutral-100 font-semibold text-sm py-2.5 rounded-lg transition-colors tracking-wide cursor-pointer" disabled={saving}>{saving ? 'Submitting' : 'Submit'}</button>
                                     </div>
                                     <div className='col-span-2 md:col-span-1 lg:col-span-2'>
                                         {errorMessage && <span className='text-red-500 text-sm'>{errorMessage}</span>}
@@ -455,12 +455,12 @@ function Form() {
                                     {metrics.map((m) => (
                                         <div key={m.label} className="border border-[#dac9eb] rounded-lg py-3 px-1 md:px-5 text-center">
                                             <span className="block text-lg font-bold text-[#dac9eb]">{m.val}</span>
-                                            <span className="block text-xs text-white mt-1 whitespace-wrap">{m.label}</span>
+                                            <span className="block text-xs text-neutral-100 mt-1 whitespace-wrap">{m.label}</span>
                                         </div>
                                     ))}
                                 </div>
                                 <div className="p-2 md:p-6 shadow-lg rounded-xl bg-[#143973]">
-                                    <p className="text-[15px] tracking-[2px] uppercase text-white font-semibold mb-2">
+                                    <p className="text-[15px] tracking-[2px] uppercase text-neutral-100 font-semibold mb-2">
                                         Get in Touch
                                     </p>
 
@@ -477,7 +477,7 @@ function Form() {
                                                     <div className="w-6 h-6 rounded bg-[#dac9eb]/20 border border-blue-900/30 flex items-center justify-center shrink-0">
                                                         {c.icon}
                                                     </div>
-                                                    <span className="text-sm text-white">{c.label}</span>
+                                                    <span className="text-sm text-neutral-100">{c.label}</span>
                                                 </a>
                                             </div>
                                         ))}

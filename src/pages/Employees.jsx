@@ -180,7 +180,7 @@ export default function Employees() {
                 <tbody className="divide-y divide-slate-800">
                 {filteredAssignedToMe.length === 0 ? (
                     <tr>
-                        <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
+                        <td colSpan={9} className="px-4 py-10 text-center text-slate-500">
                             No leads
                         </td>
                     </tr>

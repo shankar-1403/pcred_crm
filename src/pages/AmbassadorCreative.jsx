@@ -118,7 +118,7 @@ function AmbassadorCreative() {
                             <h2 className="text-lg font-semibold text-white">{details.name}</h2>
                             <ModalCloseButton onClick={handleClose} />
                         </div>
-                        <div className='flex flex-col justify-center w-full bg-[#03244c] mt-2'>
+                        <div className="sales-material-preview flex flex-col justify-center w-full bg-[#03244c] mt-2">
                             {details && (
                                 <>
                                     <img src={details.fileUrl} alt={details.name} className='h-180'/>

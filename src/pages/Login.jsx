@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { IconEye, IconEyeOff } from '@tabler/icons-react'
+import ThemeToggle from '../components/ThemeToggle'
+import { useTheme } from '../context/ThemeContext'
 
 export default function Login() {
   const { user, login } = useAuth()
   const location = useLocation()
   const from = location.state?.from?.pathname
-
+  const {theme} = useTheme();
   const [emailOrPan, setEmailOrPan] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -32,13 +34,16 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 px-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 px-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/90 p-8 shadow-2xl shadow-black/40">
         <div className="mb-4 flex justify-center">
           <img
-            src="/pcred-logo.png"
-            alt="Pcred"
-            className="h-14 object-contain mix-blend-screen"
+            src={theme === 'dark' ? '/pcred-logo.png': '/logo.webp'}
+            alt="Pcred logo"
+            className={`h-14 object-contain`}
           />
         </div>
         <h1 className="text-center text-2xl font-semibold text-white">
