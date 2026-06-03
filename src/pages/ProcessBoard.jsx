@@ -628,7 +628,7 @@ export default function ProcessBoard() {
                     </div>
                   </div>
                 )}
-                <div className="mt-4 rounded-lg border border-emerald-700/50 bg-emerald-950/20 px-3 py-3 text-sm text-emerald-200">
+                <div className="mt-4 rounded-lg border border-emerald-700/50 bg-green-600/20 px-3 py-3 text-sm text-green-600">
                   <div className="flex justify-between">
                     <span>Bank Payout Amount:</span>
                     <span>₹{editBankAmount.toFixed(2)}</span>
