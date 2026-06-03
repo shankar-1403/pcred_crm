@@ -75,6 +75,25 @@ export default function LeadDetailsModal({
     ambassadorRows,
   )
 
+  function allAssignedNames(lead) {
+    const uids = [
+      ...assignedUids(lead.assignedTo),
+      ...assignedUids(lead.salesAssignedTo),
+      ...assignedUids(lead.managementAssignedTo),
+    ]
+
+    const uniqueUids = [...new Set(uids)]
+
+    if (!uniqueUids.length) return 'Unassigned'
+
+    return uniqueUids
+      .map((uid) => {
+        const user = usersById[uid]
+        return user?.displayName || user?.email || uid.slice(0, 8)
+      })
+      .join(', ')
+  }
+
   return (
     <div className="fixed inset-0 z-60 overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
       <div className="mx-auto my-6 w-full max-w-5xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
@@ -104,7 +123,7 @@ export default function LeadDetailsModal({
               <Row label="Mobile No." value={lead.clientPhoneNo || '—'} />
               <Row label="Client Name" value={lead.clientName || '—'} />
               <Row label="Sales Owner" value={userName(lead.createdBy)} />
-              <Row label="Processed By" value={processedBy} />
+              <Row label="Processed By" value={allAssignedNames(lead)} />
               {salesAssignedBy ? (
                 <Row label="Sales assigned" value={salesAssignedBy} />
               ) : null}

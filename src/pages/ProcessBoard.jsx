@@ -193,6 +193,25 @@ export default function ProcessBoard() {
   if (loading) {
     return <p className="text-slate-400">Loading…</p>
   }
+  
+  function allAssignedNames(lead) {
+    const uids = [
+      ...assignedUids(lead.assignedTo),
+      ...assignedUids(lead.salesAssignedTo),
+      ...assignedUids(lead.managementAssignedTo),
+    ]
+
+    const uniqueUids = [...new Set(uids)]
+
+    if (!uniqueUids.length) return 'Unassigned'
+
+    return uniqueUids
+      .map((uid) => {
+        const user = usersById[uid]
+        return user?.displayName || user?.email || uid.slice(0, 8)
+      })
+      .join(', ')
+  }
 
   function exportCsv() {
     const rows = filteredAssignedToMe
@@ -209,9 +228,7 @@ export default function ProcessBoard() {
         products.find((p) => p.id === lead.productId)?.name || '',
         lead.leadDate || '',
         usersById[lead.createdBy]?.displayName || usersById[lead.createdBy]?.email || '',
-        assignedUids(lead.assignedTo)
-          .map((uid) => usersById[uid]?.displayName || usersById[uid]?.email || uid.slice(0, 8))
-          .join(', '),
+        allAssignedNames(lead),
       ])
 
     downloadCsv(
@@ -320,14 +337,7 @@ export default function ProcessBoard() {
                         '-'}
                     </td>
                     <td className="px-4 py-1 text-slate-400 whitespace-nowrap">
-                      {assignedUids(lead.assignedTo)
-                        .map(
-                          (uid) =>
-                            usersById[uid]?.displayName ||
-                            usersById[uid]?.email ||
-                            uid.slice(0, 8),
-                        )
-                        .join(', ') || '-'}
+                      {allAssignedNames(lead)}
                     </td>
                     <td className="px-4 py-1">
                       <div className="flex items-center gap-2">

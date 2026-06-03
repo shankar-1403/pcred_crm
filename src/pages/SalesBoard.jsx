@@ -322,6 +322,25 @@ export default function SalesBoard() {
   const mandateAmount = form.mandateSigned ? (baseAmount * mandatePercent) / 100 : 0
   const totalRevenue = bankAmount + mandateAmount
 
+  function allAssignedNames(lead) {
+    const uids = [
+      ...assignedUids(lead.assignedTo),
+      ...assignedUids(lead.salesAssignedTo),
+      ...assignedUids(lead.managementAssignedTo),
+    ]
+
+    const uniqueUids = [...new Set(uids)]
+
+    if (!uniqueUids.length) return 'Unassigned'
+
+    return uniqueUids
+      .map((uid) => {
+        const user = usersById[uid]
+        return user?.displayName || user?.email || uid.slice(0, 8)
+      })
+      .join(', ')
+  }
+
   function exportCsv() {
     const rows = filteredMyLeads
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
@@ -334,7 +353,7 @@ export default function SalesBoard() {
         lead.location || '',
         productNameFor(lead.productId),
         labelForLeadStatus(statusLabelByValue, lead.status),
-        processNames(lead?.assignedTo || lead?.salesAssignedTo || lead?.managementAssignedTo),
+        allAssignedNames(lead),
         salesNames(lead.createdBy),
         lead.leadDate || '',
         formatAmountForCsv(lead.totalAmount),
@@ -368,25 +387,6 @@ export default function SalesBoard() {
       ],
       rows,
     )
-  }
-
-  function allAssignedNames(lead) {
-    const uids = [
-      ...assignedUids(lead.assignedTo),
-      ...assignedUids(lead.salesAssignedTo),
-      ...assignedUids(lead.managementAssignedTo),
-    ]
-
-    const uniqueUids = [...new Set(uids)]
-
-    if (!uniqueUids.length) return 'Unassigned'
-
-    return uniqueUids
-      .map((uid) => {
-        const user = usersById[uid]
-        return user?.displayName || user?.email || uid.slice(0, 8)
-      })
-      .join(', ')
   }
 
   return (
@@ -991,7 +991,6 @@ export default function SalesBoard() {
                     type="button"
                     onClick={() => {
                       setAssignmentMode('process')
-                      // setSelectedSalesAssignees([])
                       setSalesAssigneeDropdownOpen(false)
                     }}
                     className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
@@ -1006,7 +1005,6 @@ export default function SalesBoard() {
                     type="button"
                     onClick={() => {
                       setAssignmentMode('sales')
-                      // setSelectedAssignees([])
                       setAssigneeDropdownOpen(false)
                     }}
                     className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
@@ -1021,7 +1019,6 @@ export default function SalesBoard() {
                     type="button"
                     onClick={() => {
                       setAssignmentMode('management')
-                      // setSelectedManagementAssignees([])
                       setManagementAssigneeDropdownOpen(false)
                     }}
                     className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
@@ -1156,9 +1153,9 @@ export default function SalesBoard() {
                       >
                         <span className="truncate">
                           {managementAssignees.length === 0
-                            ? 'No sales users found'
+                            ? 'No management users found'
                             : selectedManagementAssignees.length === 0
-                              ? 'Select sales users'
+                              ? 'Select management users'
                               : `${selectedManagementAssignees.length} selected`}
                         </span>
                         <span className="text-slate-400">

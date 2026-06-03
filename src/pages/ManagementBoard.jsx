@@ -8,7 +8,7 @@ import { useProducts } from '../hooks/useProducts'
 import { useStatuses } from '../hooks/useStatuses'
 import { useUsers } from '../hooks/useUsers'
 import { assignedUids, toAssignedMap } from '../lib/leads'
-import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,processUserFilterOptions,} from '../lib/assignees'
+import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,processUserFilterOptions,assignableManagementUsers} from '../lib/assignees'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import {resolveAmbassadorName,resolveEliteAmbassadorName,} from '../lib/partnerOrg'
 import {labelForLeadStatus,statusLabelMapFromStatuses,} from '../lib/statusLabels'
@@ -27,7 +27,7 @@ export default function ManagementBoard() {
   const { ambassador: ambassadorRows } = useAmbassador()
   const { products } = useProducts()
   const { statuses } = useStatuses()
-  const { usersById, processUsers } = useUsers()
+  const { usersById, processUsers, managementUsers } = useUsers()
   const [statusFilter, setStatusFilter] = useState('')
   const [leadSearch, setLeadSearch] = useState('')
   const [salesOwnerFilter, setSalesOwnerFilter] = useState([])
@@ -46,8 +46,9 @@ export default function ManagementBoard() {
   const [selectedAssignees, setSelectedAssignees] = useState([])
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false)
   const [selectedSalesAssignees, setSelectedSalesAssignees] = useState([])
-  const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] =
-    useState(false)
+  const [selectedManagementAssignees, setSelectedManagementAssignees] = useState([])
+  const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] = useState(false)
+  const [managementAssigneeDropdownOpen, setManagementAssigneeDropdownOpen] = useState(false)
   const [savingLead, setSavingLead] = useState(false)
   const [formError, setFormError] = useState('')
   const [deletingLeadId, setDeletingLeadId] = useState('')
@@ -113,6 +114,11 @@ export default function ManagementBoard() {
   const salesAssignees = useMemo(
     () => assignableSalesUsers(salesUsers, user?.uid, usersById),
     [salesUsers, user?.uid, usersById],
+  )
+
+  const managementAssignees = useMemo(
+    () => assignableManagementUsers(managementUsers, user?.uid, usersById),
+    [managementUsers, user?.uid, usersById],
   )
 
   const eliteAmbassadorOptions = useMemo(
@@ -224,7 +230,6 @@ export default function ManagementBoard() {
     totalPages: tableTotalPages,
     pageItems: tablePageItems,
   } = usePagination(filtered)
-  console.log(tablePageItems);
 
   function nameFor(uid) {
     const u = usersById[uid]
@@ -312,15 +317,11 @@ export default function ManagementBoard() {
     })
     const processUids = assignedUids(lead.assignedTo)
     const salesUids = assignedUids(lead.salesAssignedTo)
-    if (salesUids.length && !processUids.length) {
-      setAssignmentMode('sales')
-      setSelectedSalesAssignees(salesUids)
-      setSelectedAssignees([])
-    } else {
-      setAssignmentMode('process')
-      setSelectedAssignees(processUids)
-      setSelectedSalesAssignees([])
-    }
+    const managementUids = assignedUids(lead?.managementAssignedTo)
+    setSelectedAssignees(processUids)
+    setSelectedSalesAssignees(salesUids)
+    setSelectedManagementAssignees(managementUids)
+
     setAssigneeDropdownOpen(false)
     setSalesAssigneeDropdownOpen(false)
     setLeadModalOpen(true)
@@ -359,12 +360,18 @@ export default function ManagementBoard() {
         status: leadForm.status || '',
         updatedStatusDate: leadForm.updatedStatusDate || '',
         assignedTo:
-          assignmentMode === 'process'
+          selectedAssignees.length
             ? toAssignedMap(selectedAssignees)
             : null,
+
         salesAssignedTo:
-          assignmentMode === 'sales'
+          selectedSalesAssignees.length
             ? toAssignedMap(selectedSalesAssignees)
+            : null,
+
+        managementAssignedTo:
+          selectedManagementAssignees.length
+            ? toAssignedMap(selectedManagementAssignees)
             : null,
         productId: leadForm.productId || null,
         totalAmount: leadForm.totalAmount || '',
@@ -403,6 +410,25 @@ export default function ManagementBoard() {
     : 0
   const totalRevenue = bankAmount + mandateAmount
 
+  function allAssignedNames(lead) {
+    const uids = [
+      ...assignedUids(lead.assignedTo),
+      ...assignedUids(lead.salesAssignedTo),
+      ...assignedUids(lead.managementAssignedTo),
+    ]
+
+    const uniqueUids = [...new Set(uids)]
+
+    if (!uniqueUids.length) return 'Unassigned'
+
+    return uniqueUids
+      .map((uid) => {
+        const user = usersById[uid]
+        return user?.displayName || user?.email || uid.slice(0, 8)
+      })
+      .join(', ')
+  }
+
   function exportCsv() {
     const rows = filtered
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
@@ -416,7 +442,7 @@ export default function ManagementBoard() {
         productNameFor(lead.productId),
         lead.bankName,
         nameFor(lead.createdBy),
-        assignedUids(lead.assignedTo).map((uid) => nameFor(uid)).join(', '),
+        allAssignedNames(lead),
         formatAmountForCsv(lead.totalAmount),
         formatAmountForCsv(
           (Number(lead.bankPayoutAmount) || 0) +
@@ -685,7 +711,7 @@ export default function ManagementBoard() {
             <button
               type="button"
               onClick={exportCsv}
-              className="w-full rounded-lg border border-slate-600 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+              className="w-full rounded-lg border border-green-600/30 cursor-pointer px-4 py-2 text-sm font-semibold text-slate-200 bg-green-500/20 hover:bg-green-500/30"
             >
               Export CSV
             </button>
@@ -787,7 +813,7 @@ export default function ManagementBoard() {
                       </td>
                       <td className="px-4 py-1 text-slate-400">{nameFor(lead.createdBy)}</td>
                       <td className="px-4 py-1">
-                        {assignees.length === 0 ? (
+                        {/* {assignees.length === 0 ? (
                           <span className="text-slate-600">Unassigned</span>
                         ) : (
                           <ul className="space-y-0.5 text-xs text-slate-400">
@@ -795,7 +821,8 @@ export default function ManagementBoard() {
                               <li key={uid}>{nameFor(uid)}</li>
                             ))}
                           </ul>
-                        )}
+                        )} */}
+                        {allAssignedNames(lead)}
                       </td>
                       <td className="px-4 py-1 text-slate-400 text-right">
                         {formatCurrencyINR(lead?.totalAmount)}
@@ -1192,6 +1219,20 @@ export default function ManagementBoard() {
                   >
                     Sales
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAssignmentMode('management')
+                      setManagementAssigneeDropdownOpen(false)
+                    }}
+                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      assignmentMode === 'management'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Management
+                  </button>
                 </div>
                 {assignmentMode === 'process' ? (
                   <>
@@ -1239,7 +1280,7 @@ export default function ManagementBoard() {
                       )}
                     </div>
                   </>
-                ) : (
+                ) : assignmentMode === 'sales' ? (
                   <>
                     <p className="mt-3 text-xs font-medium text-slate-400">
                       Sales team (multi-select)
@@ -1280,6 +1321,59 @@ export default function ManagementBoard() {
                                   )}
                                   onChange={() =>
                                     toggleSalesAssignee(u.uid)
+                                  }
+                                  className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                                />
+                                <span>
+                                  {labelAssignableProcessUser(u)}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-3 text-xs font-medium text-slate-400">
+                      Management team (multi-select)
+                    </p>
+                    <div className="relative mt-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          managementAssignees.length > 0 &&
+                          setManagementAssigneeDropdownOpen((v) => !v)
+                        }
+                        className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-sm text-white disabled:opacity-60"
+                        disabled={managementAssignees.length === 0}
+                      >
+                        <span className="truncate">
+                          {managementAssignees.length === 0
+                            ? 'No management users found'
+                            : selectedManagementAssignees.length === 0
+                              ? 'Select management users'
+                              : `${selectedManagementAssignees.length} selected`}
+                        </span>
+                        <span className="text-slate-400">
+                          {managementAssigneeDropdownOpen ? '▲' : '▼'}
+                        </span>
+                      </button>
+                      {managementAssigneeDropdownOpen &&
+                        managementAssignees.length > 0 && (
+                          <div className="absolute bottom-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl">
+                            {managementAssignees.map((u) => (
+                              <label
+                                key={u.uid}
+                                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedManagementAssignees.includes(
+                                    u.uid,
+                                  )}
+                                  onChange={() =>
+                                    toggleManagementAssignee(u.uid)
                                   }
                                   className="rounded border-slate-600 bg-slate-950 text-blue-600"
                                 />
