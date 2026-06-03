@@ -24,8 +24,11 @@ function AmbassadorCreative() {
     }
 
     const handleDownload = async (item) => {
-        setDetails(item);
         setLoadingId(item.id);
+        setDetails(item);
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         try {
             const img = downloadRef.current.querySelector("img");
 
@@ -164,13 +167,13 @@ function AmbassadorCreative() {
                             <h3 style={{ color: "#ffffff",fontWeight:"bolder",fontSize:"30px"}}>ENTREPRENEURS CONNECT BHARAT</h3>
                             <table style={{width:"100%",marginTop:"10px"}}>
                                 <tbody>
-                                    <tr>
+                                    <tr style={{background:"#03244c"}}>
                                         <td style={{padding:"4px"}}>
                                             <div style={{display: "flex", alignItems: "center", gap: "10px"}}>
                                                 <div>
                                                     <IconUser style={{ color: "#ffffff",width:"38px",height:"38px",marginTop:"5px" }}/>
                                                 </div>
-                                                <span style={{ fontSize: "28px" }}>
+                                                <span style={{ fontSize: "28px", color:"#ffffff" }}>
                                                     {profile.displayName}
                                                 </span>
                                             </div>
@@ -180,19 +183,19 @@ function AmbassadorCreative() {
                                                 <div>
                                                     <IconId style={{ color: "#ffffff",width:"38px",height:"38px",marginTop:"5px" }}/>
                                                 </div>
-                                                <span style={{ fontSize: "28px", textTransform: "capitalize" }}>
+                                                <span style={{ fontSize: "28px", color:"#ffffff", textTransform: "capitalize" }}>
                                                     {profile.role === "elite_ambassador" ? "Elite Ambassador" : "Ambassador"}
                                                 </span>
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr>
+                                    <tr style={{background:"#03244c"}}>
                                         <td style={{padding:"4px"}}>
                                             <div style={{display: "flex", alignItems: "center", gap: "10px"}}>
                                                 <div>
                                                     <IconMail style={{ color: "#ffffff",width:"38px",height:"38px",marginTop:"5px" }}/>
                                                 </div>
-                                                <span style={{ fontSize: "28px" }}>
+                                                <span style={{ fontSize: "28px", color:"#ffffff" }}>
                                                     {profile.email}
                                                 </span>
                                             </div>
@@ -202,7 +205,7 @@ function AmbassadorCreative() {
                                                 <div>
                                                     <IconPhone style={{ color: "#ffffff",width:"38px",height:"38px",marginTop:"5px" }}/>
                                                 </div>
-                                                <span style={{ fontSize: "28px" }}>
+                                                <span style={{ fontSize: "28px", color:"#ffffff" }}>
                                                     {profile.phoneNo}
                                                 </span>
                                             </div>

@@ -177,6 +177,7 @@ export default function SalesBoard() {
     setAssigneeDropdownOpen(false)
     setManagementAssigneeDropdownOpen(false)
     setSelectedSalesAssignees([])
+    setSelectedManagementAssignees([])
     setSalesAssigneeDropdownOpen(false)
     setModalOpen(true)
   }
@@ -206,25 +207,13 @@ export default function SalesBoard() {
       mandateSigned: Boolean(lead.mandateSigned),
       mandatePayoutPercent: lead.mandatePayoutPercent ?? '',
     })
-    const processUids = assignedUids(lead.assignedTo)
-    const salesUids = assignedUids(lead.salesAssignedTo)
-    const managementUids = assignedUids(lead.managementAssignedTo)
-    if (salesUids.length && !processUids.length && !managementUids.length) {
-      setAssignmentMode('sales')
-      setSelectedSalesAssignees(salesUids)
-      setSelectedAssignees([])
-      setSelectedManagementAssignees([])
-    } else if (managementUids.length && !salesUids.length && !processUids.length){
-      setAssignmentMode('management')
-      setSelectedManagementAssignees(managementUids)
-      setSelectedAssignees([])
-      setSelectedSalesAssignees([])
-    } else {
-      setAssignmentMode('process')
-      setSelectedAssignees(processUids)
-      setSelectedSalesAssignees([])
-      setSelectedManagementAssignees([])
-    }
+    const processUids = assignedUids(lead?.assignedTo)
+    const salesUids = assignedUids(lead?.salesAssignedTo)
+    const managementUids = assignedUids(lead?.managementAssignedTo)
+    setSelectedAssignees(processUids)
+    setSelectedSalesAssignees(salesUids)
+    setSelectedManagementAssignees(managementUids)
+
     setAssigneeDropdownOpen(false)
     setSalesAssigneeDropdownOpen(false)
     setManagementAssigneeDropdownOpen(false)
@@ -283,15 +272,17 @@ export default function SalesBoard() {
         updatedStatusDate: form.updatedStatusDate || '',
         createdBy: user.uid,
         assignedTo:
-          assignmentMode === 'process'
+          selectedAssignees.length
             ? toAssignedMap(selectedAssignees)
             : null,
+
         salesAssignedTo:
-          assignmentMode === 'sales'
+          selectedSalesAssignees.length
             ? toAssignedMap(selectedSalesAssignees)
             : null,
+
         managementAssignedTo:
-          assignmentMode === 'management'
+          selectedManagementAssignees.length
             ? toAssignedMap(selectedManagementAssignees)
             : null,
         productId: form.productId || null,
@@ -377,6 +368,25 @@ export default function SalesBoard() {
       ],
       rows,
     )
+  }
+
+  function allAssignedNames(lead) {
+    const uids = [
+      ...assignedUids(lead.assignedTo),
+      ...assignedUids(lead.salesAssignedTo),
+      ...assignedUids(lead.managementAssignedTo),
+    ]
+
+    const uniqueUids = [...new Set(uids)]
+
+    if (!uniqueUids.length) return 'Unassigned'
+
+    return uniqueUids
+      .map((uid) => {
+        const user = usersById[uid]
+        return user?.displayName || user?.email || uid.slice(0, 8)
+      })
+      .join(', ')
   }
 
   return (
@@ -491,7 +501,7 @@ export default function SalesBoard() {
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-400">
-                      {processNames(lead?.assignedTo || lead?.salesAssignedTo || lead?.managementAssignedTo)}
+                      {allAssignedNames(lead)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-400">
                       {salesNames(lead?.createdBy)}
@@ -981,7 +991,7 @@ export default function SalesBoard() {
                     type="button"
                     onClick={() => {
                       setAssignmentMode('process')
-                      setSelectedSalesAssignees([])
+                      // setSelectedSalesAssignees([])
                       setSalesAssigneeDropdownOpen(false)
                     }}
                     className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
@@ -996,7 +1006,7 @@ export default function SalesBoard() {
                     type="button"
                     onClick={() => {
                       setAssignmentMode('sales')
-                      setSelectedAssignees([])
+                      // setSelectedAssignees([])
                       setAssigneeDropdownOpen(false)
                     }}
                     className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
@@ -1011,7 +1021,7 @@ export default function SalesBoard() {
                     type="button"
                     onClick={() => {
                       setAssignmentMode('management')
-                      setSelectedManagementAssignees([])
+                      // setSelectedManagementAssignees([])
                       setManagementAssigneeDropdownOpen(false)
                     }}
                     className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
