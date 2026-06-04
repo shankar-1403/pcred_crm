@@ -21,6 +21,7 @@ import AmountInWordsHint from '../components/AmountInWordsHint'
 import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect'
 import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
+import { SOURCES } from '../lib/source'
 
 export default function OtherLeads() {
   const { user,profile } = useAuth()
@@ -152,6 +153,12 @@ export default function OtherLeads() {
     return p?.name || categoryId
   }
 
+  function sourceNameFor(sourceId) {
+    if (!sourceId) return '-'
+    const s = SOURCES.find((item) => item.id == sourceId)
+    return s?.label || sourceId
+  }
+
   function formatCurrencyINR(value) {
     if (value === '' || value == null) return '-'
     const amount = Number(value)
@@ -238,39 +245,31 @@ export default function OtherLeads() {
     const rows = filtered
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
       .map((lead) => [
-        eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
-        ambassadorNameFor(lead.ambassadorId, lead.ambassadorName),
         lead.viaName,
         lead.company || '',
         lead.clientPhoneNo || '',
         labelForLeadStatus(statusLabelByValue, lead.status),
-        productNameFor(lead.productId),
-        lead.bankName,
-        nameFor(lead.createdBy),
-        formatAmountForCsv(lead.totalAmount),
-        formatAmountForCsv(
-          (Number(lead.bankPayoutAmount) || 0) +
-            (Number(lead.mandatePayoutAmount) || 0),
-        ),
+        categoryNameFor(lead.categoryId),
+        serviceNameFor(lead.serviceId),
+        lead.location,
+        lead.referred_by,
         lead.leadDate || '',
+        sourceNameFor(lead.sourceId)
       ])
 
     downloadCsv(
-      'management-leads.csv',
+      'other-leads.csv',
       [
-        'Elite ambassador',
-        'Ambassador',
-        'Connector Name',
+        'Full Name',
         'Company',
         'Phone No.',
         'Status',
-        'Product',
-        'Bank Name',
-        'Sales Owner',
-        'Process Team',
-        'Required Amount',
-        'Total Revenue',
-        'Lead Date',
+        'Category',
+        'Service',
+        'Location',
+        'Referred By',
+        'Lead date',
+        'Source',
       ],
       rows,
     )
@@ -398,6 +397,7 @@ export default function OtherLeads() {
                 <th className="px-4 py-2 font-medium">Location</th>
                 <th className="px-4 py-2 font-medium">Referred By</th>
                 <th className="px-4 py-2 font-medium">Lead Date</th>
+                <th className="px-4 py-2 font-medium">Source</th>
                 <th className="px-4 py-2 font-medium">Action</th>
               </tr>
             </thead>
@@ -431,6 +431,7 @@ export default function OtherLeads() {
                       <td className="px-4 py-1">{lead.location}</td>
                       <td className="px-4 py-1 text-slate-400 text-right">{lead?.referred_by}</td>
                       <td className="px-4 py-1 text-xs text-slate-500">{lead?.leadDate || '-'}</td>
+                      <td className="px-4 py-1 text-xs text-slate-500">{sourceNameFor(lead?.sourceId) || '-'}</td>
                       <td className="px-4 py-1">
                         <div className="flex flex-wrap items-center gap-2 justify-end">
                           <div>
