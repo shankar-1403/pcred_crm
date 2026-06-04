@@ -72,6 +72,7 @@ export default function ProcessBoard() {
       })
     }
     list = list.filter((l) => inDateRange(l.leadDate || '', fromDate, toDate))
+    list = list.filter((l) => l.categoryId === '-Os1EruiNYLx2XjzRUdF')
     return list
   }, [assignedToMe, leadSearch, fromDate, toDate])
 
@@ -141,6 +142,7 @@ export default function ProcessBoard() {
           : '',
         mandatePayoutAmount: Number(mandatePayoutAmount.toFixed(2)),
         updatedAt: serverTimestamp(),
+        categoryId: '-Os1EruiNYLx2XjzRUdF'
       })
       setEditLeadId(null)
     } finally {

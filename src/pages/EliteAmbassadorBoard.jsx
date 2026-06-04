@@ -112,6 +112,7 @@ export default function EliteAmbassadorBoard() {
       })
     }
     list = list.filter((l) => inDateRange(l.leadDate || '', fromDate, toDate))
+    list = list.filter((l) => l.categoryId === '-Os1EruiNYLx2XjzRUdF')
     return list
   }, [myLeads, leadSearch, fromDate, toDate])
 
@@ -341,6 +342,7 @@ export default function EliteAmbassadorBoard() {
         referredByUid: referredSnap || null,
         ambassadorId: ambassadorIdVal,
         ambassadorName: ambassadorNameVal,
+        categoryId: '-Os1EruiNYLx2XjzRUdF'
       }
       if (editingId) {
         await update(ref(db, `leads/${editingId}`), payload)
@@ -349,6 +351,7 @@ export default function EliteAmbassadorBoard() {
         await set(newRef, {
           ...payload,
           createdAt: Date.now(),
+          categoryId: '-Os1EruiNYLx2XjzRUdF'
         })
         sendTelegramMessage()
       }

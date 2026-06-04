@@ -24,6 +24,7 @@ import AmbassadorCreative from './pages/AmbassadorCreative'
 import AdminCategory from './pages/AdminCategory'
 import AdminServices from './pages/admin/AdminServices'
 import Employees from './pages/Employees'
+import OtherLeads from './pages/OtherLeads'
 import Form from './pages/Form'
 import { ROLES } from './constants'
 
@@ -212,6 +213,14 @@ export default function App() {
               element={
                 <ProtectedRoute roles={[ROLES.EMPLOYEES]}>
                   <Employees />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="other-leads"
+              element={
+                <ProtectedRoute roles={[ROLES.MANAGEMENT,ROLES.SALES,ROLES.PROCESS,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR]}>
+                  <OtherLeads />
                 </ProtectedRoute>
               }
             />

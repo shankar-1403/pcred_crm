@@ -191,6 +191,7 @@ export default function ManagementBoard() {
       )
     }
     list = list.filter((l) => inDateRange(l.leadDate || '', fromDate, toDate))
+    list = list.filter((l) => l.categoryId === "-Os1EruiNYLx2XjzRUdF")
     const sorted = [...list]
     if (sortBy && sortOrder) {
       sorted.sort((a, b) => {
@@ -383,6 +384,7 @@ export default function ManagementBoard() {
           : '',
         mandatePayoutAmount: Number(mandatePayoutAmount.toFixed(2)),
         updatedAt: Date.now(),
+        categoryId: '-Os1EruiNYLx2XjzRUdF'
       }
       if (editingId) {
         await update(ref(db, `leads/${editingId}`), payload)
@@ -391,6 +393,7 @@ export default function ManagementBoard() {
           ...payload,
           createdBy: user.uid,
           createdAt: Date.now(),
+          categoryId: '-Os1EruiNYLx2XjzRUdF'
         })
       }
       closeLeadModal()

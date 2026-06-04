@@ -109,22 +109,22 @@ export default function Layout() {
                 )}
                 {role === ROLES.MANAGEMENT && (
                   <NavLink to="/management" className={linkClass(theme)} onClick={closeMenu}>
-                    All leads
+                    Loan leads
                   </NavLink>
                 )}
                 {role === ROLES.SALES && (
                   <NavLink to="/sales" className={linkClass(theme)} onClick={closeMenu}>
-                    My leads
+                    Loan leads
                   </NavLink>
                 )}
                 {role === ROLES.PROCESS && (
                   <NavLink to="/process" className={linkClass(theme)} onClick={closeMenu}>
-                    Assigned leads
+                    Loan leads
                   </NavLink>
                 )}
                 {role === ROLES.EMPLOYEES && (
                   <NavLink to="/employee-dashbaord" className={linkClass(theme)} onClick={closeMenu}>
-                    My leads
+                    Loan leads
                   </NavLink>
                 )}
                 {role === ROLES.ELITE_AMBASSADOR && (
@@ -135,6 +135,11 @@ export default function Layout() {
                 {role === ROLES.AMBASSADOR && (
                   <NavLink to="/ambassador" className={linkClass(theme)} onClick={closeMenu}>
                     Ambassador dashboard
+                  </NavLink>
+                )}
+                {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                  <NavLink to="/other-leads" className={linkClass(theme)} onClick={closeMenu}>
+                    Other leads
                   </NavLink>
                 )}
                 {[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.ELITE_AMBASSADOR].includes(role) && (
