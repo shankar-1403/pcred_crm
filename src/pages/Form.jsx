@@ -78,6 +78,9 @@ function Form() {
     const elite_ambassador_id = eliteAmbassador.map((data)=>{
         return data.id;
     })
+    const users_id = users.map((data)=>{
+        return data.id;
+    })
 
     const ambassadorData = ambassador.find((data) => uid === data.id);
     const ambassadorName = ambassadorData?.name;
@@ -86,7 +89,18 @@ function Form() {
     const eliteAmbassadorName =  eliteAmbassadorData?.name;
 
     const usersData = users.find((data) => uid === data.id)
+    const userName = usersData?.displayName;
     const emailId = usersData?.email;
+
+    const statusLabelByValue = useMemo(
+        () => statusLabelMapFromStatuses(statuses),
+        [statuses],
+    )
+
+    function getUserName(id){
+        const data = users.find((item)=> id === item.id)
+        return data?.name
+    }
 
     function getProductName(id){
         const data = products.find((item)=> id === item.id)
@@ -113,11 +127,13 @@ function Form() {
         }
     }
 
-    const name = () => {
-        if (ambassador_id.includes(uid)){
+    const name = (id) => {
+        if (ambassador_id.includes(id)){
             return `${ambassadorName} (Ambassador)`
-        }else if (elite_ambassador_id.includes(uid)) {
+        }else if (elite_ambassador_id.includes(id)) {
             return `${eliteAmbassadorName} (Elite Ambassador)`
+        } else if (users_id.includes(id)) {
+            return `${userName}`
         }
     }
 
@@ -134,15 +150,62 @@ function Form() {
         const value = e.target.value;
         const selected = categoryOptions.find((s) => s.value === value);
         setSelectedCategory(value);
-        setForm((f) => ({ ...f, categoryId: selected?.id}));
+        setForm((f) => ({ ...f, categoryId: selected?.value}));
         const serviceData = serviceOptions.filter((s) => s?.category === value);
         setSelectedService(serviceData);
+    }
+    
+    function getCategory(id){
+        const data = category.find((item)=> id == item.id)
+        return data?.name
+    }
+    
+    function getService(id){
+        const data = services.find((item)=> id == item.id)
+        return data?.name
+    }
+
+    function sendTelegramMessage() {
+        const BOT_TOKEN = import.meta.env.VITE_BOT_TOKEN
+        const CHAT_ID = "-1003871644587"
+        const message = `
+          Created by ${name(uid)}
+    
+          Hello Team,
+    
+          Here are new lead details:
+          
+          Company: ${form.company || '-'}
+          Client Name: ${form.clientName || '-'}
+          Category: ${getCategory(form.categoryId || '-')}
+          ${selectedCategory === '-Os1EruiNYLx2XjzRUdF' ? 
+            `Product: ${getProductName(form.productId || '-')}
+            Amount: ₹${Number(form.totalAmount || 0).toLocaleString('en-IN')}`
+            : `Service: ${getService(form.serviceId || '-')}`
+          }
+          Status: ${labelForLeadStatus(statusLabelByValue, form.status) || 'New'}
+    
+          Thank you.
+        `
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: message,
+            parse_mode: "Markdown"
+          })
+        })
+        .then(res => res.json())
+        .catch(err => console.error("Error:", err))
     }
 
     async function saveLead(e) {
         e.preventDefault()
         
-        if(form.categoryId === "-Os1EruiNYLx2XjzRUdF"){
+        if(selectedCategory === "-Os1EruiNYLx2XjzRUdF"){
             if(!form.clientName || !form.clientPhoneNo || !form.clientEmail || !form.company || !form.city || !selectedCategory ||!form.productId || !form.totalAmount){
                 setErrorMessage("Please fill all the required details in *")
                 return
@@ -162,7 +225,7 @@ function Form() {
                 clientPhoneNo: form.clientPhoneNo.trim(),
                 clientEmail: form.clientEmail.trim(),
                 location: `${form.state.trim()}, ${form.city.trim()}`,
-                categoryId: selectedCategory || null,
+                categoryId: form.categoryId || null,
                 serviceId: form.serviceId || null,
                 productId: form.productId || null,
                 totalAmount: form.totalAmount || '',
@@ -195,7 +258,7 @@ function Form() {
                     amount:formatAmountForCsv(payload?.totalAmount)
                 }),
             });
-
+            sendTelegramMessage()
             setMessage("Form Submitted Successfully")
             setSelectedState("")
             setSelectedCategory("")

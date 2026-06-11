@@ -8,7 +8,7 @@ import ThemeToggle from './ThemeToggle'
 
 const linkClass = (theme) => ({ isActive }) =>
   [
-    'rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+    'rounded-lg px-2 py-2 text-sm font-medium transition-colors whitespace-nowrap',
     isActive
       ? 'bg-blue-600 text-white'
       : theme === 'dark'
@@ -56,11 +56,10 @@ export default function Layout() {
               <img
                 src={theme === 'dark' ? '/pcred-logo.png': '/logo.webp'}
                 alt="Pcred logo"
-                className={`${theme === "dark" ? "h-10" : "h-9"} object-contain`}
+                className={`${theme === "dark" ? "h-9" : "h-9"} object-contain`}
               />
             </NavLink>
             <div className="lg:hidden items-center gap-2 flex">
-              {/* <ThemeToggle /> */}
               <span
                 className={[
                   'rounded-full px-2.5 py-0.5 text-xs font-medium',
@@ -194,7 +193,7 @@ export default function Layout() {
                   <span className='text-green-500 text-sm'>{textCopied}</span>
                 }
                 {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
-                  <button onClick={handleCopy} className='cursor-pointer flex items-center gap-1 text-sm bg-slate-800 text-blue-300 py-1 px-3 hover:underline rounded-2xl' title='ECB MSME Link'>
+                  <button onClick={handleCopy} className='cursor-pointer flex text-nowrap items-center gap-1 text-sm bg-slate-800 text-blue-300 py-1 px-3 hover:underline rounded-2xl' title='ECB MSME Link'>
                     ECB MSME Link
                     <IconLinkFilled size={14} color={theme === 'dark' ?'#ffffff': "#000000"}/>
                   </button>
@@ -252,22 +251,22 @@ export default function Layout() {
               )}
               {role === ROLES.MANAGEMENT && (
                 <NavLink to="/management" className={linkClass(theme)} onClick={closeMenu}>
-                  All leads
+                  Loan leads
                 </NavLink>
               )}
               {role === ROLES.SALES && (
                 <NavLink to="/sales" className={linkClass(theme)} onClick={closeMenu}>
-                  My leads
+                  Loan Leads
                 </NavLink>
               )}
               {role === ROLES.PROCESS && (
                 <NavLink to="/process" className={linkClass(theme)} onClick={closeMenu}>
-                  Assigned leads
+                  Loan Leads
                 </NavLink>
               )}
               {role === ROLES.EMPLOYEES && (
                 <NavLink to="/employee-dashboard" className={linkClass(theme)} onClick={closeMenu}>
-                  My leads
+                  Loan Leads
                 </NavLink>
               )}
               {role === ROLES.ELITE_AMBASSADOR && (
@@ -284,6 +283,11 @@ export default function Layout() {
                   Ambassador dashboard
                 </NavLink>
               )}
+              {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                  <NavLink to="/other-leads" className={linkClass(theme)} onClick={closeMenu}>
+                    Other leads
+                  </NavLink>
+                )}
               {[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.ELITE_AMBASSADOR].includes(role) && (
                   <NavLink to="/ambassadors-list" className={linkClass(theme)} onClick={closeMenu}>
                     Ambassadors List
@@ -312,6 +316,16 @@ export default function Layout() {
               {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
                 <NavLink to="/visiting-card" className={linkClass(theme)} onClick={closeMenu}>
                   Visiting Card
+                </NavLink>
+              )}
+              {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                <NavLink to="/visiting-card" className={linkClass(theme)} onClick={closeMenu}>
+                  Visiting Card
+                </NavLink>
+              )}
+              {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
+                <NavLink to="/sales-material" className={linkClass(theme)} onClick={closeMenu}>
+                  Sales Material
                 </NavLink>
               )}
               {(role === ROLES.ADMIN || profile?.uid === "thy1xXKWoQXShRv3g31vuE180Uh1") && (
