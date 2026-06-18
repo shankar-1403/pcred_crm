@@ -408,11 +408,6 @@ export default function AmbassadorBoard() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <div className="flex justify-end rounded-xl border border-slate-800 bg-slate-900/40 p-2">
-        <div>
-          <p className='text-sm md:text-base'>Relationship Manager: <span className='text-blue-300'>{managerName}</span></p>
-        </div>
-      </div>
       <div className="grid grid-cols-10 gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className='col-span-10 lg:col-span-3'>
           <h1 className="text-2xl font-semibold text-white">My leads</h1>
