@@ -91,7 +91,7 @@ function AmbassadorVisiting() {
         ctx.drawImage(img2, 0, 0);
 
         ctx.fillStyle = "#ffffff";
-        ctx.font = "38px Myriad";
+        ctx.font = name.length > 20 ? "32px Myriad" : "38px Myriad";
 
         const x2 = nameLength > 20 ? 455 : 589;
         const baseY2 = canvas.height * 0.26;
@@ -101,7 +101,7 @@ function AmbassadorVisiting() {
         const x4 = 95;
         const y4 = 530;
         ctx.fillText(`${salutationName?.label || ""} ${name}`, x2, baseY2);
-        ctx.font = name.length > 20 ? "25px Myriad" : "35px Myriad";
+        ctx.font = name.length > 20 ? "30px Myriad" : "35px Myriad";
         ctx.fillText(role, x2, y2);
         ctx.fillStyle = "#000000";
         ctx.font = "28px Myriad";

@@ -128,7 +128,7 @@ function AmbassadorsList() {
         ctx.drawImage(img2, 0, 0);
 
         ctx.fillStyle = "#ffffff";
-        ctx.font = "38px Myriad";
+        ctx.font = data.name.length > 20 ? "32px Myriad" : "38px Myriad";
 
         const x2 = data.name > 20 ? 455 : 592;
         const baseY2 = canvas.height * 0.26;
@@ -138,7 +138,7 @@ function AmbassadorsList() {
         const x4 = 95;
         const y4 = 530;
         ctx.fillText(`${salutation(data.salutation) || ""} ${data.name}`, x2, baseY2);
-        ctx.font = "35px Myriad";
+        ctx.font = data.name.length > 20 ? "30px Myriad" : "35px Myriad";
         ctx.fillText("Elite Ambassador", x2, y2);
         ctx.fillStyle = "#000000";
         ctx.font = "28px Myriad";
@@ -196,7 +196,7 @@ function AmbassadorsList() {
         ctx.drawImage(img2, 0, 0);
 
         ctx.fillStyle = "#ffffff";
-        ctx.font = "38px Myriad";
+        ctx.font = data.name.length > 20 ? "32px Myriad" : "38px Myriad";
 
         const x2 = data.name > 20 ? 455 : 592;
         const baseY2 = canvas.height * 0.26;
@@ -206,7 +206,7 @@ function AmbassadorsList() {
         const x4 = 95;
         const y4 = 530;
         ctx.fillText(`${salutation(data.salutation) || ""} ${data.name}`, x2, baseY2);
-        ctx.font = "35px Myriad";
+        ctx.font = data.name.length > 20 ? "30px Myriad" : "35px Myriad";
         ctx.fillText("Ambassador", x2, y2);
         ctx.fillStyle = "#000000";
         ctx.font = "28px Myriad";
@@ -255,7 +255,7 @@ function AmbassadorsList() {
         ctx.fillText(`This is to certify that ${salutation(data.salutation) || ""}` || "", salutationX, salutationY);
 
         ctx.fillStyle = "#000000";
-        ctx.font = "150px GreatVibes";
+        ctx.font = data.name.length > 20 ? "100px GreatVibes" : "150px GreatVibes";
         ctx.fillText(data.name, x, nameY);
 
         const imgData = canvas.toDataURL("image/png");
@@ -271,6 +271,7 @@ function AmbassadorsList() {
         pdf.save(`${data.name} certificate.pdf`);
         };
     };
+
     const {
         page: tablePage,
         setPage: setTablePage,
