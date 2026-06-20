@@ -85,7 +85,7 @@ function Certificate() {
         ctx.fillText(`This is to certify that ${salutationName?.label || ""}` || "", salutationX, salutationY);
 
         ctx.fillStyle = "#000000";
-        ctx.font = "150px GreatVibes";
+        ctx.font = name.length > 20 ? "100px GreatVibes" : "150px GreatVibes";
         ctx.fillText(name, x, nameY);
 
         const imgData = canvas.toDataURL("image/png");

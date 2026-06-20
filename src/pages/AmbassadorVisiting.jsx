@@ -101,7 +101,7 @@ function AmbassadorVisiting() {
         const x4 = 95;
         const y4 = 530;
         ctx.fillText(`${salutationName?.label || ""} ${name}`, x2, baseY2);
-        ctx.font = "35px Myriad";
+        ctx.font = name.length > 20 ? "25px Myriad" : "35px Myriad";
         ctx.fillText(role, x2, y2);
         ctx.fillStyle = "#000000";
         ctx.font = "28px Myriad";
