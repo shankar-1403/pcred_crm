@@ -3,7 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { ROLES, ROLE_LABELS } from '../constants'
-import { IconLinkFilled,IconUserFilled,IconMenu2 } from '@tabler/icons-react'
+import { IconLinkFilled,IconUserFilled,IconMenu2,IconCheckFilled } from '@tabler/icons-react'
 import ThemeToggle from './ThemeToggle'
 
 const linkClass = (theme) => ({ isActive }) =>
@@ -189,13 +189,15 @@ export default function Layout() {
               </nav>
               <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
                 <ThemeToggle />
-                {textCopied &&
-                  <span className='text-green-500 text-sm'>{textCopied}</span>
-                }
+                
                 {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
                   <button onClick={handleCopy} className='cursor-pointer flex text-nowrap items-center gap-1 text-sm bg-slate-800 text-blue-300 py-1 px-3 hover:underline rounded-2xl' title='ECB MSME Link'>
                     ECB MSME Link
-                    <IconLinkFilled size={14} color={theme === 'dark' ?'#ffffff': "#000000"}/>
+                    {textCopied ?
+                      <IconCheckFilled size={14} color={theme === 'dark' ?'#ffffff': "#000000"}/>
+                      :
+                      <IconLinkFilled size={14} color={theme === 'dark' ?'#ffffff': "#000000"}/>
+                    }
                   </button>
                 )}
                 <div className="relative inline-block">
@@ -341,7 +343,11 @@ export default function Layout() {
               {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
                 <button onClick={handleCopy} className='cursor-pointer flex justify-center items-center gap-1 text-sm text-center bg-slate-800 text-blue-300 py-2 px-3 hover:underline rounded-2xl' title='ECB MSME Link'>
                   ECB MSME Link
-                  <IconLinkFilled size={14} color={theme === 'dark' ?'#ffffff': "#000000"}/>
+                  {textCopied ?
+                    <IconCheckFilled size={14} color={theme === 'dark' ?'#ffffff': "#000000"}/>
+                    :
+                    <IconLinkFilled size={14} color={theme === 'dark' ?'#ffffff': "#000000"}/>
+                  }
                 </button>
               )}
             </nav>
