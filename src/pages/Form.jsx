@@ -13,6 +13,7 @@ import { useCategory } from '../hooks/useCategory';
 import { useServices } from '../hooks/useServices';
 import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect';
 import SearchableDropdown from '../components/SearchSelect';
+import SearchableLightDropdown from '../components/SearchSelectLight';
 import { useUsers } from '../hooks/useUsers';
 import { formatAmountForCsv } from '../lib/csv';
 import { SOURCES } from '../lib/source';
@@ -426,7 +427,7 @@ function Form() {
                                     </div>
                                     <div className='col-span-2 md:col-span-1 lg:col-span-2'>
                                         <label className='text-black' htmlFor="state">State <span className='text-red-600 text-sm'>*</span></label>
-                                        <SearchableDropdown
+                                        <SearchableLightDropdown
                                             placeholder="Search State…"
                                             options={stateOptions}
                                             value={selectedState}
@@ -435,7 +436,7 @@ function Form() {
                                     </div>
                                     <div className='col-span-2 md:col-span-1 lg:col-span-2'>
                                         <label className='text-black' htmlFor="city">City <span className='text-red-600 text-sm'>*</span></label>
-                                        <SearchableDropdown
+                                        <SearchableLightDropdown
                                             placeholder="Search City…"
                                             options={citiesOptions}
                                             value={form.city}
@@ -444,7 +445,7 @@ function Form() {
                                     </div>
                                     <div className='col-span-2 md:col-span-1 lg:col-span-2'>
                                         <label className='text-black' htmlFor="category">Category <span className='text-red-600 text-sm'>*</span></label>
-                                        <SearchableDropdown
+                                        <SearchableLightDropdown
                                             placeholder="Search Category…"
                                             options={categoryOptions}
                                             value={selectedCategory}
@@ -471,7 +472,7 @@ function Form() {
                                         </> : 
                                         <div className='col-span-2 md:col-span-1 lg:col-span-2'>
                                             <label className='text-black' htmlFor="service">Services <span className='text-red-600 text-sm'>*</span></label>
-                                            <SearchableDropdown
+                                            <SearchableLightDropdown
                                                 placeholder="Search Service…"
                                                 options={selectedService}
                                                 value={form.serviceId}
