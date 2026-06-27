@@ -110,12 +110,12 @@ export default function SearchableDropdown({
             }, 50)
           }
         }}
-        className="mt-1 flex w-full items-center justify-between rounded-lg border border-gray-400 bg-white px-3 py-2 text-white"
+        className="mt-1 flex w-full items-center justify-between rounded-lg border border-gray-400 bg-slate-950 px-3 py-2 text-white"
       >
         <span
           className={
             selectedOption
-              ? 'text-[#172742]'
+              ? 'text-white'
               : 'text-slate-500'
           }
         >
@@ -127,7 +127,7 @@ export default function SearchableDropdown({
 
       {open && (
         <div
-          className={`absolute z-50 w-full rounded-lg border border-slate-400 bg-white shadow-xl ${
+          className={`absolute z-50 w-full rounded-lg border border-slate-400 bg-slate-950 shadow-xl ${
             openUpward
               ? 'bottom-full mb-2'
               : 'top-full mt-2'
@@ -143,7 +143,7 @@ export default function SearchableDropdown({
                 setSearch(e.target.value)
               }
               placeholder={searchPlaceholder}
-              className="w-full rounded-lg border border-slate-400 bg-white px-3 py-2 text-sm text-[#172742] outline-none"
+              className="w-full rounded-lg border border-slate-400 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
             />
           </div>
 
@@ -164,13 +164,14 @@ export default function SearchableDropdown({
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() =>
+                  onPointerDown={(e) => {
+                    e.preventDefault()
                     onSelect(option.value)
-                  }
+                  }}
                   className={`flex w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[#172742] hover:text-white ${
                     value === option.value
-                      ? 'bg-white text-[#172742]'
-                      : 'text-[#172742]'
+                      ? 'bg-[#172742] text-white'
+                      : 'text-white'
                   }`}
                 >
                   {option.label}

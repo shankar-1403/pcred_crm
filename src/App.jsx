@@ -25,6 +25,8 @@ import AdminCategory from './pages/AdminCategory'
 import AdminServices from './pages/admin/AdminServices'
 import Employees from './pages/Employees'
 import OtherLeads from './pages/OtherLeads'
+import EliteOtherLeads from './pages/EliteOtherLeads'
+import AmbassadorOtherLeads from './pages/AmbassadorOtherLeads'
 import Form from './pages/Form'
 import { ROLES } from './constants'
 
@@ -89,7 +91,7 @@ export default function App() {
               }
             />
             <Route
-              path="admin/elite-ambassador"
+              path="admin/elite-ambassador-master"
               element={
                 <ProtectedRoute roles={[ROLES.ADMIN]} uid={'thy1xXKWoQXShRv3g31vuE180Uh1'}>
                   <AdminEliteAmbassador />
@@ -97,7 +99,7 @@ export default function App() {
               }
             />
             <Route
-              path="admin/ambassador"
+              path="admin/ambassador-master"
               element={
                 <ProtectedRoute roles={[ROLES.ADMIN]} uid={'thy1xXKWoQXShRv3g31vuE180Uh1'}>
                   <AdminAmbassador />
@@ -219,8 +221,24 @@ export default function App() {
             <Route
               path="other-leads"
               element={
-                <ProtectedRoute roles={[ROLES.MANAGEMENT,ROLES.SALES,ROLES.PROCESS,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR]}>
+                <ProtectedRoute roles={[ROLES.MANAGEMENT,ROLES.SALES,ROLES.PROCESS,ROLES.EMPLOYEES]}>
                   <OtherLeads />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="elite-ambassador-other-leads"
+              element={
+                <ProtectedRoute roles={[ROLES.ELITE_AMBASSADOR]}>
+                  <EliteOtherLeads />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="ambassador-other-leads"
+              element={
+                <ProtectedRoute roles={[ROLES.AMBASSADOR]}>
+                  <AmbassadorOtherLeads />
                 </ProtectedRoute>
               }
             />

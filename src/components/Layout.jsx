@@ -128,15 +128,25 @@ export default function Layout() {
                 )}
                 {role === ROLES.ELITE_AMBASSADOR && (
                   <NavLink to="/elite-ambassador" className={linkClass(theme)} onClick={closeMenu}>
-                    Elite ambassador dashboard
+                    Loan leads
                   </NavLink>
                 )}
                 {role === ROLES.AMBASSADOR && (
                   <NavLink to="/ambassador" className={linkClass(theme)} onClick={closeMenu}>
-                    Ambassador dashboard
+                    Loan leads
                   </NavLink>
                 )}
-                {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                {role === ROLES.ELITE_AMBASSADOR && (
+                  <NavLink to="/elite-ambassador-other-leads" className={linkClass(theme)} onClick={closeMenu}>
+                    Other leads
+                  </NavLink>
+                )}
+                {role === ROLES.AMBASSADOR && (
+                  <NavLink to="/ambassador-other-leads" className={linkClass(theme)} onClick={closeMenu}>
+                    Other leads
+                  </NavLink>
+                )}
+                {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
                   <NavLink to="/other-leads" className={linkClass(theme)} onClick={closeMenu}>
                     Other leads
                   </NavLink>
@@ -177,12 +187,12 @@ export default function Layout() {
                   </NavLink>
                 )}
                 {(role === ROLES.ADMIN || profile?.uid === "thy1xXKWoQXShRv3g31vuE180Uh1") && (
-                  <NavLink to="/admin/elite-ambassador" className={linkClass(theme)} onClick={closeMenu}>
+                  <NavLink to="/admin/elite-ambassador-master" className={linkClass(theme)} onClick={closeMenu}>
                     Elite ambassador master
                   </NavLink>
                 )}
                 {(role === ROLES.ADMIN || profile?.uid === "thy1xXKWoQXShRv3g31vuE180Uh1") && (
-                  <NavLink to="/admin/ambassador" className={linkClass(theme)} onClick={closeMenu}>
+                  <NavLink to="/admin/ambassador-master" className={linkClass(theme)} onClick={closeMenu}>
                     Ambassador master
                   </NavLink>
                 )}
@@ -285,16 +295,26 @@ export default function Layout() {
                   Ambassador dashboard
                 </NavLink>
               )}
-              {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
-                  <NavLink to="/other-leads" className={linkClass(theme)} onClick={closeMenu}>
-                    Other leads
-                  </NavLink>
-                )}
+               {[ROLES.ELITE_AMBASSADOR].includes(role) && (
+                <NavLink to="/elite-ambassador-other-leads" className={linkClass(theme)} onClick={closeMenu}>
+                  Other leads
+                </NavLink>
+              )}
+              {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
+                <NavLink to="/other-leads" className={linkClass(theme)} onClick={closeMenu}>
+                  Other leads
+                </NavLink>
+              )}
+              {[ROLES.AMBASSADOR].includes(role) && (
+                <NavLink to="/ambassador-other-leads" className={linkClass(theme)} onClick={closeMenu}>
+                  Other leads
+                </NavLink>
+              )}
               {[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.ELITE_AMBASSADOR].includes(role) && (
-                  <NavLink to="/ambassadors-list" className={linkClass(theme)} onClick={closeMenu}>
-                    Ambassadors List
-                  </NavLink>
-                )}
+                <NavLink to="/ambassadors-list" className={linkClass(theme)} onClick={closeMenu}>
+                  Ambassadors List
+                </NavLink>
+              )}
               {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
                 <NavLink to="/certificate" className={linkClass(theme)} onClick={closeMenu}>
                   Certificate
@@ -331,12 +351,12 @@ export default function Layout() {
                 </NavLink>
               )}
               {(role === ROLES.ADMIN || profile?.uid === "thy1xXKWoQXShRv3g31vuE180Uh1") && (
-                <NavLink to="/admin/elite-ambassador" className={linkClass(theme)} onClick={closeMenu}>
+                <NavLink to="/admin/elite-ambassador-master" className={linkClass(theme)} onClick={closeMenu}>
                   Elite ambassador master
                 </NavLink>
               )}
               {(role === ROLES.ADMIN || profile?.uid === "thy1xXKWoQXShRv3g31vuE180Uh1") && (
-                <NavLink to="/admin/ambassador" className={linkClass(theme)} onClick={closeMenu}>
+                <NavLink to="/admin/ambassador-master" className={linkClass(theme)} onClick={closeMenu}>
                   Ambassador master
                 </NavLink>
               )}
