@@ -523,7 +523,7 @@ function Form() {
                                         </a>
                                     </div>
                                 </div>
-
+                                
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-2 p-2 md:p-6 shadow-lg rounded-xl bg-[#143973] border border-[#dac9eb]/20">
                                     {metrics.map((m) => (
                                         <div key={m.label} className="border border-[#dac9eb] rounded-lg py-3 px-1 md:px-5 text-center">
@@ -531,6 +531,9 @@ function Form() {
                                             <span className="block text-xs text-neutral-100 mt-1 whitespace-wrap">{m.label}</span>
                                         </div>
                                     ))}
+                                </div>
+                                <div className='rounded-xl border-2 border-[#143973]/20'>
+                                    <img src="/msme_form.webp" alt="MSME ke liye" className='object-cover rounded-xl h-full' />
                                 </div>
                                 <div className="p-2 md:p-6 shadow-lg rounded-xl bg-[#143973]">
                                     <p className="text-[15px] tracking-[2px] uppercase text-neutral-100 font-semibold mb-2">
