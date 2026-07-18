@@ -44,7 +44,7 @@ export default function AdminUsers() {
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [designation, setDesignation] = useState('')
-  const [role, setRole] = useState('')
+  const [role, setRole] = useState()
   const [phoneNo, setPhoneNo] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deletingUid, setDeletingUid] = useState('')
@@ -103,16 +103,18 @@ export default function AdminUsers() {
         emailTrim,
         password,
         displayTrim,
-        designationTrim,
         role,
         phoneTrim,
+        designationTrim,
         {},
       )
       setMessage(`User created successfully. UID: ${uid}`)
+      setSalutation('')
       setEmail('')
       setPassword('')
       setDisplayName('')
       setDesignation('')
+      setPhoneNo('')
       setRole('')
     } catch (err) {
       setError(err?.message || 'Could not create user')
@@ -283,7 +285,7 @@ export default function AdminUsers() {
           <div>
             <label className="block text-sm font-medium text-slate-300">Salutation</label>
             <select
-              value={editForm.salutation}
+              value={salutation}
               onChange={(e) => setSalutation(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
             >

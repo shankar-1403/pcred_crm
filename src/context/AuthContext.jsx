@@ -194,7 +194,7 @@ export function AuthProvider({ children }) {
   }, [loadProfile])
 
   const createUserByAdmin = useCallback(
-    async (email, password, displayName, role, extraProfile = {}) => {
+    async (salutation, email, password, displayName, role, phoneNo, designation,extraProfile = {}) => {
       if (String(role).trim().toLowerCase() === 'admin') {
         throw new Error(
           'Only one admin is allowed. Admin account creation is disabled.',
@@ -212,9 +212,12 @@ export function AuthProvider({ children }) {
           password,
         )
         const base = {
+          salutation,
           email,
           displayName: displayName || email.split('@')[0],
           role,
+          designation,
+          phoneNo,
           createdAt: Date.now(),
           createdByAdminUid: user?.uid ?? null,
         }
