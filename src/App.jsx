@@ -23,6 +23,8 @@ import AmbassadorVisiting from './pages/AmbassadorVisiting'
 import AmbassadorCreative from './pages/AmbassadorCreative'
 import AdminCategory from './pages/AdminCategory'
 import AdminServices from './pages/admin/AdminServices'
+import AdminMarketing from './pages/admin/AdminMarketing'
+import MarketingInternal from './pages/MarketingInternal'
 import Employees from './pages/Employees'
 import OtherLeads from './pages/OtherLeads'
 import EliteOtherLeads from './pages/EliteOtherLeads'
@@ -239,6 +241,22 @@ export default function App() {
               element={
                 <ProtectedRoute roles={[ROLES.AMBASSADOR]}>
                   <AmbassadorOtherLeads />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/admin-marketing"
+              element={
+                <ProtectedRoute roles={[ROLES.ADMIN]} uid={'xAOrYTcPrnWp11hKG0AQGgZkvQB3'}>
+                  <AdminMarketing />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/marketing-material"
+              element={
+                <ProtectedRoute roles={[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.EMPLOYEES]}>
+                  <MarketingInternal />
                 </ProtectedRoute>
               }
             />
