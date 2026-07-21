@@ -12,10 +12,7 @@ import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
 import { downloadCsv, inDateRange } from '../lib/csv'
-import {
-  resolveEliteAmbassadorName,
-  resolveEliteAmbassadorPhone,
-} from '../lib/partnerOrg'
+import { resolveEliteAmbassadorName, resolveEliteAmbassadorPhone} from '../lib/partnerOrg'
 import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
 import {labelForLeadStatus,statusLabelMapFromStatuses,} from '../lib/statusLabels'
@@ -33,6 +30,7 @@ export default function ProcessBoard() {
   const [toDate, setToDate] = useState('')
   const [editLeadId, setEditLeadId] = useState(null)
   const [editForm, setEditForm] = useState({
+    lead_source:'',
     eliteAmbassadorId: '',
     eliteAmbassadorName: '',
     company: '',
@@ -89,6 +87,7 @@ export default function ProcessBoard() {
   function openEdit(lead) {
     setEditLeadId(lead.id)
     setEditForm({
+      lead_source: lead.lead_source ?? '',
       eliteAmbassadorId: lead.eliteAmbassadorId ?? '',
       eliteAmbassadorName: lead.eliteAmbassadorName ?? '',
       company: lead.company ?? '',
@@ -122,6 +121,7 @@ export default function ProcessBoard() {
         : 0
 
       await update(ref(db, `leads/${editLeadId}`), {
+        lead_source: editForm.lead_source || '',
         eliteAmbassadorId: editForm.eliteAmbassadorId || null,
         eliteAmbassadorName: editForm.eliteAmbassadorName || '',
         company: editForm.company.trim(),
@@ -215,10 +215,20 @@ export default function ProcessBoard() {
       .join(', ')
   }
 
+  function capitalizeWords(str) {
+    if (!str) return "";
+    return str
+      .replace("_"," ")
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
   function exportCsv() {
     const rows = filteredAssignedToMe
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
       .map((lead) => [
+        capitalizeWords(lead.lead_source) || '-',
         eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
         eliteAmbassadorPhoneDisplay(lead),
         lead.company || '',
@@ -236,6 +246,7 @@ export default function ProcessBoard() {
     downloadCsv(
       'process-leads.csv',
       [
+        'Lead Source',
         'Elite ambassador',
         'Elite ambassador phone',
         'Company',
@@ -397,6 +408,20 @@ export default function ProcessBoard() {
               <ModalCloseButton onClick={() => setEditLeadId(null)} />
             </div>
             <form onSubmit={saveEdit} className="mt-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Lead Source</label>
+                <div className="flex items-center gap-6 mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="lead_source" value="online_lead" checked={editForm.lead_source === 'online_lead'} defaultChecked  onChange={(e) => setEditForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500"/>
+                    <span className="text-sm font-medium text-slate-300">Online Lead</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="lead_source" value="offline_lead" checked={editForm.lead_source === 'offline_lead'} onChange={(e) => setEditForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500"/>
+                    <span className="text-sm font-medium text-slate-300">Offline Lead</span>
+                  </label>
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300">
                   Elite ambassador

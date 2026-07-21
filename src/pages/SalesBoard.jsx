@@ -21,6 +21,7 @@ import SearchableDarkDropdown from '../components/SearchDarkSelect'
 import { usePagination } from '../hooks/usePagination'
 
 const emptyForm = {
+  lead_source:'',
   title: '',
   sourceEnabled: false,
   leadType:'',
@@ -186,6 +187,7 @@ export default function SalesBoard() {
   function openEdit(lead) {
     setEditingId(lead.id)
     setForm({
+      lead_source: lead.lead_source ?? '',
       title: lead.title ?? '',
       sourceEnabled: lead.sourceEnabled ?? '',
       eliteAmbassadorId: lead.eliteAmbassadorId ?? '',
@@ -255,6 +257,7 @@ export default function SalesBoard() {
         : 0
 
       const payload = {
+        lead_source: form.lead_source.trim(),
         title: form.title.trim(),
         sourceEnabled: form.sourceEnabled,
         viaName: form.viaName.trim(),
@@ -344,10 +347,20 @@ export default function SalesBoard() {
       .join(', ')
   }
 
+  function capitalizeWords(str) {
+    if (!str) return "";
+    return str
+      .replace("_"," ")
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
   function exportCsv() {
     const rows = filteredMyLeads
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
       .map((lead) => [
+        capitalizeWords(lead.lead_source) || '-',
         eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
         lead.company || '',
         lead.clientName || '',
@@ -370,6 +383,7 @@ export default function SalesBoard() {
     downloadCsv(
       'sales-leads.csv',
       [
+        'Lead Source',
         'Elite ambassador',
         'Company',
         'Client Name',
@@ -587,119 +601,134 @@ export default function SalesBoard() {
             </div>
 
             <form onSubmit={saveLead} className="mt-6 space-y-4">
-              <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-3">
-                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
-                  <input type="checkbox" checked={form.sourceEnabled}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        sourceEnabled: e.target.checked,
-                      }))
-                    }
-                    className="rounded border-slate-600 bg-slate-950 text-blue-600"
-                  />
-                  <span>Source</span>
-                </label>
-                {form.sourceEnabled && (
-                  <>
-                    <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-3">
-                      <div className="flex gap-4">
-                        <div>
-                          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
-                            <input
-                              type="radio"
-                              name='leadType'
-                              checked={form.leadType === "via"}
-                              onChange={(e) =>
-                                setForm((f) => ({
-                                  ...f,
-                                  leadType: "via",
-                                  ambassadorName: '' }),
-                                )
-                              }
-                              className="rounded border-slate-600 bg-slate-950 text-blue-600"
-                            />
-                            <span>Via</span>
-                          </label>
-                        </div>
-                        <div>
-                          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
-                            <input
-                              type="radio"
-                              name='leadType'
-                              checked={form.leadType === "elite_ambassador"}
-                              onChange={(e) =>
-                                setForm((f) => ({
-                                  ...f,
-                                  leadType: "elite_ambassador",
-                                  viaName: '' }),
-                                )
-                              }
-                              className="rounded border-slate-600 bg-slate-950 text-blue-600"
-                            />
-                            <span>Elite Ambassador</span>
-                          </label>
-                        </div>
-                        <div>
-                          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
-                            <input
-                              type="radio"
-                              name='leadType'
-                              checked={form.leadType === "ambassador"}
-                              onChange={(e) =>
-                                setForm((f) => ({
-                                  ...f,
-                                  leadType: "ambassador",
-                                  viaName: '' }),
-                                )
-                              }
-                              className="rounded border-slate-600 bg-slate-950 text-blue-600"
-                            />
-                            <span>Ambassador</span>
-                          </label>
-                        </div>
-                      </div>
-                      
-                      {form.leadType === "via" && (
-                        <>
-                          <div>
-                            <label htmlFor="sales-lead-via-name" className="block text-xs font-medium text-slate-400"> 
-                              Name
-                            </label>
-                            <input
-                              id="sales-lead-via-name"
-                              type="text"
-                              value={form.viaName}
-                              onChange={(e) =>
-                                setForm((f) => ({ ...f, viaName: e.target.value }))
-                              }
-                              placeholder="Referrer or channel name"
-                              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                            />
-                          </div>
-                        </>
-                      )}
-                      {form.leadType === "elite_ambassador" && (
-                        <div className='grid grid-cols-2'>
-                          <div>
-                            <label className="block text-xs font-medium text-slate-400">Elite Ambassador</label>
-                            <SearchableDarkDropdown name={"eliteAmbassadorId"} options={eliteAmbassadorOptions} value={form.eliteAmbassadorId} handleChange={(e) => setForm((f) => ({ ...f, eliteAmbassadorId: e.target.value }))}/>
-                          </div>
-                        </div>
-                      )}
-                      {form.leadType === "ambassador" && (
-                        <div className='grid grid-cols-2'>
-                          <div>
-                            <label className="block text-xs font-medium text-slate-400">Ambassador</label>
-                            <SearchableDarkDropdown name="ambassadorId" options={ambassadorOptions} value={form.ambassadorId} handleChange={(e)=>setForm((f) => ({ ...f,ambassadorId: e.target.value }))}/>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Lead Source</label>
+                <div className="flex items-center gap-6 mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="lead_source" value="online_lead" checked={form.lead_source === 'online_lead'} defaultChecked  onChange={(e) => setForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500"/>
+                    <span className="text-sm font-medium text-slate-300">Online Lead</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="lead_source" value="offline_lead" checked={form.lead_source === 'offline_lead'} onChange={(e) => setForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500"/>
+                    <span className="text-sm font-medium text-slate-300">Offline Lead</span>
+                  </label>
+                </div>
               </div>
-              
+              {form.lead_source === 'offline_lead' &&
+                <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-3">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
+                    <input type="checkbox" checked={form.sourceEnabled}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          sourceEnabled: e.target.checked,
+                        }))
+                      }
+                      className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                    />
+                    <span>Source</span>
+                  </label>
+                  {form.sourceEnabled && (
+                    <>
+                      <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-3">
+                        <div className="flex gap-4">
+                          <div>
+                            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
+                              <input
+                                type="radio"
+                                name='leadType'
+                                checked={form.leadType === "via"}
+                                onChange={(e) =>
+                                  setForm((f) => ({
+                                    ...f,
+                                    leadType: "via",
+                                    ambassadorName: '' }),
+                                  )
+                                }
+                                className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                              />
+                              <span>Via</span>
+                            </label>
+                          </div>
+                          <div>
+                            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
+                              <input
+                                type="radio"
+                                name='leadType'
+                                checked={form.leadType === "elite_ambassador"}
+                                onChange={(e) =>
+                                  setForm((f) => ({
+                                    ...f,
+                                    leadType: "elite_ambassador",
+                                    viaName: '' }),
+                                  )
+                                }
+                                className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                              />
+                              <span>Elite Ambassador</span>
+                            </label>
+                          </div>
+                          <div>
+                            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
+                              <input
+                                type="radio"
+                                name='leadType'
+                                checked={form.leadType === "ambassador"}
+                                onChange={(e) =>
+                                  setForm((f) => ({
+                                    ...f,
+                                    leadType: "ambassador",
+                                    viaName: '' }),
+                                  )
+                                }
+                                className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                              />
+                              <span>Ambassador</span>
+                            </label>
+                          </div>
+                        </div>
+                        
+                        {form.leadType === "via" && (
+                          <>
+                            <div>
+                              <label htmlFor="sales-lead-via-name" className="block text-xs font-medium text-slate-400"> 
+                                Name
+                              </label>
+                              <input
+                                id="sales-lead-via-name"
+                                type="text"
+                                value={form.viaName}
+                                onChange={(e) =>
+                                  setForm((f) => ({ ...f, viaName: e.target.value }))
+                                }
+                                placeholder="Referrer or channel name"
+                                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                              />
+                            </div>
+                          </>
+                        )}
+                        {form.leadType === "elite_ambassador" && (
+                          <div className='grid grid-cols-2'>
+                            <div>
+                              <label className="block text-xs font-medium text-slate-400">Elite Ambassador</label>
+                              <SearchableDarkDropdown name={"eliteAmbassadorId"} options={eliteAmbassadorOptions} value={form.eliteAmbassadorId} handleChange={(e) => setForm((f) => ({ ...f, eliteAmbassadorId: e.target.value }))}/>
+                            </div>
+                          </div>
+                        )}
+                        {form.leadType === "ambassador" && (
+                          <div className='grid grid-cols-2'>
+                            <div>
+                              <label className="block text-xs font-medium text-slate-400">Ambassador</label>
+                              <SearchableDarkDropdown name="ambassadorId" options={ambassadorOptions} value={form.ambassadorId} handleChange={(e)=>setForm((f) => ({ ...f,ambassadorId: e.target.value }))}/>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              }
               <div>
                 <label className="block text-sm font-medium text-slate-300">
                   Company

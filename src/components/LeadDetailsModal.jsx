@@ -94,6 +94,16 @@ export default function LeadDetailsModal({
       .join(', ')
   }
 
+  function capitalizeWords(str) {
+    if (!str) return "";
+    return str
+      .replace("_"," ")
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
+
   return (
     <div className="fixed inset-0 z-60 overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
       <div className="mx-auto my-6 w-full max-w-5xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
@@ -106,6 +116,7 @@ export default function LeadDetailsModal({
           <div className="grid gap-8 md:grid-cols-2">
             <section className="space-y-3">
               <p className="text-sm font-semibold text-slate-400">Lead Information</p>
+              <Row label="Lead Source" value={capitalizeWords(lead.lead_source) || '—'} />
               {titleTrim ? <Row label="Title" value={titleTrim} /> : null}
               {showPartner && (lead.eliteAmbassadorId || lead.eliteAmbassadorName) ? (
                 <Row label="Elite ambassador" value={eliteAmbassadorOrgName} />

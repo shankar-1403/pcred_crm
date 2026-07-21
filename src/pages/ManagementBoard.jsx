@@ -54,6 +54,7 @@ export default function ManagementBoard() {
   const [deletingLeadId, setDeletingLeadId] = useState('')
   const [message, setMessage] = useState('')
   const [leadForm, setLeadForm] = useState({
+    lead_source: '',
     eliteAmbassadorId: '',
     company: '',
     clientName: '',
@@ -299,6 +300,7 @@ export default function ManagementBoard() {
     setFormError('')
     setEditingId(lead.id)
     setLeadForm({
+      lead_source: lead.lead_source ?? '',
       eliteAmbassadorId: String(lead.eliteAmbassadorId ?? '').trim(),
       company: lead.company ?? '',
       clientName: lead.clientName ?? '',
@@ -348,6 +350,7 @@ export default function ManagementBoard() {
         : 0
 
       const payload = {
+        lead_source: leadForm.lead_source,
         eliteAmbassadorId: leadForm.eliteAmbassadorId,
         eliteAmbassadorName: eliteAmbassadorLabel,
         company: leadForm.company.trim() || eliteAmbassadorLabel,
@@ -432,10 +435,20 @@ export default function ManagementBoard() {
       .join(', ')
   }
 
+  function capitalizeWords(str) {
+    if (!str) return "";
+    return str
+      .replace("_"," ")
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
   function exportCsv() {
     const rows = filtered
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
       .map((lead) => [
+        capitalizeWords(lead.lead_source) || '-',
         eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
         ambassadorNameFor(lead.ambassadorId, lead.ambassadorName),
         lead.viaName,
@@ -457,6 +470,7 @@ export default function ManagementBoard() {
     downloadCsv(
       'management-leads.csv',
       [
+        'Lead Source',
         'Elite ambassador',
         'Ambassador',
         'Connector Name',
@@ -482,6 +496,7 @@ export default function ManagementBoard() {
     setSalesAssigneeDropdownOpen(false)
     setAssignmentMode('process')
     setLeadForm({
+      lead_source:'',
       eliteAmbassadorId: '',
       company: '',
       clientName: '',
@@ -906,31 +921,47 @@ export default function ManagementBoard() {
             </div>
             <form onSubmit={saveLeadByManagement} className="mt-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300">
-                  Elite ambassador
-                </label>
-                <select
-                  value={leadForm.eliteAmbassadorId}
-                  onChange={(e) =>
-                    setLeadForm((f) => ({
-                      ...f,
-                      eliteAmbassadorId: e.target.value,
-                      company:
-                        f.company ||
-                        eliteAmbassador.find((p) => p.id === e.target.value)?.name ||
-                        '',
-                    }))
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                >
-                  <option value="">Select elite ambassador</option>
-                  {eliteAmbassador.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-sm font-medium text-slate-300">Lead Source</label>
+                <div className="flex items-center gap-6 mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="lead_source" value="online_lead" checked={leadForm.lead_source === 'online_lead'} defaultChecked  onChange={(e) => setLeadForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500"/>
+                    <span className="text-sm font-medium text-slate-300">Online Lead</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="lead_source" value="offline_lead" checked={leadForm.lead_source === 'offline_lead'} onChange={(e) => setLeadForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500"/>
+                    <span className="text-sm font-medium text-slate-300">Offline Lead</span>
+                  </label>
+                </div>
               </div>
+              {leadForm.lead_source === 'offline_lead' &&
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">
+                    Elite ambassador
+                  </label>
+                  <select
+                    value={leadForm.eliteAmbassadorId}
+                    onChange={(e) =>
+                      setLeadForm((f) => ({
+                        ...f,
+                        eliteAmbassadorId: e.target.value,
+                        company:
+                          f.company ||
+                          eliteAmbassador.find((p) => p.id === e.target.value)?.name ||
+                          '',
+                      }))
+                    }
+                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                  >
+                    <option value="">Select elite ambassador</option>
+                    {eliteAmbassador.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              }
               <div>
                 <label className="block text-sm font-medium text-slate-300">Company</label>
                 <input
