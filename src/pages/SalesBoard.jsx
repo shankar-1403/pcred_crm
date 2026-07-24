@@ -8,8 +8,8 @@ import { useProducts } from '../hooks/useProducts'
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
 import { useAmbassador } from '../hooks/useAmbassador'
 import { useStatuses } from '../hooks/useStatuses'
-import { assignedUids, leadReferredToUser, toAssignedMap } from '../lib/leads'
-import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,assignableManagementUsers} from '../lib/assignees'
+import { assignedUids, leadReferredToUser, toAssignedMap, bankUids } from '../lib/leads'
+import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,assignableManagementUsers,labelBanks} from '../lib/assignees'
 import { labelForLeadStatus, statusLabelMapFromStatuses,} from '../lib/statusLabels'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import { resolveEliteAmbassadorName } from '../lib/partnerOrg'
@@ -19,6 +19,7 @@ import AmountInWordsHint from '../components/AmountInWordsHint'
 import TablePagination from '../components/TablePagination'
 import SearchableDarkDropdown from '../components/SearchDarkSelect'
 import { usePagination } from '../hooks/usePagination'
+import { useBanks } from '../hooks/useBanks'
 
 const emptyForm = {
   lead_source:'',
@@ -53,6 +54,7 @@ export default function SalesBoard() {
   const { eliteAmbassador } = useEliteAmbassador()
   const { ambassador } = useAmbassador()
   const { statuses } = useStatuses()
+  const { banks } = useBanks()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(emptyForm)
@@ -63,6 +65,8 @@ export default function SalesBoard() {
   const [selectedManagementAssignees, setSelectedManagementAssignees] = useState([])
   const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] = useState(false)
   const [managementAssigneeDropdownOpen, setManagementAssigneeDropdownOpen] = useState(false)
+  const [selectedBanks, setSelectedBanks] = useState([])
+  const [bankDropdownOpen, setBankDropdownOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [leadSearch, setLeadSearch] = useState('')
   const [viewLead, setViewLead] = useState(null)
@@ -93,6 +97,15 @@ export default function SalesBoard() {
   const managementAssignees = useMemo(
     () => assignableManagementUsers(managementUsers, user?.uid, usersById),
     [managementUsers, user?.uid, usersById],
+  )
+
+  const bankOptions = useMemo(
+    () =>
+      banks.map((p) => ({
+        id: p.id,
+        name: p.name || p.id,
+      })),
+    [banks],
   )
 
   const filteredMyLeads = useMemo(() => {
@@ -181,6 +194,8 @@ export default function SalesBoard() {
     setSelectedSalesAssignees([])
     setSelectedManagementAssignees([])
     setSalesAssigneeDropdownOpen(false)
+    setSelectedBanks([])
+    setBankDropdownOpen(false)
     setModalOpen(true)
   }
 
@@ -213,13 +228,16 @@ export default function SalesBoard() {
     const processUids = assignedUids(lead?.assignedTo)
     const salesUids = assignedUids(lead?.salesAssignedTo)
     const managementUids = assignedUids(lead?.managementAssignedTo)
+    const bankIds = bankUids(lead.bankName)
     setSelectedAssignees(processUids)
     setSelectedSalesAssignees(salesUids)
     setSelectedManagementAssignees(managementUids)
+    setSelectedBanks(bankIds)
 
     setAssigneeDropdownOpen(false)
     setSalesAssigneeDropdownOpen(false)
     setManagementAssigneeDropdownOpen(false)
+    setBankDropdownOpen(false)
     setModalOpen(true)
   }
 
@@ -238,6 +256,12 @@ export default function SalesBoard() {
   function toggleManagementAssignee(uid) {
     setSelectedManagementAssignees((prev) =>
       prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid],
+    )
+  }
+
+  function toggleBanks(bankId) {
+    setSelectedBanks((prev) =>
+      prev.includes(bankId) ? prev.filter((x) => x !== bankId) : [...prev, bankId],
     )
   }
 
@@ -268,7 +292,7 @@ export default function SalesBoard() {
         clientName: form.clientName.trim(),
         clientPhoneNo: form.clientPhoneNo.trim(),
         location: form.location.trim(),
-        bankName: form.bankName.trim(),
+        bankName: toAssignedMap(selectedBanks),
         onePagerLink: form.onePagerLink.trim(),
         leadDate: form.leadDate || '',
         description: form.description.trim(),
@@ -311,6 +335,8 @@ export default function SalesBoard() {
           categoryId: '-Os1EruiNYLx2XjzRUdF'
         })
       }
+      setSelectedBanks([])
+      setBankDropdownOpen(false)
       setModalOpen(false)
     } finally {
       setSaving(false)
@@ -347,6 +373,21 @@ export default function SalesBoard() {
       .join(', ')
   }
 
+  function allBankNames(bankName) {
+    if (typeof bankName === 'string' && bankName.trim()) {
+      return bankName.trim()
+    }
+    const ids = bankUids(bankName)
+    const uniqueIds = [...new Set(ids)]
+    if (!uniqueIds.length) return ''
+    return uniqueIds
+      .map((id) => {
+        const bank = banks.find((b) => b.id === id)
+        return bank?.name || id.slice(0, 8)
+      })
+      .join(', ')
+  }
+
   function capitalizeWords(str) {
     if (!str) return "";
     return str
@@ -367,6 +408,7 @@ export default function SalesBoard() {
         lead.clientPhoneNo || '',
         lead.viaName || '',
         lead.location || '',
+        allBankNames(lead.bankName),
         productNameFor(lead.productId),
         labelForLeadStatus(statusLabelByValue, lead.status),
         allAssignedNames(lead),
@@ -390,6 +432,7 @@ export default function SalesBoard() {
         'Mobile No',
         'Via',
         'Location',
+        'Bank Name',
         'Product',
         'Status',
         'Processed By',
@@ -779,13 +822,46 @@ export default function SalesBoard() {
                 <label className="block text-sm font-medium text-slate-300">
                   Bank Name
                 </label>
-                <input
-                  value={form.bankName}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, bankName: e.target.value }))
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                />
+                <div className="relative mt-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      bankOptions.length > 0 &&
+                      setBankDropdownOpen((v) => !v)
+                    }
+                    className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-sm text-white disabled:opacity-60"
+                    disabled={bankOptions.length === 0}
+                  >
+                    <span className="truncate">
+                      {bankOptions.length === 0
+                        ? 'No banks found'
+                        : selectedBanks.length
+                          ? `${selectedBanks.length} selected`
+                          : 'Select Banks'}
+                    </span>
+                    <span className="text-slate-400">
+                      {bankDropdownOpen ? '▲' : '▼'}
+                    </span>
+                  </button>
+                  {bankDropdownOpen && bankOptions.length > 0 && (
+                    <div className="absolute top-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl">
+                      {bankOptions.map((bank) => (
+                        <label
+                          key={bank.id}
+                          className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedBanks.includes(bank.id)}
+                            onChange={() => toggleBanks(bank.id)}
+                            className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                          />
+                          <span>{labelBanks(bank)}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300">

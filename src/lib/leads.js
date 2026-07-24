@@ -4,6 +4,13 @@ export function assignedUids(assignedTo) {
   return Object.keys(assignedTo).filter((uid) => assignedTo[uid])
 }
 
+export function bankUids(bank) {
+  if (!bank) return []
+  if (Array.isArray(bank)) return bank.filter(Boolean)
+  return Object.keys(bank).filter((uid) => bank[uid])
+}
+
+
 /** Elite ambassador master row or lead row: internal user who referred / sees the lead. */
 export function normalizedReferredByUid(record) {
   return String(record?.referredByUid ?? '').trim()

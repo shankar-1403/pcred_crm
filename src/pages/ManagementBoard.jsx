@@ -7,8 +7,8 @@ import { useAmbassador } from '../hooks/useAmbassador'
 import { useProducts } from '../hooks/useProducts'
 import { useStatuses } from '../hooks/useStatuses'
 import { useUsers } from '../hooks/useUsers'
-import { assignedUids, toAssignedMap } from '../lib/leads'
-import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,processUserFilterOptions,assignableManagementUsers} from '../lib/assignees'
+import { assignedUids, toAssignedMap, bankUids } from '../lib/leads'
+import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,processUserFilterOptions,assignableManagementUsers,labelBanks} from '../lib/assignees'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import {resolveAmbassadorName,resolveEliteAmbassadorName,} from '../lib/partnerOrg'
 import {labelForLeadStatus,statusLabelMapFromStatuses,} from '../lib/statusLabels'
@@ -19,6 +19,7 @@ import AmountInWordsHint from '../components/AmountInWordsHint'
 import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect'
 import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
+import { useBanks } from '../hooks/useBanks'
 
 export default function ManagementBoard() {
   const { user,profile } = useAuth()
@@ -27,6 +28,7 @@ export default function ManagementBoard() {
   const { ambassador: ambassadorRows } = useAmbassador()
   const { products } = useProducts()
   const { statuses } = useStatuses()
+  const { banks } = useBanks()
   const { usersById, processUsers, managementUsers } = useUsers()
   const [statusFilter, setStatusFilter] = useState([])
   const [leadSearch, setLeadSearch] = useState('')
@@ -35,6 +37,7 @@ export default function ManagementBoard() {
   const [productFilter, setProductFilter] = useState([])
   const [eliteAmbassadorFilter, setEliteAmbassadorFilter] = useState([])
   const [ambassadorFilter, setAmbassadorFilter] = useState([])
+  const [selectedBanks, setSelectedBanks] = useState([])
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [sortBy, setSortBy] = useState('')
@@ -45,6 +48,7 @@ export default function ManagementBoard() {
   const [assignmentMode, setAssignmentMode] = useState('process')
   const [selectedAssignees, setSelectedAssignees] = useState([])
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false)
+  const [bankDropdownOpen, setBankDropdownOpen] = useState(false)
   const [selectedSalesAssignees, setSelectedSalesAssignees] = useState([])
   const [selectedManagementAssignees, setSelectedManagementAssignees] = useState([])
   const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] = useState(false)
@@ -139,6 +143,15 @@ export default function ManagementBoard() {
   const managementAssignees = useMemo(
     () => assignableManagementUsers(managementUsers, user?.uid, usersById),
     [managementUsers, user?.uid, usersById],
+  )
+
+  const bankOptions = useMemo(
+    () =>
+      banks.map((p) => ({
+        id: p.id,
+        name: p.name || p.id,
+      })),
+    [banks],
   )
 
   const eliteAmbassadorOptions = useMemo(
@@ -300,6 +313,13 @@ export default function ManagementBoard() {
     )
   }
 
+  function toggleBanks(uid) {
+    setSelectedBanks((prev) =>
+      prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid],
+    )
+  }
+
+
   function toggleSalesAssignee(uid) {
     setSelectedSalesAssignees((prev) =>
       prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid],
@@ -331,12 +351,15 @@ export default function ManagementBoard() {
     const processUids = assignedUids(lead.assignedTo)
     const salesUids = assignedUids(lead.salesAssignedTo)
     const managementUids = assignedUids(lead?.managementAssignedTo)
+    const bankIds = bankUids(lead.bankName)
     setSelectedAssignees(processUids)
     setSelectedSalesAssignees(salesUids)
     setSelectedManagementAssignees(managementUids)
+    setSelectedBanks(bankIds)
 
     setAssigneeDropdownOpen(false)
     setSalesAssigneeDropdownOpen(false)
+    setBankDropdownOpen(false)
     setLeadModalOpen(true)
   }
 
@@ -367,7 +390,7 @@ export default function ManagementBoard() {
         clientName: leadForm.clientName.trim(),
         location: leadForm.location.trim(),
         clientPhoneNo: leadForm.clientPhoneNo.trim(),
-        bankName: leadForm.bankName.trim(),
+        bankName: toAssignedMap(selectedBanks),
         onePagerLink: leadForm.onePagerLink.trim(),
         leadDate: leadForm.leadDate || '',
         description: leadForm.description.trim(),
@@ -445,6 +468,21 @@ export default function ManagementBoard() {
       .join(', ')
   }
 
+  function allBankNames(bankName) {
+    const ids = bankUids(bankName)
+    const uniqueIds = [...new Set(ids)]
+
+    if (!uniqueIds.length) return 'No banks'
+
+    return uniqueIds
+      .map((id) => {
+        const bank = banks.find((b) => b.id === id)
+        return bank?.name || id.slice(0, 8)
+      })
+      .join(', ')
+  }
+
+
   function capitalizeWords(str) {
     if (!str) return "";
     return str
@@ -466,7 +504,7 @@ export default function ManagementBoard() {
         lead.clientPhoneNo || '',
         labelForLeadStatus(statusLabelByValue, lead.status),
         productNameFor(lead.productId),
-        lead.bankName,
+        allBankNames(lead.bankName),
         nameFor(lead.createdBy),
         allAssignedNames(lead),
         formatAmountForCsv(lead.totalAmount),
@@ -504,6 +542,7 @@ export default function ManagementBoard() {
     setEditingId(null)
     setAssigneeDropdownOpen(false)
     setSalesAssigneeDropdownOpen(false)
+    setBankDropdownOpen(false)
     setAssignmentMode('process')
     setLeadForm({
       lead_source:'',
@@ -524,6 +563,7 @@ export default function ManagementBoard() {
       mandateSigned: false,
       mandatePayoutPercent: '',
     })
+    setSelectedBanks([])
     setSelectedAssignees([])
     setSelectedSalesAssignees([])
   }
@@ -551,6 +591,7 @@ export default function ManagementBoard() {
       setDeletingLeadId('')
     }
   }
+
 
   return (
     <div className="min-w-0 space-y-4">
@@ -589,8 +630,10 @@ export default function ManagementBoard() {
                 })
                 setSelectedAssignees([])
                 setSelectedSalesAssignees([])
+                setSelectedBanks([])
                 setAssigneeDropdownOpen(false)
                 setSalesAssigneeDropdownOpen(false)
+                setBankDropdownOpen(false)
                 setLeadModalOpen(true)
               }}
               className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-500"
@@ -1004,13 +1047,46 @@ export default function ManagementBoard() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300">Bank Name</label>
-                <input
-                  value={leadForm.bankName}
-                  onChange={(e) =>
-                    setLeadForm((f) => ({ ...f, bankName: e.target.value }))
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                />
+                <div className="relative mt-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      bankOptions.length > 0 &&
+                      setBankDropdownOpen((v) => !v)
+                    }
+                    className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-sm text-white disabled:opacity-60"
+                    disabled={bankOptions.length === 0}
+                  >
+                    <span className="truncate">
+                      {bankOptions.length === 0
+                        ? 'No banks found'
+                        : selectedBanks.length
+                          ? `${selectedBanks.length} selected`
+                          : 'Select Banks'}
+                    </span>
+                    <span className="text-slate-400">
+                      {bankDropdownOpen ? '▲' : '▼'}
+                    </span>
+                  </button>
+                  {bankDropdownOpen && bankOptions.length > 0 && (
+                    <div className="absolute top-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl">
+                      {bankOptions.map((bank) => (
+                        <label
+                          key={bank.id}
+                          className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedBanks.includes(bank.id)}
+                            onChange={() => toggleBanks(bank.id)}
+                            className="rounded border-slate-600 bg-slate-950 text-blue-600"
+                          />
+                          <span>{labelBanks(bank)}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300">One pager link</label>

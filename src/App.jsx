@@ -25,6 +25,7 @@ import AdminCategory from './pages/AdminCategory'
 import AdminServices from './pages/admin/AdminServices'
 import AdminMarketing from './pages/admin/AdminMarketing'
 import MarketingInternal from './pages/MarketingInternal'
+import AdminBank from './pages/admin/AdminBank'
 import Employees from './pages/Employees'
 import OtherLeads from './pages/OtherLeads'
 import EliteOtherLeads from './pages/EliteOtherLeads'
@@ -257,6 +258,14 @@ export default function App() {
               element={
                 <ProtectedRoute roles={[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.EMPLOYEES]}>
                   <MarketingInternal />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/admin-bank"
+              element={
+                <ProtectedRoute roles={[ROLES.ADMIN]} uid={'wb7qK35cYXfAkikZKbxYULbVWJ12'}>
+                  <AdminBank />
                 </ProtectedRoute>
               }
             />

@@ -25,6 +25,10 @@ export function labelAssignableProcessUser(u) {
   return u.displayName || u.email || u.uid.slice(0, 8)
 }
 
+export function labelBanks(u) {
+  return u?.name || u?.displayName || u?.label || u?.id || u?.uid || '—'
+}
+
 /** Sales-role users, plus Self when the signed-in user is not in that list. */
 export function assignableSalesUsers(salesUsers, currentUid, usersById) {
   if (!currentUid) return salesUsers

@@ -8,7 +8,7 @@ import ThemeToggle from './ThemeToggle'
 
 const linkClass = (theme) => ({ isActive }) =>
   [
-    'rounded-lg px-2 py-2 text-sm font-medium transition-colors whitespace-nowrap',
+    'rounded-lg px-2 py-2 text-[12px] font-medium transition-colors whitespace-nowrap',
     isActive
       ? 'bg-blue-600 text-white'
       : theme === 'dark'
@@ -206,6 +206,11 @@ export default function Layout() {
                     Marketing material
                   </NavLink>
                 )}
+                {(role === ROLES.ADMIN || profile?.uid === "wb7qK35cYXfAkikZKbxYULbVWJ12") && (
+                  <NavLink to="/admin/admin-bank" className={linkClass(theme)} onClick={closeMenu}>
+                    Admin Bank
+                  </NavLink>
+                )}
               </nav>
               <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
                 <ThemeToggle />
@@ -376,10 +381,15 @@ export default function Layout() {
                 </NavLink>
               )}
               {[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.EMPLOYEES].includes(role) && (
-                  <NavLink to="/admin/marketing-material" className={linkClass(theme)} onClick={closeMenu}>
-                    Marketing material
-                  </NavLink>
-                )}
+                <NavLink to="/admin/marketing-material" className={linkClass(theme)} onClick={closeMenu}>
+                  Marketing material
+                </NavLink>
+              )}
+              {(role === ROLES.ADMIN || profile?.uid === "wb7qK35cYXfAkikZKbxYULbVWJ12") && (
+                <NavLink to="/admin/admin-bank" className={linkClass(theme)} onClick={closeMenu}>
+                  Admin Bank
+                </NavLink>
+              )}
               {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
                 <button onClick={handleCopy} className='cursor-pointer flex justify-center items-center gap-1 text-sm text-center bg-slate-800 text-blue-300 py-2 px-3 hover:underline rounded-2xl' title='ECB MSME Link'>
                   ECB MSME Link

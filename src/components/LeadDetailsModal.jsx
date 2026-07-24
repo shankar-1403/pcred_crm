@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import ModalCloseButton from './ModalCloseButton'
 import { ROLES } from '../constants'
 import { useAuth } from '../context/AuthContext'
@@ -7,8 +8,9 @@ import { useProducts } from '../hooks/useProducts'
 import { useCategory } from '../hooks/useCategory'
 import { useServices } from '../hooks/useServices'
 import { useStatuses } from '../hooks/useStatuses'
+import { useBanks } from '../hooks/useBanks'
 import { SOURCES } from '../lib/source'
-import { assignedUids } from '../lib/leads'
+import { assignedUids, bankUids } from '../lib/leads'
 import {
   resolveAmbassadorName,
   resolveEliteAmbassadorName,
@@ -24,6 +26,7 @@ import {
 export default function LeadDetailsModal({
   lead,
   usersById,
+  banksById: banksByIdProp,
   onClose,
   showPartner = true,
 }) {
@@ -38,6 +41,14 @@ export default function LeadDetailsModal({
   const { eliteAmbassador } = useEliteAmbassador()
   const { ambassador: ambassadorRows } = useAmbassador()
   const { statuses } = useStatuses()
+  const { banks } = useBanks()
+
+  const banksById = useMemo(() => {
+    if (banksByIdProp && !Array.isArray(banksByIdProp)) return banksByIdProp
+    const list = Array.isArray(banksByIdProp) ? banksByIdProp : banks || []
+    return Object.fromEntries(list.map((b) => [b.id, b]))
+  }, [banksByIdProp, banks])
+
   if (!lead) return null
 
   const titleTrim = String(lead.title ?? '').trim()
@@ -58,12 +69,9 @@ export default function LeadDetailsModal({
   const statusLabel =
     labelForLeadStatus(statusMap, lead.status) || '—'
 
-  const processedBy = assignees.length
-    ? assignees.map((uid) => userName(uid)).join(', ')
-    : 'Unassigned'
-  const productName = getProductName(lead.productId, products) || "-"
-  const categoryName = getCategoryName(lead.categoryId, category) || "-"
-  const serviceName = getServiceName(lead.serviceId, services) || "-"
+  const productName = getProductName(lead.productId, products) || '-'
+  const categoryName = getCategoryName(lead.categoryId, category) || '-'
+  const serviceName = getServiceName(lead.serviceId, services) || '-'
   const eliteAmbassadorOrgName = getEliteAmbassadorOrgName(
     lead.eliteAmbassadorId,
     lead.eliteAmbassadorName,
@@ -75,11 +83,11 @@ export default function LeadDetailsModal({
     ambassadorRows,
   )
 
-  function allAssignedNames(lead) {
+  function allAssignedNames(currentLead) {
     const uids = [
-      ...assignedUids(lead.assignedTo),
-      ...assignedUids(lead.salesAssignedTo),
-      ...assignedUids(lead.managementAssignedTo),
+      ...assignedUids(currentLead.assignedTo),
+      ...assignedUids(currentLead.salesAssignedTo),
+      ...assignedUids(currentLead.managementAssignedTo),
     ]
 
     const uniqueUids = [...new Set(uids)]
@@ -94,15 +102,32 @@ export default function LeadDetailsModal({
       .join(', ')
   }
 
-  function capitalizeWords(str) {
-    if (!str) return "";
-    return str
-      .replace("_"," ")
-      .split(" ")
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+  function formatBankNames(bankName) {
+    // Legacy plain string from older forms
+    if (typeof bankName === 'string' && bankName.trim()) {
+      return bankName.trim()
+    }
+
+    const ids = bankUids(bankName)
+    const uniqueIds = [...new Set(ids)]
+    if (!uniqueIds.length) return '—'
+
+    return uniqueIds
+      .map((id) => {
+        const bank = banksById?.[id] || banks.find((b) => b.id === id)
+        return bank?.name || id.slice(0, 8)
+      })
+      .join(', ')
   }
 
+  function capitalizeWords(str) {
+    if (!str) return ''
+    return str
+      .replace('_', ' ')
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
 
   return (
     <div className="fixed inset-0 z-60 overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
@@ -127,9 +152,7 @@ export default function LeadDetailsModal({
               {referredByUid ? (
                 <Row label="Referred by" value={userName(referredByUid)} />
               ) : null}
-              {lead.viaName ? (
-                <Row label="Via" value={lead.viaName} />
-              ) : null}
+              {lead.viaName ? <Row label="Via" value={lead.viaName} /> : null}
               <Row label="Company" value={lead.company || '—'} />
               <Row label="Mobile No." value={lead.clientPhoneNo || '—'} />
               <Row label="Client Name" value={lead.clientName || '—'} />
@@ -140,16 +163,22 @@ export default function LeadDetailsModal({
               ) : null}
               <Row label="Status" value={statusLabel} />
               <Row label="Date" value={lead.leadDate || '—'} />
-              <Row label="Updated status date" value={lead.updatedStatusDate || '—'}/>
-              <Row label="Referred by" value={lead.referred_by || '—'}/>
-              <Row label="Source" value={getSourceName(lead.sourceId, SOURCES) || '—'}/>
+              <Row
+                label="Updated status date"
+                value={lead.updatedStatusDate || '—'}
+              />
+              <Row label="Referred by" value={lead.referred_by || '—'} />
+              <Row
+                label="Source"
+                value={getSourceName(lead.sourceId, SOURCES) || '—'}
+              />
             </section>
 
             <section className="space-y-3">
               <p className="text-sm font-semibold text-slate-400">Company Details</p>
               <Row label="Location" value={lead.location || '—'} />
               {isRestrictedExternalRole ? null : (
-                <Row label="Bank Name" value={lead.bankName || '—'} />
+                <Row label="Bank Name" value={formatBankNames(lead.bankName)} />
               )}
               <Row label="Product" value={productName} />
               <Row label="Category" value={categoryName} />
@@ -162,22 +191,38 @@ export default function LeadDetailsModal({
                 />
               )}
             </section>
-            
+
             <section className="space-y-3">
-              <p className="text-sm font-semibold text-slate-400">Financial Information</p>
-              <Row label="Requirement Amount" value={formatAmount(lead.totalAmount)} />
+              <p className="text-sm font-semibold text-slate-400">
+                Financial Information
+              </p>
+              <Row
+                label="Requirement Amount"
+                value={formatAmount(lead.totalAmount)}
+              />
               {isRestrictedExternalRole ? null : (
                 <>
-                  <Row label="Bank Payout %" value={formatPercent(lead.bankPayoutPercent)} />
-                  <Row label="Bank Payout Amount" value={formatAmount(lead.bankPayoutAmount)} />
+                  <Row
+                    label="Bank Payout %"
+                    value={formatPercent(lead.bankPayoutPercent)}
+                  />
+                  <Row
+                    label="Bank Payout Amount"
+                    value={formatAmount(lead.bankPayoutAmount)}
+                  />
                 </>
               )}
             </section>
 
             {isRestrictedExternalRole ? null : (
               <section className="space-y-3">
-                <p className="text-sm font-semibold text-slate-400">Revenue Details</p>
-                <Row label="Mandate Signed" value={lead.mandateSigned ? 'Yes' : 'No'} />
+                <p className="text-sm font-semibold text-slate-400">
+                  Revenue Details
+                </p>
+                <Row
+                  label="Mandate Signed"
+                  value={lead.mandateSigned ? 'Yes' : 'No'}
+                />
                 <Row
                   label="Mandate Payout %"
                   value={
@@ -189,7 +234,9 @@ export default function LeadDetailsModal({
                 <Row
                   label="Mandate Payout Amount"
                   value={
-                    lead.mandateSigned ? formatAmount(lead.mandatePayoutAmount) : 'N/A'
+                    lead.mandateSigned
+                      ? formatAmount(lead.mandatePayoutAmount)
+                      : 'N/A'
                   }
                 />
                 <Row
@@ -201,7 +248,9 @@ export default function LeadDetailsModal({
           </div>
 
           <section className="mt-8">
-            <p className="mb-2 text-sm font-semibold text-slate-400">Description</p>
+            <p className="mb-2 text-sm font-semibold text-slate-400">
+              Description
+            </p>
             <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-slate-200">
               {lead.description || '—'}
             </div>
@@ -284,4 +333,3 @@ function getAmbassadorName(ambassadorId, fallbackName, ambassadorRows) {
   const s = resolveAmbassadorName(ambassadorId, fallbackName, ambassadorRows)
   return s || 'N/A'
 }
-
