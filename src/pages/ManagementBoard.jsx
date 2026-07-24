@@ -28,11 +28,11 @@ export default function ManagementBoard() {
   const { products } = useProducts()
   const { statuses } = useStatuses()
   const { usersById, processUsers, managementUsers } = useUsers()
-  const [statusFilter, setStatusFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState([])
   const [leadSearch, setLeadSearch] = useState('')
   const [salesOwnerFilter, setSalesOwnerFilter] = useState([])
   const [processUserFilter, setProcessUserFilter] = useState([])
-  const [productFilter, setProductFilter] = useState('')
+  const [productFilter, setProductFilter] = useState([])
   const [eliteAmbassadorFilter, setEliteAmbassadorFilter] = useState([])
   const [ambassadorFilter, setAmbassadorFilter] = useState([])
   const [fromDate, setFromDate] = useState('')
@@ -102,6 +102,25 @@ export default function ManagementBoard() {
     [salesUsers],
   )
 
+  const statusOptions = useMemo(
+    () =>
+      statuses.map((p) => ({
+        id: p.id,
+        label: p.label || p.id,
+      })),
+    [statuses],
+  )
+
+  const productOptions = useMemo(
+    () =>
+      products.map((p) => ({
+        id: p.id,
+        label: p.name || p.id,
+      })),
+    [products],
+  )
+
+
   const processUserOptions = useMemo(
     () => processUserFilterOptions(processUsers, user?.uid, usersById),
     [processUsers, user?.uid, usersById],
@@ -140,15 +159,6 @@ export default function ManagementBoard() {
     [ambassadorRows],
   )
 
-  const statusOptions = useMemo(() => {
-    return [
-      { value: '', label: 'Select Status' },
-      ...statuses
-        .filter((s) => String(s?.id ?? '').trim() && String(s?.label ?? '').trim())
-        .map((s) => ({ value: String(s.id).trim(), label: String(s.label).trim() })),
-    ]
-  }, [statuses])
-
   const statusLabelByValue = useMemo(
     () => statusLabelMapFromStatuses(statuses),
     [statuses],
@@ -157,8 +167,8 @@ export default function ManagementBoard() {
   const filtered = useMemo(() => {
     const term = leadSearch.trim().toLowerCase()
     let list = leads
-    if (statusFilter) {
-      list = list.filter((l) => l.status === statusFilter)
+    if (statusFilter.length) {
+      list = list.filter((l) => statusFilter.includes(l.status))
     }
     if (term) {
       list = list.filter((l) => {
@@ -176,8 +186,8 @@ export default function ManagementBoard() {
         return processUserFilter.some((uid) => assigned.includes(uid))
       })
     }
-    if (productFilter) {
-      list = list.filter((l) => l.productId === productFilter)
+    if (productFilter.length) {
+      list = list.filter((l) => productFilter.includes(l.productId))
     }
     if (eliteAmbassadorFilter.length) {
       list = list.filter((l) =>
@@ -597,19 +607,14 @@ export default function ManagementBoard() {
             >
               Filter by status
             </label>
-            <select
+            <TypeaheadMultiSelect
               id="status-filter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
-            >
-              <option value="">All statuses</option>
-              {statusOptions.filter((s) => s.value).map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+              label={null}
+              placeholder="Type status..."
+              options={statusOptions}
+              selectedIds={statusFilter}
+              onChangeSelectedIds={setStatusFilter}
+            />
           </div>
 
           <div>
@@ -653,19 +658,14 @@ export default function ManagementBoard() {
             >
               Product
             </label>
-            <select
+            <TypeaheadMultiSelect
               id="product-filter"
-              value={productFilter}
-              onChange={(e) => setProductFilter(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
-            >
-              <option value="">All products</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name || p.id}
-                </option>
-              ))}
-            </select>
+              label={null}
+              placeholder="Type product..."
+              options={productOptions}
+              selectedIds={productFilter}
+              onChangeSelectedIds={setProductFilter}
+            />
           </div>
 
           <div>
