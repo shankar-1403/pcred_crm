@@ -9,7 +9,7 @@ import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
 import { useAmbassador } from '../hooks/useAmbassador'
 import { useStatuses } from '../hooks/useStatuses'
 import { assignedUids, leadReferredToUser, toAssignedMap, bankUids } from '../lib/leads'
-import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,assignableManagementUsers,labelBanks} from '../lib/assignees'
+import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,assignableManagementUsers} from '../lib/assignees'
 import { labelForLeadStatus, statusLabelMapFromStatuses,} from '../lib/statusLabels'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import { resolveEliteAmbassadorName } from '../lib/partnerOrg'
@@ -18,6 +18,7 @@ import ModalCloseButton from '../components/ModalCloseButton'
 import AmountInWordsHint from '../components/AmountInWordsHint'
 import TablePagination from '../components/TablePagination'
 import SearchableDarkDropdown from '../components/SearchDarkSelect'
+import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect'
 import { usePagination } from '../hooks/usePagination'
 import { useBanks } from '../hooks/useBanks'
 
@@ -66,7 +67,6 @@ export default function SalesBoard() {
   const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] = useState(false)
   const [managementAssigneeDropdownOpen, setManagementAssigneeDropdownOpen] = useState(false)
   const [selectedBanks, setSelectedBanks] = useState([])
-  const [bankDropdownOpen, setBankDropdownOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [leadSearch, setLeadSearch] = useState('')
   const [viewLead, setViewLead] = useState(null)
@@ -103,7 +103,7 @@ export default function SalesBoard() {
     () =>
       banks.map((p) => ({
         id: p.id,
-        name: p.name || p.id,
+        label: p.name || p.id,
       })),
     [banks],
   )
@@ -195,7 +195,6 @@ export default function SalesBoard() {
     setSelectedManagementAssignees([])
     setSalesAssigneeDropdownOpen(false)
     setSelectedBanks([])
-    setBankDropdownOpen(false)
     setModalOpen(true)
   }
 
@@ -237,7 +236,6 @@ export default function SalesBoard() {
     setAssigneeDropdownOpen(false)
     setSalesAssigneeDropdownOpen(false)
     setManagementAssigneeDropdownOpen(false)
-    setBankDropdownOpen(false)
     setModalOpen(true)
   }
 
@@ -258,13 +256,6 @@ export default function SalesBoard() {
       prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid],
     )
   }
-
-  function toggleBanks(bankId) {
-    setSelectedBanks((prev) =>
-      prev.includes(bankId) ? prev.filter((x) => x !== bankId) : [...prev, bankId],
-    )
-  }
-
 
   async function saveLead(e) {
     e.preventDefault()
@@ -336,7 +327,6 @@ export default function SalesBoard() {
         })
       }
       setSelectedBanks([])
-      setBankDropdownOpen(false)
       setModalOpen(false)
     } finally {
       setSaving(false)
@@ -822,45 +812,20 @@ export default function SalesBoard() {
                 <label className="block text-sm font-medium text-slate-300">
                   Bank Name
                 </label>
-                <div className="relative mt-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      bankOptions.length > 0 &&
-                      setBankDropdownOpen((v) => !v)
-                    }
-                    className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-sm text-white disabled:opacity-60"
-                    disabled={bankOptions.length === 0}
-                  >
-                    <span className="truncate">
-                      {bankOptions.length === 0
+                <div className="mt-1">
+                  <TypeaheadMultiSelect
+                    id="sales-bank-select"
+                    label={null}
+                    placeholder={
+                      bankOptions.length === 0
                         ? 'No banks found'
-                        : selectedBanks.length
-                          ? `${selectedBanks.length} selected`
-                          : 'Select Banks'}
-                    </span>
-                    <span className="text-slate-400">
-                      {bankDropdownOpen ? '▲' : '▼'}
-                    </span>
-                  </button>
-                  {bankDropdownOpen && bankOptions.length > 0 && (
-                    <div className="absolute top-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl">
-                      {bankOptions.map((bank) => (
-                        <label
-                          key={bank.id}
-                          className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedBanks.includes(bank.id)}
-                            onChange={() => toggleBanks(bank.id)}
-                            className="rounded border-slate-600 bg-slate-950 text-blue-600"
-                          />
-                          <span>{labelBanks(bank)}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
+                        : 'Search banks…'
+                    }
+                    options={bankOptions}
+                    selectedIds={selectedBanks}
+                    onChangeSelectedIds={setSelectedBanks}
+                    disabled={bankOptions.length === 0}
+                  />
                 </div>
               </div>
               <div>

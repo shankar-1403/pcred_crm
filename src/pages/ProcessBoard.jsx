@@ -17,7 +17,7 @@ import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
 import {labelForLeadStatus,statusLabelMapFromStatuses,} from '../lib/statusLabels'
 import { useBanks } from '../hooks/useBanks'
-import { labelBanks } from '../lib/assignees'
+import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect'
 
 export default function ProcessBoard() {
   const { user } = useAuth()
@@ -32,7 +32,6 @@ export default function ProcessBoard() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [selectedBanks, setSelectedBanks] = useState([])
-  const [bankDropdownOpen, setBankDropdownOpen] = useState(false)
   const [editLeadId, setEditLeadId] = useState(null)
   const [editForm, setEditForm] = useState({
     lead_source:'',
@@ -111,7 +110,6 @@ export default function ProcessBoard() {
     })
     const bankIds = bankUids(lead.bankName)
     setSelectedBanks(bankIds)
-    setBankDropdownOpen(false)
   }
 
   async function saveEdit(e) {
@@ -153,7 +151,6 @@ export default function ProcessBoard() {
         categoryId: '-Os1EruiNYLx2XjzRUdF',
       })
       setEditLeadId(null)
-      setBankDropdownOpen(false)
       setSelectedBanks([])
     } finally {
       setSavingEdit(false)
@@ -170,16 +167,10 @@ export default function ProcessBoard() {
     () =>
       banks.map((p) => ({
         id: p.id,
-        name: p.name || p.id,
+        label: p.name || p.id,
       })),
     [banks],
   )
-
-  function toggleBanks(uid) {
-    setSelectedBanks((prev) =>
-      prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid],
-    )
-  }
 
   function eliteAmbassadorPhoneDisplay(lead) {
     const phone = resolveEliteAmbassadorPhone(
@@ -507,45 +498,20 @@ export default function ProcessBoard() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300">Bank Name</label>
-                <div className="relative mt-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      bankOptions.length > 0 &&
-                      setBankDropdownOpen((v) => !v)
-                    }
-                    className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-sm text-white disabled:opacity-60"
-                    disabled={bankOptions.length === 0}
-                  >
-                    <span className="truncate">
-                      {bankOptions.length === 0
+                <div className="mt-1">
+                  <TypeaheadMultiSelect
+                    id="process-bank-select"
+                    label={null}
+                    placeholder={
+                      bankOptions.length === 0
                         ? 'No banks found'
-                        : selectedBanks.length
-                          ? `${selectedBanks.length} selected`
-                          : 'Select Banks'}
-                    </span>
-                    <span className="text-slate-400">
-                      {bankDropdownOpen ? '▲' : '▼'}
-                    </span>
-                  </button>
-                  {bankDropdownOpen && bankOptions.length > 0 && (
-                    <div className="absolute top-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl">
-                      {bankOptions.map((bank) => (
-                        <label
-                          key={bank.id}
-                          className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedBanks.includes(bank.id)}
-                            onChange={() => toggleBanks(bank.id)}
-                            className="rounded border-slate-600 bg-slate-950 text-blue-600"
-                          />
-                          <span>{labelBanks(bank)}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
+                        : 'Search banks…'
+                    }
+                    options={bankOptions}
+                    selectedIds={selectedBanks}
+                    onChangeSelectedIds={setSelectedBanks}
+                    disabled={bankOptions.length === 0}
+                  />
                 </div>
               </div>
               <div>
