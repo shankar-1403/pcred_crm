@@ -58,6 +58,7 @@ export default function ManagementBoard() {
   const [message, setMessage] = useState('')
   const [leadForm, setLeadForm] = useState({
     lead_source: '',
+    viaName:'',
     eliteAmbassadorId: '',
     company: '',
     clientName: '',
@@ -323,6 +324,7 @@ export default function ManagementBoard() {
     setEditingId(lead.id)
     setLeadForm({
       lead_source: lead.lead_source ?? '',
+      viaName: lead.viaName ?? '',
       eliteAmbassadorId: String(lead.eliteAmbassadorId ?? '').trim(),
       company: lead.company ?? '',
       clientName: lead.clientName ?? '',
@@ -375,6 +377,7 @@ export default function ManagementBoard() {
 
       const payload = {
         lead_source: leadForm.lead_source,
+        viaName: leadForm.viaName,
         eliteAmbassadorId: leadForm.eliteAmbassadorId,
         eliteAmbassadorName: eliteAmbassadorLabel,
         company: leadForm.company.trim() || eliteAmbassadorLabel,
@@ -536,6 +539,7 @@ export default function ManagementBoard() {
     setAssignmentMode('process')
     setLeadForm({
       lead_source:'',
+      viaName:'',
       eliteAmbassadorId: '',
       company: '',
       clientName: '',
@@ -792,8 +796,9 @@ export default function ManagementBoard() {
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium">Sr No.</th>
+                <th className="px-4 py-2 font-medium">Elite ambassador</th>
+                <th className="px-4 py-2 font-medium">Ambassador</th>
                 <th className="px-4 py-2 font-medium">Company</th>
-                <th className="px-4 py-2 font-medium">Client Name</th>
                 <th className="px-4 py-2 font-medium">Status</th>
                 <th className="px-4 py-2 font-medium">Product</th>
                 <th className="px-4 py-2 font-medium">Sales owner</th>
@@ -841,20 +846,40 @@ export default function ManagementBoard() {
                   return (
                     <tr key={lead.id} className="text-slate-300">
                       <td className="px-4 py-1 text-slate-400">{index+1}</td>
-                      <td className="px-4 py-1 text-slate-400 lowercase first-letter:uppercase">{lead.company || '-'}</td>
-                      <td className="px-4 py-1 text-slate-400 lowercase first-letter:uppercase">{lead.clientName || '-'}</td>
+                      <td className="px-4 py-1">
+                        {eliteAmbassadorNameFor(
+                          lead.eliteAmbassadorId,
+                          lead.eliteAmbassadorName,
+                        )}
+                      </td>
+                      <td className="px-4 py-1 text-slate-400">
+                        {ambassadorNameFor(lead.ambassadorId, lead.ambassadorName)}
+                      </td>
+                        <td className="px-4 py-1 text-slate-400 lowercase first-letter:uppercase">{lead.company || '-'}</td>
                       <td className="px-4 py-1">
                         <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
-                          {labelForLeadStatus(statusLabelByValue, lead.status) ||
-                            'New'}
+                          {labelForLeadStatus(statusLabelByValue, lead.status) || 'New'}
                         </span>
                       </td>
                       <td className="px-4 py-1 text-slate-400">
                         {productNameFor(lead?.productId)}
                       </td>
                       <td className="px-4 py-1 text-slate-400">{nameFor(lead.createdBy)}</td>
-                      <td className="px-4 py-1">{allAssignedNames(lead)}</td>
-                      <td className="px-4 py-1 text-slate-400 text-right">{formatCurrencyINR(lead?.totalAmount)}</td>
+                      <td className="px-4 py-1">
+                        {/* {assignees.length === 0 ? (
+                          <span className="text-slate-600">Unassigned</span>
+                        ) : (
+                          <ul className="space-y-0.5 text-xs text-slate-400">
+                            {assignees.map((uid) => (
+                              <li key={uid}>{nameFor(uid)}</li>
+                            ))}
+                          </ul>
+                        )} */}
+                        {allAssignedNames(lead)}
+                      </td>
+                      <td className="px-4 py-1 text-slate-400 text-right">
+                        {formatCurrencyINR(lead?.totalAmount)}
+                      </td>
                       <td className="px-4 py-1 text-slate-400 text-right">
                         {formatCurrencyINR(
                           (Number(lead?.bankPayoutAmount) || 0) +
@@ -972,6 +997,21 @@ export default function ManagementBoard() {
                   </select>
                 </div>
               }
+              <div>
+                <label htmlFor="lead-via-name" className="block text-xs font-medium text-slate-400"> 
+                  Connector Name
+                </label>
+                <input
+                  id="lead-via-name"
+                  type="text"
+                  value={leadForm.viaName}
+                  onChange={(e) =>
+                    setLeadForm((f) => ({ ...f, viaName: e.target.value }))
+                  }
+                  placeholder="Referrer or channel name"
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300">Company</label>
                 <input
@@ -1125,7 +1165,11 @@ export default function ManagementBoard() {
                   onChange={(e) =>
                     setLeadForm((f) => ({ ...f, totalAmount: e.target.value }))
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                  onWheel={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }}
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white no-spinner"
                 />
                 <AmountInWordsHint value={leadForm.totalAmount} />
               </div>
@@ -1144,7 +1188,11 @@ export default function ManagementBoard() {
                       onChange={(e) =>
                         setLeadForm((f) => ({ ...f, bankPayoutPercent: e.target.value }))
                       }
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                      onWheel={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }}
+                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white no-spinner"
                     />
                   </div>
                   <div>
@@ -1157,7 +1205,7 @@ export default function ManagementBoard() {
                       step="0.01"
                       value={bankAmount.toFixed(2)}
                       readOnly
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-white"
+                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-white no-spinner"
                     />
                   </div>
                 </div>
@@ -1199,13 +1247,17 @@ export default function ManagementBoard() {
                         min="0"
                         step="0.01"
                         value={leadForm.mandatePayoutPercent}
+                        onWheel={(e) => {
+                          e.preventDefault();
+                          e.currentTarget.blur();
+                        }}
                         onChange={(e) =>
                           setLeadForm((f) => ({
                             ...f,
                             mandatePayoutPercent: e.target.value,
                           }))
                         }
-                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white no-spinner"
                       />
                     </div>
                     <div>
@@ -1216,7 +1268,7 @@ export default function ManagementBoard() {
                         type="number"
                         value={mandateAmount.toFixed(2)}
                         readOnly
-                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-white"
+                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-white no-spinner"
                       />
                     </div>
                   </div>

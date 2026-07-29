@@ -936,10 +936,14 @@ export default function SalesBoard() {
                   min="0"
                   step="0.01"
                   value={form.totalAmount}
+                  onWheel={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, totalAmount: e.target.value }))
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white no-spinner"
                 />
                 <AmountInWordsHint value={form.totalAmount} />
               </div>
@@ -958,10 +962,14 @@ export default function SalesBoard() {
                       min="0"
                       step="0.01"
                       value={form.bankPayoutPercent}
+                      onWheel={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, bankPayoutPercent: e.target.value }))
                       }
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white no-spinner"
                     />
                   </div>
                   <div>
@@ -1014,13 +1022,17 @@ export default function SalesBoard() {
                         min="0"
                         step="0.01"
                         value={form.mandatePayoutPercent}
+                        onWheel={(e) => {
+                          e.preventDefault();
+                          e.currentTarget.blur();
+                        }}
                         onChange={(e) =>
                           setForm((f) => ({
                             ...f,
                             mandatePayoutPercent: e.target.value,
                           }))
                         }
-                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white no-spinner"
                       />
                     </div>
                     <div>

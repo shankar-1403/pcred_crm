@@ -586,10 +586,14 @@ export default function ProcessBoard() {
                   min="0"
                   step="0.01"
                   value={editForm.totalAmount}
+                  onWheel={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }}
                   onChange={(e) =>
                     setEditForm((f) => ({ ...f, totalAmount: e.target.value }))
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white no-spinner"
                 />
                 <AmountInWordsHint value={editForm.totalAmount} />
               </div>
@@ -607,13 +611,17 @@ export default function ProcessBoard() {
                       min="0"
                       step="0.01"
                       value={editForm.bankPayoutPercent}
+                      onWheel={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }}
                       onChange={(e) =>
                         setEditForm((f) => ({
                           ...f,
                           bankPayoutPercent: e.target.value,
                         }))
                       }
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white no-spinner"
                     />
                   </div>
                   <div>
@@ -670,13 +678,17 @@ export default function ProcessBoard() {
                         min="0"
                         step="0.01"
                         value={editForm.mandatePayoutPercent}
+                        onWheel={(e) => {
+                          e.preventDefault();
+                          e.currentTarget.blur();
+                        }}
                         onChange={(e) =>
                           setEditForm((f) => ({
                             ...f,
                             mandatePayoutPercent: e.target.value,
                           }))
                         }
-                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white no-spinner"
                       />
                     </div>
                     <div>
