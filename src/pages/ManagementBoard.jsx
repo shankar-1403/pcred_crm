@@ -792,9 +792,8 @@ export default function ManagementBoard() {
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium">Sr No.</th>
-                <th className="px-4 py-2 font-medium">Elite ambassador</th>
-                <th className="px-4 py-2 font-medium">Ambassador</th>
                 <th className="px-4 py-2 font-medium">Company</th>
+                <th className="px-4 py-2 font-medium">Client Name</th>
                 <th className="px-4 py-2 font-medium">Status</th>
                 <th className="px-4 py-2 font-medium">Product</th>
                 <th className="px-4 py-2 font-medium">Sales owner</th>
@@ -842,16 +841,8 @@ export default function ManagementBoard() {
                   return (
                     <tr key={lead.id} className="text-slate-300">
                       <td className="px-4 py-1 text-slate-400">{index+1}</td>
-                      <td className="px-4 py-1">
-                        {eliteAmbassadorNameFor(
-                          lead.eliteAmbassadorId,
-                          lead.eliteAmbassadorName,
-                        )}
-                      </td>
-                      <td className="px-4 py-1 text-slate-400">
-                        {ambassadorNameFor(lead.ambassadorId, lead.ambassadorName)}
-                      </td>
-                      <td className="px-4 py-1 text-slate-400">{lead.company || '-'}</td>
+                      <td className="px-4 py-1 text-slate-400 lowercase first-letter:uppercase">{lead.company || '-'}</td>
+                      <td className="px-4 py-1 text-slate-400 lowercase first-letter:uppercase">{lead.clientName || '-'}</td>
                       <td className="px-4 py-1">
                         <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
                           {labelForLeadStatus(statusLabelByValue, lead.status) ||
@@ -862,21 +853,8 @@ export default function ManagementBoard() {
                         {productNameFor(lead?.productId)}
                       </td>
                       <td className="px-4 py-1 text-slate-400">{nameFor(lead.createdBy)}</td>
-                      <td className="px-4 py-1">
-                        {/* {assignees.length === 0 ? (
-                          <span className="text-slate-600">Unassigned</span>
-                        ) : (
-                          <ul className="space-y-0.5 text-xs text-slate-400">
-                            {assignees.map((uid) => (
-                              <li key={uid}>{nameFor(uid)}</li>
-                            ))}
-                          </ul>
-                        )} */}
-                        {allAssignedNames(lead)}
-                      </td>
-                      <td className="px-4 py-1 text-slate-400 text-right">
-                        {formatCurrencyINR(lead?.totalAmount)}
-                      </td>
+                      <td className="px-4 py-1">{allAssignedNames(lead)}</td>
+                      <td className="px-4 py-1 text-slate-400 text-right">{formatCurrencyINR(lead?.totalAmount)}</td>
                       <td className="px-4 py-1 text-slate-400 text-right">
                         {formatCurrencyINR(
                           (Number(lead?.bankPayoutAmount) || 0) +

@@ -186,7 +186,7 @@ export default function Layout() {
                     Sales Material
                   </NavLink>
                 )}
-                {(role === ROLES.ADMIN || profile?.uid === "thy1xXKWoQXShRv3g31vuE180Uh1") && (
+                {/* {(role === ROLES.ADMIN || profile?.uid === "thy1xXKWoQXShRv3g31vuE180Uh1") && (
                   <NavLink to="/admin/elite-ambassador-master" className={linkClass(theme)} onClick={closeMenu}>
                     Elite ambassador master
                   </NavLink>
@@ -195,7 +195,7 @@ export default function Layout() {
                   <NavLink to="/admin/ambassador-master" className={linkClass(theme)} onClick={closeMenu}>
                     Ambassador master
                   </NavLink>
-                )}
+                )} */}
                 {(role === ROLES.ADMIN || profile?.uid === "xAOrYTcPrnWp11hKG0AQGgZkvQB3") && (
                   <NavLink to="/admin/admin-marketing" className={linkClass(theme)} onClick={closeMenu}>
                     Admin Marketing
@@ -209,6 +209,11 @@ export default function Layout() {
                 {(role === ROLES.ADMIN || profile?.uid === "wb7qK35cYXfAkikZKbxYULbVWJ12") && (
                   <NavLink to="/admin/admin-bank" className={linkClass(theme)} onClick={closeMenu}>
                     Admin Bank
+                  </NavLink>
+                )}
+                {(role === ROLES.ADMIN) && (
+                  <NavLink to="/admin/admin-transfer-leads" className={linkClass(theme)} onClick={closeMenu}>
+                    Transfer Leads
                   </NavLink>
                 )}
               </nav>
@@ -365,7 +370,7 @@ export default function Layout() {
                   Sales Material
                 </NavLink>
               )}
-              {(role === ROLES.ADMIN || profile?.uid === "thy1xXKWoQXShRv3g31vuE180Uh1") && (
+              {/* {(role === ROLES.ADMIN || profile?.uid === "thy1xXKWoQXShRv3g31vuE180Uh1") && (
                 <NavLink to="/admin/elite-ambassador-master" className={linkClass(theme)} onClick={closeMenu}>
                   Elite ambassador master
                 </NavLink>
@@ -374,7 +379,7 @@ export default function Layout() {
                 <NavLink to="/admin/ambassador-master" className={linkClass(theme)} onClick={closeMenu}>
                   Ambassador master
                 </NavLink>
-              )}
+              )} */}
               {(role === ROLES.ADMIN || profile?.uid === "xAOrYTcPrnWp11hKG0AQGgZkvQB3") && (
                 <NavLink to="/admin/admin-marketing" className={linkClass(theme)} onClick={closeMenu}>
                   Admin Marketing
@@ -388,6 +393,11 @@ export default function Layout() {
               {(role === ROLES.ADMIN || profile?.uid === "wb7qK35cYXfAkikZKbxYULbVWJ12") && (
                 <NavLink to="/admin/admin-bank" className={linkClass(theme)} onClick={closeMenu}>
                   Admin Bank
+                </NavLink>
+              )}
+              {(role === ROLES.ADMIN) && (
+                <NavLink to="/admin/admin-transfer-leads" className={linkClass(theme)} onClick={closeMenu}>
+                  Transfer Leads
                 </NavLink>
               )}
               {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (

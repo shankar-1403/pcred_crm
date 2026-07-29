@@ -28,6 +28,7 @@ import MarketingInternal from './pages/MarketingInternal'
 import AdminBank from './pages/admin/AdminBank'
 import Employees from './pages/Employees'
 import OtherLeads from './pages/OtherLeads'
+import AdminTransferLeads from './pages/admin/AdminTransferLeads'
 import EliteOtherLeads from './pages/EliteOtherLeads'
 import AmbassadorOtherLeads from './pages/AmbassadorOtherLeads'
 import Form from './pages/Form'
@@ -266,6 +267,14 @@ export default function App() {
               element={
                 <ProtectedRoute roles={[ROLES.ADMIN]} uid={'wb7qK35cYXfAkikZKbxYULbVWJ12'}>
                   <AdminBank />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/admin-transfer-leads"
+              element={
+                <ProtectedRoute roles={[ROLES.ADMIN]}>
+                  <AdminTransferLeads />
                 </ProtectedRoute>
               }
             />
