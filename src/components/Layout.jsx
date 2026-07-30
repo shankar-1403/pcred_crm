@@ -216,6 +216,16 @@ export default function Layout() {
                     Transfer Leads
                   </NavLink>
                 )}
+                {(role === ROLES.ADMIN) && (
+                  <NavLink to="/admin/admin-category-status" className={linkClass(theme)} onClick={closeMenu}>
+                    Category Status
+                  </NavLink>
+                )}
+                {(role === ROLES.ADMIN) && (
+                  <NavLink to="/admin/admin-sub-status" className={linkClass(theme)} onClick={closeMenu}>
+                    Sub Status
+                  </NavLink>
+                )}
               </nav>
               <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
                 <ThemeToggle />
@@ -398,6 +408,16 @@ export default function Layout() {
               {(role === ROLES.ADMIN) && (
                 <NavLink to="/admin/admin-transfer-leads" className={linkClass(theme)} onClick={closeMenu}>
                   Transfer Leads
+                </NavLink>
+              )}
+              {(role === ROLES.ADMIN) && (
+                <NavLink to="/admin/admin-category-status" className={linkClass(theme)} onClick={closeMenu}>
+                  Category Status
+                </NavLink>
+              )}
+              {(role === ROLES.ADMIN) && (
+                <NavLink to="/admin/admin-sub-status" className={linkClass(theme)} onClick={closeMenu}>
+                  Sub Status
                 </NavLink>
               )}
               {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (

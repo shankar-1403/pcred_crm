@@ -31,6 +31,8 @@ import OtherLeads from './pages/OtherLeads'
 import AdminTransferLeads from './pages/admin/AdminTransferLeads'
 import EliteOtherLeads from './pages/EliteOtherLeads'
 import AmbassadorOtherLeads from './pages/AmbassadorOtherLeads'
+import AdminCategoryStatus from './pages/admin/AdminCategoryStatus'
+import AdminSubStatus from './pages/admin/AdminSubStatus'
 import Form from './pages/Form'
 import { ROLES } from './constants'
 
@@ -275,6 +277,22 @@ export default function App() {
               element={
                 <ProtectedRoute roles={[ROLES.ADMIN]}>
                   <AdminTransferLeads />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/admin-category-status"
+              element={
+                <ProtectedRoute roles={[ROLES.ADMIN]}>
+                  <AdminCategoryStatus />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/admin-sub-status"
+              element={
+                <ProtectedRoute roles={[ROLES.ADMIN]}>
+                  <AdminSubStatus />
                 </ProtectedRoute>
               }
             />
