@@ -17,6 +17,8 @@ import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
 import {labelForLeadStatus,statusLabelMapFromStatuses,} from '../lib/statusLabels'
 import { useBanks } from '../hooks/useBanks'
+import { useCategoryStatus } from '../hooks/useCategoryStatus'
+import { useSubStatus } from '../hooks/useSubStatus'
 import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect'
 
 export default function ProcessBoard() {
@@ -24,6 +26,8 @@ export default function ProcessBoard() {
   const { banks } = useBanks()
   const { products, loading: productsLoading, error: productsError } = useProducts()
   const { statuses } = useStatuses()
+  const { categoryStatus } = useCategoryStatus()
+  const { subStatus } = useSubStatus()
   const { eliteAmbassador } = useEliteAmbassador()
   const { leads, loading } = useLeads()
   const { usersById } = useUsers()
@@ -32,6 +36,7 @@ export default function ProcessBoard() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [selectedBanks, setSelectedBanks] = useState([])
+  const [selectedSubStatus, setSelectedSubStatus] = useState([])
   const [editLeadId, setEditLeadId] = useState(null)
   const [editForm, setEditForm] = useState({
     lead_source:'',
@@ -45,6 +50,8 @@ export default function ProcessBoard() {
     leadDate: '',
     description: '',
     status: '',
+    categoryStatus: '',
+    subStatus: '',
     productId: '',
     totalAmount: '',
     bankPayoutPercent: '',
@@ -102,6 +109,8 @@ export default function ProcessBoard() {
       leadDate: lead.leadDate ?? '',
       description: lead.description ?? '',
       status: lead.status ?? '',
+      categoryStatus: lead.categoryStatus ?? '',
+      subStatus: lead.subStatus ?? '',
       productId: lead.productId ?? '',
       totalAmount: lead.totalAmount ?? '',
       bankPayoutPercent: lead.bankPayoutPercent ?? '',
@@ -110,6 +119,21 @@ export default function ProcessBoard() {
     })
     const bankIds = bankUids(lead.bankName)
     setSelectedBanks(bankIds)
+    setSelectedSubStatus(
+      subStatusOptions.filter((s) => s.categoryId === lead.categoryStatus),
+    )
+  }
+
+  function handleCategoryStatusChange(e) {
+    const value = e.target.value
+    setEditForm((f) => ({
+      ...f,
+      categoryStatus: value,
+      subStatus: '',
+    }))
+    setSelectedSubStatus(
+      subStatusOptions.filter((s) => s.categoryId === value),
+    )
   }
 
   async function saveEdit(e) {
@@ -138,6 +162,8 @@ export default function ProcessBoard() {
         leadDate: editForm.leadDate || '',
         description: editForm.description.trim(),
         status: editForm.status || '',
+        categoryStatus: editForm.categoryStatus || '',
+        subStatus: editForm.subStatus || '',
         productId: editForm.productId || null,
         totalAmount: editForm.totalAmount || '',
         bankPayoutPercent: editForm.bankPayoutPercent || '',
@@ -152,6 +178,7 @@ export default function ProcessBoard() {
       })
       setEditLeadId(null)
       setSelectedBanks([])
+      setSelectedSubStatus([])
     } finally {
       setSavingEdit(false)
     }
@@ -170,6 +197,27 @@ export default function ProcessBoard() {
         label: p.name || p.id,
       })),
     [banks],
+  )
+
+  const categoryStatusOptions = useMemo(
+    () =>
+      categoryStatus.map((p) => ({
+        id: p.id,
+        value: p.id,
+        label: p.name,
+      })),
+    [categoryStatus],
+  )
+
+  const subStatusOptions = useMemo(
+    () =>
+      subStatus.map((p) => ({
+        id: p.id,
+        categoryId: p.category,
+        value: p.id,
+        label: p.name,
+      })),
+    [subStatus],
   )
 
   function eliteAmbassadorPhoneDisplay(lead) {
@@ -203,9 +251,14 @@ export default function ProcessBoard() {
     ]
   }, [statuses])
 
-  const statusLabelByValue = useMemo(
-    () => statusLabelMapFromStatuses(statuses),
-    [statuses],
+  const categoryStatusLabelByValue = useMemo(
+    () => statusLabelMapFromStatuses(categoryStatus),
+    [categoryStatus],
+  )
+
+  const subStatusLabelByValue = useMemo(
+    () => statusLabelMapFromStatuses(subStatus),
+    [subStatus],
   )
 
   if (loading) {
@@ -266,7 +319,8 @@ export default function ProcessBoard() {
         lead.clientName || '',
         lead.location || '',
         allBankNames(lead.bankName),
-        labelForLeadStatus(statusLabelByValue, lead.status),
+        labelForLeadStatus(categoryStatusLabelByValue, lead.categoryStatus),
+        labelForLeadStatus(subStatusLabelByValue, lead.subStatus),
         lead.onePagerLink || '',
         products.find((p) => p.id === lead.productId)?.name || '',
         lead.leadDate || '',
@@ -284,7 +338,8 @@ export default function ProcessBoard() {
         'Client Name',
         'Location',
         'Bank Name',
-        'Status',
+        'Category Status',
+        'Sub Status',
         'One Pager',
         'Product',
         'Lead Date',
@@ -336,7 +391,8 @@ export default function ProcessBoard() {
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Client name</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Location</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Product</th>
-                <th className="px-4 py-2 font-medium whitespace-nowrap">Status</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Category Status</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Sub Status</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Lead date</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Updated status date</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Sales owner</th>
@@ -347,7 +403,7 @@ export default function ProcessBoard() {
             <tbody className="divide-y divide-slate-800">
               {filteredAssignedToMe.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={13} className="px-4 py-10 text-center text-slate-500">
                     No leads assigned to you yet.
                   </td>
                 </tr>
@@ -367,7 +423,14 @@ export default function ProcessBoard() {
                       {products.find((p) => p.id === lead.productId)?.name || '-'}
                     </td>
                     <td className="px-4 py-1 text-slate-400 whitespace-nowrap">
-                      <span className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">{labelForLeadStatus(statusLabelByValue, lead.status) ||'New'}</span>
+                      <span className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
+                        {labelForLeadStatus(categoryStatusLabelByValue, lead.categoryStatus) || 'New'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-1 text-slate-400 whitespace-nowrap">
+                      <span className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
+                        {labelForLeadStatus(subStatusLabelByValue, lead.subStatus) || 'New'}
+                      </span>
                     </td>
                     <td className="px-4 py-1 text-xs text-slate-500 whitespace-nowrap">
                       {lead.leadDate || '-'}
@@ -546,6 +609,38 @@ export default function ProcessBoard() {
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 >
                   {statusOptions.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Category Status</label>
+                <select
+                  value={editForm.categoryStatus}
+                  onChange={handleCategoryStatusChange}
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                >
+                  <option value="">-- select --</option>
+                  {categoryStatusOptions.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Sub Status</label>
+                <select
+                  value={editForm.subStatus}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, subStatus: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                >
+                  <option value="">-- select --</option>
+                  {selectedSubStatus.map((s) => (
                     <option key={s.value} value={s.value}>
                       {s.label}
                     </option>

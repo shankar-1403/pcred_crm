@@ -100,38 +100,51 @@ export default function SearchableDropdown({
         ref={buttonRef}
         type="button"
         onClick={() => {
-          const next = !open
-          setOpen(next)
+          const next = !open;
+          setOpen(next);
 
-          // Direct mobile focus trigger
           if (!open) {
-            setTimeout(() => {
-              searchInputRef.current?.focus()
-            }, 50)
+            setTimeout(() => searchInputRef.current?.focus(), 50);
           }
         }}
         className="mt-1 flex w-full items-center justify-between rounded-lg border border-gray-400 bg-slate-950 px-3 py-2 text-white"
       >
         <span
           className={
-            selectedOption
-              ? 'text-white'
-              : 'text-slate-500'
+            selectedOption ? "text-white" : "text-slate-500"
           }
         >
           {selectedOption?.label || placeholder}
         </span>
 
-        <IconChevronDown size={16} color="gray" />
+        <div className="flex items-center gap-2">
+          {value && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleChange({
+                  target: {
+                    value: "",
+                  },
+                });
+                setSearch("");
+              }}
+              className="mr-2 text-slate-400 hover:text-red-400"
+            >
+              ✕
+            </button>
+          )}
+          <IconChevronDown size={16} color="gray" />
+        </div>
       </button>
 
       {open && (
         <div
-          className={`absolute z-50 w-full rounded-lg border border-slate-400 bg-slate-950 shadow-xl ${
-            openUpward
-              ? 'bottom-full mb-2'
-              : 'top-full mt-2'
-          }`}
+          className={`absolute z-50 w-full rounded-lg border border-slate-400 bg-slate-950 shadow-xl ${openUpward
+            ? 'bottom-full mb-2'
+            : 'top-full mt-2'
+            }`}
         >
           <div className="border-b border-gray-400 p-2">
             <input
@@ -155,6 +168,16 @@ export default function SearchableDropdown({
               overscrollBehavior: 'contain',
             }}
           >
+            <button
+              type="button"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                onSelect("");
+              }}
+              className="flex w-full rounded-lg px-3 py-2 text-left text-sm text-red-400 hover:bg-slate-800"
+            >
+              Clear Selection
+            </button>
             {filteredOptions.length === 0 ? (
               <div className="px-3 py-2 text-sm text-slate-400">
                 No results found
@@ -168,11 +191,10 @@ export default function SearchableDropdown({
                     e.preventDefault()
                     onSelect(option.value)
                   }}
-                  className={`flex w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[#172742] hover:text-white ${
-                    value === option.value
-                      ? 'bg-[#172742] text-white'
-                      : 'text-white'
-                  }`}
+                  className={`flex w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[#172742] hover:text-white ${value === option.value
+                    ? 'bg-[#172742] text-white'
+                    : 'text-white'
+                    }`}
                 >
                   {option.label}
                 </button>

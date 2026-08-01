@@ -7,6 +7,8 @@ import { useAmbassador } from '../hooks/useAmbassador'
 import { useProducts } from '../hooks/useProducts'
 import { useCategory } from '../hooks/useCategory'
 import { useServices } from '../hooks/useServices'
+import { useCategoryStatus } from '../hooks/useCategoryStatus'
+import { useSubStatus } from '../hooks/useSubStatus'
 import { useStatuses } from '../hooks/useStatuses'
 import { useBanks } from '../hooks/useBanks'
 import { SOURCES } from '../lib/source'
@@ -40,7 +42,8 @@ export default function LeadDetailsModal({
   const { services } = useServices()
   const { eliteAmbassador } = useEliteAmbassador()
   const { ambassador: ambassadorRows } = useAmbassador()
-  const { statuses } = useStatuses()
+  const { categoryStatus } = useCategoryStatus()
+  const { subStatus } = useSubStatus()
   const { banks } = useBanks()
 
   const banksById = useMemo(() => {
@@ -65,9 +68,10 @@ export default function LeadDetailsModal({
     salesAssignees.length > 0
       ? salesAssignees.map((uid) => userName(uid)).join(', ')
       : null
-  const statusMap = statusLabelMapFromStatuses(statuses)
-  const statusLabel =
-    labelForLeadStatus(statusMap, lead.status) || '—'
+  const categoryStatusMap = statusLabelMapFromStatuses(categoryStatus)
+  const subStatusMap = statusLabelMapFromStatuses(subStatus)
+  const categoryStatusLabel = labelForLeadStatus(categoryStatusMap, lead.categoryStatus) || '—'
+  const subStatusLabel = labelForLeadStatus(subStatusMap, lead.subStatus) || '—'
 
   const productName = getProductName(lead.productId, products) || '-'
   const categoryName = getCategoryName(lead.categoryId, category) || '-'
@@ -161,7 +165,8 @@ export default function LeadDetailsModal({
               {salesAssignedBy ? (
                 <Row label="Sales assigned" value={salesAssignedBy} />
               ) : null}
-              <Row label="Status" value={statusLabel} />
+              <Row label="Category Status" value={categoryStatusLabel} />
+              <Row label="Sub Status" value={subStatusLabel} />
               <Row label="Date" value={lead.leadDate || '—'} />
               <Row
                 label="Updated status date"

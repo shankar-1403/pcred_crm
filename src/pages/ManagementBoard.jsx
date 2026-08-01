@@ -5,13 +5,12 @@ import { useLeads } from '../hooks/useLeads'
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
 import { useAmbassador } from '../hooks/useAmbassador'
 import { useProducts } from '../hooks/useProducts'
-import { useStatuses } from '../hooks/useStatuses'
 import { useUsers } from '../hooks/useUsers'
 import { assignedUids, toAssignedMap, bankUids } from '../lib/leads'
-import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,processUserFilterOptions,assignableManagementUsers} from '../lib/assignees'
+import { assignableProcessUsers, assignableSalesUsers, labelAssignableProcessUser, processUserFilterOptions, assignableManagementUsers } from '../lib/assignees'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
-import {resolveAmbassadorName,resolveEliteAmbassadorName,} from '../lib/partnerOrg'
-import {labelForLeadStatus,statusLabelMapFromStatuses,} from '../lib/statusLabels'
+import { resolveAmbassadorName, resolveEliteAmbassadorName, } from '../lib/partnerOrg'
+import { labelForLeadStatus, statusLabelMapFromStatuses, } from '../lib/statusLabels'
 import { db } from '../lib/firebase'
 import LeadDetailsModal from '../components/LeadDetailsModal'
 import ModalCloseButton from '../components/ModalCloseButton'
@@ -20,17 +19,22 @@ import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect'
 import TablePagination from '../components/TablePagination'
 import { usePagination } from '../hooks/usePagination'
 import { useBanks } from '../hooks/useBanks'
+import { useCategoryStatus } from '../hooks/useCategoryStatus'
+import { useSubStatus } from '../hooks/useSubStatus'
 
 export default function ManagementBoard() {
-  const { user,profile } = useAuth()
+  const { user, profile } = useAuth()
   const { leads, loading } = useLeads()
   const { eliteAmbassador } = useEliteAmbassador()
   const { ambassador: ambassadorRows } = useAmbassador()
   const { products } = useProducts()
-  const { statuses } = useStatuses()
+  // const { statuses } = useStatuses()
+  const { categoryStatus } = useCategoryStatus()
+  const { subStatus } = useSubStatus()
   const { banks } = useBanks()
   const { usersById, processUsers, managementUsers } = useUsers()
-  const [statusFilter, setStatusFilter] = useState([])
+  const [categoryStatusFilter, setCategoryStatusFilter] = useState([])
+  const [subStatusFilter, setSubStatusFilter] = useState([])
   const [leadSearch, setLeadSearch] = useState('')
   const [salesOwnerFilter, setSalesOwnerFilter] = useState([])
   const [processUserFilter, setProcessUserFilter] = useState([])
@@ -52,22 +56,24 @@ export default function ManagementBoard() {
   const [selectedManagementAssignees, setSelectedManagementAssignees] = useState([])
   const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] = useState(false)
   const [managementAssigneeDropdownOpen, setManagementAssigneeDropdownOpen] = useState(false)
+  const [selectedSubStatus, setSelectedSubStatus] = useState([])
   const [savingLead, setSavingLead] = useState(false)
   const [formError, setFormError] = useState('')
   const [deletingLeadId, setDeletingLeadId] = useState('')
   const [message, setMessage] = useState('')
   const [leadForm, setLeadForm] = useState({
     lead_source: '',
-    viaName:'',
+    viaName: '',
     eliteAmbassadorId: '',
     company: '',
     clientName: '',
-    clientPhoneNo:'',
+    clientPhoneNo: '',
     location: '',
     bankName: '',
     onePagerLink: '',
     description: '',
-    status: '',
+    categoryStatus: '',
+    subStatus: '',
     updatedStatusDate: '',
     productId: '',
     leadDate: '',
@@ -106,13 +112,25 @@ export default function ManagementBoard() {
     [salesUsers],
   )
 
-  const statusOptions = useMemo(
+  const categoryStatusOptions = useMemo(
     () =>
-      statuses.map((p) => ({
+      categoryStatus.map((p) => ({
         id: p.id,
-        label: p.label || p.id,
+        value: p.id,
+        label: p.name,
       })),
-    [statuses],
+    [categoryStatus],
+  )
+
+  const subStatusOptions = useMemo(
+    () =>
+      subStatus.map((p) => ({
+        id: p.id,
+        categoryId: p.category,
+        value: p.id,
+        label: p.name,
+      })),
+    [subStatus],
   )
 
   const productOptions = useMemo(
@@ -172,16 +190,33 @@ export default function ManagementBoard() {
     [ambassadorRows],
   )
 
-  const statusLabelByValue = useMemo(
-    () => statusLabelMapFromStatuses(statuses),
-    [statuses],
+  const categoryStatusLabelByValue = useMemo(
+    () => statusLabelMapFromStatuses(categoryStatus),
+    [categoryStatus],
   )
+
+  const subStatusLabelByValue = useMemo(
+    () => statusLabelMapFromStatuses(subStatus),
+    [subStatus],
+  )
+
+  const subStatusFilterOptions = useMemo(() => {
+    if (!categoryStatusFilter.length) return subStatusOptions
+    return subStatusOptions.filter((s) =>
+      categoryStatusFilter.includes(s.categoryId),
+    )
+  }, [subStatusOptions, categoryStatusFilter])
 
   const filtered = useMemo(() => {
     const term = leadSearch.trim().toLowerCase()
     let list = leads
-    if (statusFilter.length) {
-      list = list.filter((l) => statusFilter.includes(l.status))
+    if (categoryStatusFilter.length) {
+      list = list.filter((l) =>
+        categoryStatusFilter.includes(l.categoryStatus),
+      )
+    }
+    if (subStatusFilter.length) {
+      list = list.filter((l) => subStatusFilter.includes(l.subStatus))
     }
     if (term) {
       list = list.filter((l) => {
@@ -233,7 +268,8 @@ export default function ManagementBoard() {
     return sorted
   }, [
     leads,
-    statusFilter,
+    categoryStatusFilter,
+    subStatusFilter,
     leadSearch,
     salesOwnerFilter,
     processUserFilter,
@@ -319,6 +355,29 @@ export default function ManagementBoard() {
     )
   }
 
+  const handleCategoryStatusChange = (e) => {
+    const value = e.target.value
+
+    setLeadForm((f) => ({
+      ...f,
+      categoryStatus: value,
+      subStatus: '',
+    }))
+    setSelectedSubStatus(
+      subStatusOptions.filter((s) => s.categoryId === value),
+    )
+  }
+
+  function handleCategoryStatusFilterChange(ids) {
+    setCategoryStatusFilter(ids)
+    setSubStatusFilter((prev) =>
+      prev.filter((subId) => {
+        const opt = subStatusOptions.find((s) => s.id === subId)
+        return opt && ids.includes(opt.categoryId)
+      }),
+    )
+  }
+
   function openEdit(lead) {
     setFormError('')
     setEditingId(lead.id)
@@ -333,7 +392,8 @@ export default function ManagementBoard() {
       bankName: lead.bankName ?? '',
       onePagerLink: lead.onePagerLink ?? '',
       description: lead.description ?? '',
-      status: lead.status ?? '',
+      categoryStatus: lead.categoryStatus ?? '',
+      subStatus: lead.subStatus ?? '',
       updatedStatusDate: lead.updatedStatusDate ?? '',
       productId: lead.productId ?? '',
       leadDate: lead.leadDate ?? '',
@@ -350,7 +410,11 @@ export default function ManagementBoard() {
     setSelectedSalesAssignees(salesUids)
     setSelectedManagementAssignees(managementUids)
     setSelectedBanks(bankIds)
-
+    setSelectedSubStatus(
+      subStatusOptions.filter(
+        (s) => s.categoryId === lead.categoryStatus,
+      ),
+    )
     setAssigneeDropdownOpen(false)
     setSalesAssigneeDropdownOpen(false)
     setLeadModalOpen(true)
@@ -388,7 +452,8 @@ export default function ManagementBoard() {
         onePagerLink: leadForm.onePagerLink.trim(),
         leadDate: leadForm.leadDate || '',
         description: leadForm.description.trim(),
-        status: leadForm.status || '',
+        categoryStatus: leadForm.categoryStatus || '',
+        subStatus: leadForm.subStatus || '',
         updatedStatusDate: leadForm.updatedStatusDate || '',
         assignedTo:
           selectedAssignees.length
@@ -463,24 +528,33 @@ export default function ManagementBoard() {
   }
 
   function allBankNames(bankName) {
-    const ids = bankUids(bankName)
-    const uniqueIds = [...new Set(ids)]
+    if (!bankName) return "-";
 
-    if (!uniqueIds.length) return 'No banks'
+    // Already a bank name
+    if (typeof bankName === "string") {
+      return bankName;
+    }
 
-    return uniqueIds
-      .map((id) => {
-        const bank = banks.find((b) => b.id === id)
-        return bank?.name || id.slice(0, 8)
-      })
-      .join(', ')
+    // Object like { bankId: true }
+    if (typeof bankName === "object") {
+      return Object.keys(bankName)
+        .map((id) => {
+          if (id === "true") return "";
+
+          const bank = banks.find((b) => b.id === id);
+          return bank?.name || id;
+        })
+        .filter(Boolean)
+        .join(", ");
+    }
+
+    return "-";
   }
-
 
   function capitalizeWords(str) {
     if (!str) return "";
     return str
-      .replace("_"," ")
+      .replace("_", " ")
       .split(" ")
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
@@ -496,7 +570,8 @@ export default function ManagementBoard() {
         lead.viaName,
         lead.company || '',
         lead.clientPhoneNo || '',
-        labelForLeadStatus(statusLabelByValue, lead.status),
+        labelForLeadStatus(categoryStatusLabelByValue, lead.categoryStatus),
+        labelForLeadStatus(subStatusLabelByValue, lead.subStatus),
         productNameFor(lead.productId),
         allBankNames(lead.bankName),
         nameFor(lead.createdBy),
@@ -504,7 +579,7 @@ export default function ManagementBoard() {
         formatAmountForCsv(lead.totalAmount),
         formatAmountForCsv(
           (Number(lead.bankPayoutAmount) || 0) +
-            (Number(lead.mandatePayoutAmount) || 0),
+          (Number(lead.mandatePayoutAmount) || 0),
         ),
         lead.leadDate || '',
       ])
@@ -518,7 +593,8 @@ export default function ManagementBoard() {
         'Connector Name',
         'Company',
         'Phone No.',
-        'Status',
+        'Category Status',
+        'Sub Status',
         'Product',
         'Bank Name',
         'Sales Owner',
@@ -538,8 +614,8 @@ export default function ManagementBoard() {
     setSalesAssigneeDropdownOpen(false)
     setAssignmentMode('process')
     setLeadForm({
-      lead_source:'',
-      viaName:'',
+      lead_source: '',
+      viaName: '',
       eliteAmbassadorId: '',
       company: '',
       clientName: '',
@@ -548,7 +624,8 @@ export default function ManagementBoard() {
       bankName: '',
       onePagerLink: '',
       description: '',
-      status: '',
+      categoryStatus: '',
+      subStatus: '',
       updatedStatusDate: '',
       productId: '',
       leadDate: '',
@@ -565,11 +642,11 @@ export default function ManagementBoard() {
   if (loading) {
     return <p className="text-slate-400">Loading leads…</p>
   }
-  
+
   async function handleDelete(leadId) {
     setMessage('')
     setFormError('')
-    
+
     const ok = window.confirm(
       `Delete this lead? This cannot be undone.`,
     )
@@ -613,7 +690,8 @@ export default function ManagementBoard() {
                   bankName: '',
                   onePagerLink: '',
                   description: '',
-                  status: '',
+                  categoryStatus: '',
+                  subStatus: '',
                   updatedStatusDate: '',
                   productId: '',
                   leadDate: '',
@@ -625,6 +703,7 @@ export default function ManagementBoard() {
                 setSelectedAssignees([])
                 setSelectedSalesAssignees([])
                 setSelectedBanks([])
+                setSelectedSubStatus([])
                 setAssigneeDropdownOpen(false)
                 setSalesAssigneeDropdownOpen(false)
                 setLeadModalOpen(true)
@@ -635,21 +714,38 @@ export default function ManagementBoard() {
             </button>
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <div>
             <label
-              htmlFor="status-filter"
+              htmlFor="category-status-filter"
               className="block text-xs font-medium uppercase tracking-wide text-slate-500"
             >
-              Filter by status
+              Category Status
             </label>
             <TypeaheadMultiSelect
-              id="status-filter"
+              id="category-status-filter"
               label={null}
-              placeholder="Type status..."
-              options={statusOptions}
-              selectedIds={statusFilter}
-              onChangeSelectedIds={setStatusFilter}
+              placeholder="Type category status…"
+              options={categoryStatusOptions}
+              selectedIds={categoryStatusFilter}
+              onChangeSelectedIds={handleCategoryStatusFilterChange}
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="sub-status-filter"
+              className="block text-xs font-medium uppercase tracking-wide text-slate-500"
+            >
+              Sub Status
+            </label>
+            <TypeaheadMultiSelect
+              id="sub-status-filter"
+              label={null}
+              placeholder="Type sub status..."
+              options={subStatusFilterOptions}
+              selectedIds={subStatusFilter}
+              onChangeSelectedIds={setSubStatusFilter}
             />
           </div>
 
@@ -701,40 +797,6 @@ export default function ManagementBoard() {
               options={productOptions}
               selectedIds={productFilter}
               onChangeSelectedIds={setProductFilter}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="elite-ambassador-filter"
-              className="block text-xs font-medium uppercase tracking-wide text-slate-500"
-            >
-              Elite ambassador
-            </label>
-            <TypeaheadMultiSelect
-              id="elite-ambassador-filter"
-              label={null}
-              placeholder="Type elite ambassador…"
-              options={eliteAmbassadorOptions}
-              selectedIds={eliteAmbassadorFilter}
-              onChangeSelectedIds={setEliteAmbassadorFilter}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="ambassador-filter"
-              className="block text-xs font-medium uppercase tracking-wide text-slate-500"
-            >
-              Ambassador
-            </label>
-            <TypeaheadMultiSelect
-              id="ambassador-filter"
-              label={null}
-              placeholder="Type ambassador…"
-              options={ambassadorOptions}
-              selectedIds={ambassadorFilter}
-              onChangeSelectedIds={setAmbassadorFilter}
             />
           </div>
         </div>
@@ -799,7 +861,8 @@ export default function ManagementBoard() {
                 <th className="px-4 py-2 font-medium">Elite ambassador</th>
                 <th className="px-4 py-2 font-medium">Ambassador</th>
                 <th className="px-4 py-2 font-medium">Company</th>
-                <th className="px-4 py-2 font-medium">Status</th>
+                <th className="px-4 py-2 font-medium">Category Status</th>
+                <th className="px-4 py-2 font-medium">Sub Status</th>
                 <th className="px-4 py-2 font-medium">Product</th>
                 <th className="px-4 py-2 font-medium">Sales owner</th>
                 <th className="px-4 py-2 font-medium">Process team</th>
@@ -841,11 +904,11 @@ export default function ManagementBoard() {
                   </td>
                 </tr>
               ) : (
-                tablePageItems.map((lead,index) => {
+                tablePageItems.map((lead, index) => {
                   const assignees = assignedUids(lead.assignedTo)
                   return (
                     <tr key={lead.id} className="text-slate-300">
-                      <td className="px-4 py-1 text-slate-400">{index+1}</td>
+                      <td className="px-4 py-1 text-slate-400">{index + 1}</td>
                       <td className="px-4 py-1">
                         {eliteAmbassadorNameFor(
                           lead.eliteAmbassadorId,
@@ -855,10 +918,15 @@ export default function ManagementBoard() {
                       <td className="px-4 py-1 text-slate-400">
                         {ambassadorNameFor(lead.ambassadorId, lead.ambassadorName)}
                       </td>
-                        <td className="px-4 py-1 text-slate-400 lowercase first-letter:uppercase">{lead.company || '-'}</td>
+                      <td className="px-4 py-1 text-slate-400 lowercase first-letter:uppercase">{lead.company || '-'}</td>
                       <td className="px-4 py-1">
                         <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
-                          {labelForLeadStatus(statusLabelByValue, lead.status) || 'New'}
+                          {labelForLeadStatus(categoryStatusLabelByValue, lead.categoryStatus) || 'New'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-1">
+                        <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
+                          {labelForLeadStatus(subStatusLabelByValue, lead.subStatus) || 'New'}
                         </span>
                       </td>
                       <td className="px-4 py-1 text-slate-400">
@@ -883,7 +951,7 @@ export default function ManagementBoard() {
                       <td className="px-4 py-1 text-slate-400 text-right">
                         {formatCurrencyINR(
                           (Number(lead?.bankPayoutAmount) || 0) +
-                            (Number(lead?.mandatePayoutAmount) || 0),
+                          (Number(lead?.mandatePayoutAmount) || 0),
                         )}
                       </td>
                       <td className="px-4 py-1 text-xs text-slate-500">{lead.leadDate || '-'}</td>
@@ -895,9 +963,9 @@ export default function ManagementBoard() {
                               type="button"
                               onClick={() => setViewLead(lead)}
                               className="rounded-lg border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800 sm:px-3"
-                              >
-                                View details
-                              </button>
+                            >
+                              View details
+                            </button>
                           </div>
                           <div>
                             <button
@@ -912,7 +980,7 @@ export default function ManagementBoard() {
                             <button
                               type="button"
                               onClick={() => handleDelete(lead.id)}
-                              disabled={!isManagement ||deletingLeadId === lead.id}
+                              disabled={!isManagement || deletingLeadId === lead.id}
                               className="rounded-lg border border-red-800/40 px-4 py-1 text-xs text-red-300 hover:bg-red-950/40 disabled:opacity-50"
                             >
                               {deletingLeadId === lead.id ? 'Deleting...' : 'Delete'}
@@ -959,12 +1027,12 @@ export default function ManagementBoard() {
                 <label className="block text-sm font-medium text-slate-300">Lead Source</label>
                 <div className="flex items-center gap-6 mt-2">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="lead_source" value="online_lead" checked={leadForm.lead_source === 'online_lead'} defaultChecked  onChange={(e) => setLeadForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500"/>
+                    <input type="radio" name="lead_source" value="online_lead" checked={leadForm.lead_source === 'online_lead'} defaultChecked onChange={(e) => setLeadForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500" />
                     <span className="text-sm font-medium text-slate-300">Online Lead</span>
                   </label>
 
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="lead_source" value="offline_lead" checked={leadForm.lead_source === 'offline_lead'} onChange={(e) => setLeadForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500"/>
+                    <input type="radio" name="lead_source" value="offline_lead" checked={leadForm.lead_source === 'offline_lead'} onChange={(e) => setLeadForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500" />
                     <span className="text-sm font-medium text-slate-300">Offline Lead</span>
                   </label>
                 </div>
@@ -998,7 +1066,7 @@ export default function ManagementBoard() {
                 </div>
               }
               <div>
-                <label htmlFor="lead-via-name" className="block text-xs font-medium text-slate-400"> 
+                <label htmlFor="lead-via-name" className="block text-xs font-medium text-slate-400">
                   Connector Name
                 </label>
                 <input
@@ -1094,15 +1162,31 @@ export default function ManagementBoard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300">Status</label>
+                <label className="block text-sm font-medium text-slate-300">Category Status</label>
                 <select
-                  value={leadForm.status}
+                  value={leadForm.categoryStatus}
+                  onChange={handleCategoryStatusChange}
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                >
+                  <option selected>-- select --</option>
+                  {categoryStatusOptions.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Sub Status</label>
+                <select
+                  value={leadForm.subStatus}
                   onChange={(e) =>
-                    setLeadForm((f) => ({ ...f, status: e.target.value }))
+                    setLeadForm((f) => ({ ...f, subStatus: e.target.value }))
                   }
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 >
-                  {statusOptions.map((s) => (
+                  <option selected>-- select --</option>
+                  {selectedSubStatus.map((s) => (
                     <option key={s.value} value={s.value}>
                       {s.label}
                     </option>
@@ -1300,11 +1384,10 @@ export default function ManagementBoard() {
                       setSelectedSalesAssignees([])
                       setSalesAssigneeDropdownOpen(false)
                     }}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      assignmentMode === 'process'
+                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${assignmentMode === 'process'
                         ? 'bg-blue-600 text-white'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     Process
                   </button>
@@ -1315,11 +1398,10 @@ export default function ManagementBoard() {
                       setSelectedAssignees([])
                       setAssigneeDropdownOpen(false)
                     }}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      assignmentMode === 'sales'
+                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${assignmentMode === 'sales'
                         ? 'bg-blue-600 text-white'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     Sales
                   </button>
@@ -1329,11 +1411,10 @@ export default function ManagementBoard() {
                       setAssignmentMode('management')
                       setManagementAssigneeDropdownOpen(false)
                     }}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      assignmentMode === 'management'
+                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${assignmentMode === 'management'
                         ? 'bg-blue-600 text-white'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     Management
                   </button>

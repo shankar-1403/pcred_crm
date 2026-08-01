@@ -7,7 +7,6 @@ import { useUsers } from '../hooks/useUsers'
 import { useProducts } from '../hooks/useProducts'
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
 import { useAmbassador } from '../hooks/useAmbassador'
-import { useStatuses } from '../hooks/useStatuses'
 import { assignedUids, leadReferredToUser, toAssignedMap, bankUids } from '../lib/leads'
 import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,assignableManagementUsers} from '../lib/assignees'
 import { labelForLeadStatus, statusLabelMapFromStatuses,} from '../lib/statusLabels'
@@ -21,6 +20,8 @@ import SearchableDarkDropdown from '../components/SearchDarkSelect'
 import TypeaheadMultiSelect from '../components/TypeaheadMultiSelect'
 import { usePagination } from '../hooks/usePagination'
 import { useBanks } from '../hooks/useBanks'
+import { useCategoryStatus } from '../hooks/useCategoryStatus'
+import { useSubStatus } from '../hooks/useSubStatus'
 
 const emptyForm = {
   lead_source:'',
@@ -39,6 +40,8 @@ const emptyForm = {
   leadDate: '',
   description: '',
   status: '',
+  categoryStatus: '',
+  subStatus: '',
   updatedStatusDate: '',
   productId: '',
   totalAmount: '',
@@ -54,7 +57,8 @@ export default function SalesBoard() {
   const { products, loading: productsLoading, error: productsError } = useProducts()
   const { eliteAmbassador } = useEliteAmbassador()
   const { ambassador } = useAmbassador()
-  const { statuses } = useStatuses()
+  const { categoryStatus } = useCategoryStatus()
+  const { subStatus } = useSubStatus()
   const { banks } = useBanks()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -67,6 +71,7 @@ export default function SalesBoard() {
   const [salesAssigneeDropdownOpen, setSalesAssigneeDropdownOpen] = useState(false)
   const [managementAssigneeDropdownOpen, setManagementAssigneeDropdownOpen] = useState(false)
   const [selectedBanks, setSelectedBanks] = useState([])
+  const [selectedSubStatus, setSelectedSubStatus] = useState([])
   const [saving, setSaving] = useState(false)
   const [leadSearch, setLeadSearch] = useState('')
   const [viewLead, setViewLead] = useState(null)
@@ -108,6 +113,27 @@ export default function SalesBoard() {
     [banks],
   )
 
+  const categoryStatusOptions = useMemo(
+    () =>
+      categoryStatus.map((p) => ({
+        id: p.id,
+        value: p.id,
+        label: p.name,
+      })),
+    [categoryStatus],
+  )
+
+  const subStatusOptions = useMemo(
+    () =>
+      subStatus.map((p) => ({
+        id: p.id,
+        categoryId: p.category,
+        value: p.id,
+        label: p.name,
+      })),
+    [subStatus],
+  )
+
   const filteredMyLeads = useMemo(() => {
     const term = leadSearch.trim().toLowerCase()
     let list = myLeads
@@ -133,18 +159,14 @@ export default function SalesBoard() {
     pageItems: tablePageItems,
   } = usePagination(filteredMyLeads)
 
-  const statusOptions = useMemo(() => {
-    return [
-      { value: '', label: 'Select Status' },
-      ...statuses
-        .filter((s) => String(s?.id ?? '').trim() && String(s?.label ?? '').trim())
-        .map((s) => ({ value: String(s.id).trim(), label: String(s.label).trim() })),
-    ]
-  }, [statuses])
+  const categoryStatusLabelByValue = useMemo(
+    () => statusLabelMapFromStatuses(categoryStatus),
+    [categoryStatus],
+  )
 
-  const statusLabelByValue = useMemo(
-    () => statusLabelMapFromStatuses(statuses),
-    [statuses],
+  const subStatusLabelByValue = useMemo(
+    () => statusLabelMapFromStatuses(subStatus),
+    [subStatus],
   )
 
   function processNames(assignedTo) {
@@ -195,6 +217,7 @@ export default function SalesBoard() {
     setSelectedManagementAssignees([])
     setSalesAssigneeDropdownOpen(false)
     setSelectedBanks([])
+    setSelectedSubStatus([])
     setModalOpen(true)
   }
 
@@ -217,6 +240,8 @@ export default function SalesBoard() {
       leadDate: lead.leadDate ?? '',
       description: lead.description ?? '',
       status: lead.status ?? '',
+      categoryStatus: lead.categoryStatus ?? '',
+      subStatus: lead.subStatus ?? '',
       updatedStatusDate: lead.updatedStatusDate ?? '',
       productId: lead.productId ?? '',
       totalAmount: lead.totalAmount ?? '',
@@ -232,11 +257,26 @@ export default function SalesBoard() {
     setSelectedSalesAssignees(salesUids)
     setSelectedManagementAssignees(managementUids)
     setSelectedBanks(bankIds)
+    setSelectedSubStatus(
+      subStatusOptions.filter((s) => s.categoryId === lead.categoryStatus),
+    )
 
     setAssigneeDropdownOpen(false)
     setSalesAssigneeDropdownOpen(false)
     setManagementAssigneeDropdownOpen(false)
     setModalOpen(true)
+  }
+
+  function handleCategoryStatusChange(e) {
+    const value = e.target.value
+    setForm((f) => ({
+      ...f,
+      categoryStatus: value,
+      subStatus: '',
+    }))
+    setSelectedSubStatus(
+      subStatusOptions.filter((s) => s.categoryId === value),
+    )
   }
 
   function toggleAssignee(uid) {
@@ -288,6 +328,8 @@ export default function SalesBoard() {
         leadDate: form.leadDate || '',
         description: form.description.trim(),
         status: form.status,
+        categoryStatus: form.categoryStatus || '',
+        subStatus: form.subStatus || '',
         updatedStatusDate: form.updatedStatusDate || '',
         createdBy: user.uid,
         assignedTo:
@@ -400,7 +442,8 @@ export default function SalesBoard() {
         lead.location || '',
         allBankNames(lead.bankName),
         productNameFor(lead.productId),
-        labelForLeadStatus(statusLabelByValue, lead.status),
+        labelForLeadStatus(categoryStatusLabelByValue, lead.categoryStatus),
+        labelForLeadStatus(subStatusLabelByValue, lead.subStatus),
         allAssignedNames(lead),
         salesNames(lead.createdBy),
         lead.leadDate || '',
@@ -424,7 +467,8 @@ export default function SalesBoard() {
         'Location',
         'Bank Name',
         'Product',
-        'Status',
+        'Category Status',
+        'Sub Status',
         'Processed By',
         'Sales',
         'Lead Date',
@@ -507,7 +551,8 @@ export default function SalesBoard() {
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Via</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Location</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Product</th>
-                <th className="px-4 py-2 font-medium whitespace-nowrap">Status</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Category Status</th>
+                <th className="px-4 py-2 font-medium whitespace-nowrap">Sub Status</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Processed by</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Sales Owner</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap text-right">Required Amount</th>
@@ -519,7 +564,7 @@ export default function SalesBoard() {
             <tbody className="divide-y divide-slate-800">
               {filteredMyLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={14} className="px-4 py-10 text-center text-slate-500">
                     You have no leads yet. Click New lead to add one.
                   </td>
                 </tr>
@@ -547,7 +592,12 @@ export default function SalesBoard() {
                     </td>
                     <td className="whitespace-nowrap px-4 py-1">
                       <span className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
-                        {labelForLeadStatus(statusLabelByValue, lead.status) ||'New'}
+                        {labelForLeadStatus(categoryStatusLabelByValue, lead.categoryStatus) || 'New'}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-1">
+                      <span className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
+                        {labelForLeadStatus(subStatusLabelByValue, lead.subStatus) || 'New'}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-1 text-xs text-slate-400">
@@ -869,17 +919,31 @@ export default function SalesBoard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300">
-                  Status
-                </label>
+                <label className="block text-sm font-medium text-slate-300">Category Status</label>
                 <select
-                  value={form.status}
+                  value={form.categoryStatus}
+                  onChange={handleCategoryStatusChange}
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                >
+                  <option value="">-- select --</option>
+                  {categoryStatusOptions.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Sub Status</label>
+                <select
+                  value={form.subStatus}
                   onChange={(e) =>
-                    setForm((f) => ({ ...f, status: e.target.value }))
+                    setForm((f) => ({ ...f, subStatus: e.target.value }))
                   }
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 >
-                  {statusOptions.map((s) => (
+                  <option value="">-- select --</option>
+                  {selectedSubStatus.map((s) => (
                     <option key={s.value} value={s.value}>
                       {s.label}
                     </option>

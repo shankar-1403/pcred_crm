@@ -5,7 +5,7 @@
 export function statusLabelMapFromStatuses(statuses) {
   const m = new Map()
   for (const s of statuses || []) {
-    const label = String(s?.label ?? '').trim()
+    const label = String(s?.name ?? '').trim()
     if (!label) continue
     const id = String(s?.id ?? '').trim()
     const legacyValue = String(s?.value ?? '').trim()
