@@ -441,9 +441,11 @@ export default function ManagementBoard() {
 
       const payload = {
         lead_source: leadForm.lead_source,
-        viaName: leadForm.viaName,
-        eliteAmbassadorId: leadForm.eliteAmbassadorId,
-        eliteAmbassadorName: eliteAmbassadorLabel,
+        ...(leadForm.viaName?.trim()
+          ? {
+            viaName: leadForm.viaName.trim(),
+          }
+          : {}),
         company: leadForm.company.trim() || eliteAmbassadorLabel,
         clientName: leadForm.clientName.trim(),
         location: leadForm.location.trim(),
@@ -1037,7 +1039,7 @@ export default function ManagementBoard() {
                   </label>
                 </div>
               </div>
-              {leadForm.lead_source === 'offline_lead' &&
+              {/* {leadForm.lead_source === 'offline_lead' &&
                 <div>
                   <label className="block text-sm font-medium text-slate-300">
                     Elite ambassador
@@ -1064,22 +1066,24 @@ export default function ManagementBoard() {
                     ))}
                   </select>
                 </div>
+              } */}
+              {leadForm.lead_source === 'offline_lead' &&
+                <div>
+                  <label htmlFor="lead-via-name" className="block text-xs font-medium text-slate-400">
+                    Connector Name
+                  </label>
+                  <input
+                    id="lead-via-name"
+                    type="text"
+                    value={leadForm.viaName}
+                    onChange={(e) =>
+                      setLeadForm((f) => ({ ...f, viaName: e.target.value }))
+                    }
+                    placeholder="Referrer or channel name"
+                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                  />
+                </div>
               }
-              <div>
-                <label htmlFor="lead-via-name" className="block text-xs font-medium text-slate-400">
-                  Connector Name
-                </label>
-                <input
-                  id="lead-via-name"
-                  type="text"
-                  value={leadForm.viaName}
-                  onChange={(e) =>
-                    setLeadForm((f) => ({ ...f, viaName: e.target.value }))
-                  }
-                  placeholder="Referrer or channel name"
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300">Company</label>
                 <input
@@ -1385,8 +1389,8 @@ export default function ManagementBoard() {
                       setSalesAssigneeDropdownOpen(false)
                     }}
                     className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${assignmentMode === 'process'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-400 hover:text-white'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-slate-400 hover:text-white'
                       }`}
                   >
                     Process
@@ -1399,8 +1403,8 @@ export default function ManagementBoard() {
                       setAssigneeDropdownOpen(false)
                     }}
                     className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${assignmentMode === 'sales'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-400 hover:text-white'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-slate-400 hover:text-white'
                       }`}
                   >
                     Sales
@@ -1412,8 +1416,8 @@ export default function ManagementBoard() {
                       setManagementAssigneeDropdownOpen(false)
                     }}
                     className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${assignmentMode === 'management'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-400 hover:text-white'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-slate-400 hover:text-white'
                       }`}
                   >
                     Management
