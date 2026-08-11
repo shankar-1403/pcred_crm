@@ -61,6 +61,19 @@ export function assignableManagementUsers(managementUsers, currentUid, usersById
 }
 
 /** Options for filtering leads by process assignee (includes Self when needed). */
+export function managementUserFilterOptions(managementUsers, currentUid, usersById) {
+  const rest = managementUsers.map((u) => ({
+    id: u.uid,
+    label: u.displayName || u.email || u.uid.slice(0, 8),
+  }))
+  if (!currentUid || rest.some((o) => o.id === currentUid)) return rest
+  const me = usersById[currentUid]
+  const name = me?.displayName || me?.email || currentUid.slice(0, 8)
+  return [{ id: currentUid, label: `Self (${name})` }, ...rest]
+}
+
+
+/** Options for filtering leads by process assignee (includes Self when needed). */
 export function processUserFilterOptions(processUsers, currentUid, usersById) {
   const rest = processUsers.map((u) => ({
     id: u.uid,

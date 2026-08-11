@@ -7,7 +7,7 @@ import { useAmbassador } from '../hooks/useAmbassador'
 import { useProducts } from '../hooks/useProducts'
 import { useUsers } from '../hooks/useUsers'
 import { assignedUids, toAssignedMap, bankUids } from '../lib/leads'
-import { assignableProcessUsers, assignableSalesUsers, labelAssignableProcessUser, processUserFilterOptions, assignableManagementUsers } from '../lib/assignees'
+import { assignableProcessUsers, assignableSalesUsers, labelAssignableProcessUser, processUserFilterOptions, assignableManagementUsers, managementUserFilterOptions } from '../lib/assignees'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import { resolveAmbassadorName, resolveEliteAmbassadorName, } from '../lib/partnerOrg'
 import { labelForLeadStatus, statusLabelMapFromStatuses, } from '../lib/statusLabels'
@@ -39,6 +39,7 @@ export default function ManagementBoard() {
   const [salesOwnerFilter, setSalesOwnerFilter] = useState([])
   const [processUserFilter, setProcessUserFilter] = useState([])
   const [productFilter, setProductFilter] = useState([])
+  const [managementUserFilter, setManagementUserFilter] = useState([])
   const [eliteAmbassadorFilter, setEliteAmbassadorFilter] = useState([])
   const [ambassadorFilter, setAmbassadorFilter] = useState([])
   const [selectedBanks, setSelectedBanks] = useState([])
@@ -142,7 +143,6 @@ export default function ManagementBoard() {
     [products],
   )
 
-
   const processUserOptions = useMemo(
     () => processUserFilterOptions(processUsers, user?.uid, usersById),
     [processUsers, user?.uid, usersById],
@@ -157,6 +157,12 @@ export default function ManagementBoard() {
     () => assignableSalesUsers(salesUsers, user?.uid, usersById),
     [salesUsers, user?.uid, usersById],
   )
+
+  const managementUserOptions = useMemo(
+    () => managementUserFilterOptions(managementUsers, user?.uid, usersById),
+    [managementUsers, user?.uid, usersById],
+  )
+
 
   const managementAssignees = useMemo(
     () => assignableManagementUsers(managementUsers, user?.uid, usersById),
@@ -237,17 +243,8 @@ export default function ManagementBoard() {
     if (productFilter.length) {
       list = list.filter((l) => productFilter.includes(l.productId))
     }
-    if (eliteAmbassadorFilter.length) {
-      list = list.filter((l) =>
-        eliteAmbassadorFilter.includes(
-          String(l.eliteAmbassadorId ?? '').trim(),
-        ),
-      )
-    }
-    if (ambassadorFilter.length) {
-      list = list.filter((l) =>
-        ambassadorFilter.includes(String(l.ambassadorId ?? '').trim()),
-      )
+    if(managementUserFilter.length) {
+      list = list.filter((l) => managementUserFilter.includes(l.createdBy) || managementUserFilter.includes(l.assignedTo))
     }
     list = list.filter((l) => inDateRange(l.leadDate || '', fromDate, toDate))
     list = list.filter((l) => l.categoryId === "-Os1EruiNYLx2XjzRUdF")
@@ -274,8 +271,7 @@ export default function ManagementBoard() {
     salesOwnerFilter,
     processUserFilter,
     productFilter,
-    eliteAmbassadorFilter,
-    ambassadorFilter,
+    managementUserFilter,
     fromDate,
     toDate,
     sortBy,
@@ -567,8 +563,6 @@ export default function ManagementBoard() {
       .filter((lead) => inDateRange(lead.leadDate || '', fromDate, toDate))
       .map((lead) => [
         capitalizeWords(lead.lead_source) || '-',
-        eliteAmbassadorNameFor(lead.eliteAmbassadorId, lead.eliteAmbassadorName),
-        ambassadorNameFor(lead.ambassadorId, lead.ambassadorName),
         lead.viaName,
         lead.company || '',
         lead.clientPhoneNo || '',
@@ -590,8 +584,6 @@ export default function ManagementBoard() {
       'management-leads.csv',
       [
         'Lead Source',
-        'Elite ambassador',
-        'Ambassador',
         'Connector Name',
         'Company',
         'Phone No.',
@@ -618,7 +610,6 @@ export default function ManagementBoard() {
     setLeadForm({
       lead_source: '',
       viaName: '',
-      eliteAmbassadorId: '',
       company: '',
       clientName: '',
       clientPhoneNo: '',
@@ -684,7 +675,6 @@ export default function ManagementBoard() {
                 setEditingId(null)
                 setAssignmentMode('process')
                 setLeadForm({
-                  eliteAmbassadorId: '',
                   company: '',
                   clientName: '',
                   clientPhoneNo: '',
@@ -804,6 +794,22 @@ export default function ManagementBoard() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <div>
+            <label
+              htmlFor="management-filter"
+              className="block text-xs font-medium uppercase tracking-wide text-slate-500"
+            >
+              Management
+            </label>
+            <TypeaheadMultiSelect
+              id="management-filter"
+              label={null}
+              placeholder="Type management name..."
+              options={managementUserOptions}
+              selectedIds={managementUserFilter}
+              onChangeSelectedIds={setManagementUserFilter}
+            />
+          </div>
+          <div>
             <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">
               From
             </label>
@@ -825,16 +831,6 @@ export default function ManagementBoard() {
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
             />
           </div>
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={exportCsv}
-              className="w-full rounded-lg border border-green-600/30 cursor-pointer px-4 py-2 text-sm font-semibold text-slate-200 bg-green-500/20 hover:bg-green-500/30"
-            >
-              Export CSV
-            </button>
-          </div>
-          <div></div>
           <div>
             <label
               htmlFor="search-company-management"
@@ -851,6 +847,15 @@ export default function ManagementBoard() {
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={exportCsv}
+              className="w-full rounded-lg border border-green-600/30 cursor-pointer px-4 py-2 text-sm font-semibold text-slate-200 bg-green-500/20 hover:bg-green-500/30"
+            >
+              Export CSV
+            </button>
+          </div>
         </div>
       </div>
 
@@ -860,8 +865,6 @@ export default function ManagementBoard() {
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium">Sr No.</th>
-                <th className="px-4 py-2 font-medium">Elite ambassador</th>
-                <th className="px-4 py-2 font-medium">Ambassador</th>
                 <th className="px-4 py-2 font-medium">Company</th>
                 <th className="px-4 py-2 font-medium">Category Status</th>
                 <th className="px-4 py-2 font-medium">Sub Status</th>
@@ -911,15 +914,6 @@ export default function ManagementBoard() {
                   return (
                     <tr key={lead.id} className="text-slate-300">
                       <td className="px-4 py-1 text-slate-400">{index + 1}</td>
-                      <td className="px-4 py-1">
-                        {eliteAmbassadorNameFor(
-                          lead.eliteAmbassadorId,
-                          lead.eliteAmbassadorName,
-                        )}
-                      </td>
-                      <td className="px-4 py-1 text-slate-400">
-                        {ambassadorNameFor(lead.ambassadorId, lead.ambassadorName)}
-                      </td>
                       <td className="px-4 py-1 text-slate-400 lowercase first-letter:uppercase">{lead.company || '-'}</td>
                       <td className="px-4 py-1">
                         <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-blue-300">
@@ -936,15 +930,6 @@ export default function ManagementBoard() {
                       </td>
                       <td className="px-4 py-1 text-slate-400">{nameFor(lead.createdBy)}</td>
                       <td className="px-4 py-1">
-                        {/* {assignees.length === 0 ? (
-                          <span className="text-slate-600">Unassigned</span>
-                        ) : (
-                          <ul className="space-y-0.5 text-xs text-slate-400">
-                            {assignees.map((uid) => (
-                              <li key={uid}>{nameFor(uid)}</li>
-                            ))}
-                          </ul>
-                        )} */}
                         {allAssignedNames(lead)}
                       </td>
                       <td className="px-4 py-1 text-slate-400 text-right">
