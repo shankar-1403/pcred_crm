@@ -600,22 +600,6 @@ export default function ProcessBoard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300">Status</label>
-                <select
-                  value={editForm.status}
-                  onChange={(e) =>
-                    setEditForm((f) => ({ ...f, status: e.target.value }))
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                >
-                  {statusOptions.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-slate-300">Category Status</label>
                 <select
                   value={editForm.categoryStatus}
