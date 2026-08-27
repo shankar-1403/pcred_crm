@@ -3,7 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { ROLES, ROLE_LABELS } from '../constants'
-import { IconLinkFilled,IconUserFilled,IconMenu2,IconCheckFilled } from '@tabler/icons-react'
+import { IconLinkFilled, IconUserFilled, IconMenu2, IconCheckFilled } from '@tabler/icons-react'
 import ThemeToggle from './ThemeToggle'
 
 const linkClass = (theme) => ({ isActive }) =>
@@ -39,9 +39,9 @@ export default function Layout() {
     const url = `${base.replace(/\/$/, '')}/lead/loan/${encodeURIComponent(uid)}`
     await navigator.clipboard.writeText(url)
     setTextCopied("Copied Successfully")
-    setTimeout(()=>{
+    setTimeout(() => {
       setTextCopied("")
-    },3000)
+    }, 3000)
   }
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -54,7 +54,7 @@ export default function Layout() {
               className="flex items-center text-lg font-semibold tracking-tight text-white"
             >
               <img
-                src={theme === 'dark' ? '/pcred-logo.png': '/logo.webp'}
+                src={theme === 'dark' ? '/pcred-logo.png' : '/logo.webp'}
                 alt="Pcred logo"
                 className={`${theme === "dark" ? "h-9" : "h-9"} object-contain`}
               />
@@ -146,17 +146,17 @@ export default function Layout() {
                     Other leads
                   </NavLink>
                 )}
-                {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
+                {[ROLES.MANAGEMENT, ROLES.PROCESS, ROLES.SALES, ROLES.EMPLOYEES].includes(role) && (
                   <NavLink to="/other-leads" className={linkClass(theme)} onClick={closeMenu}>
                     Other leads
                   </NavLink>
                 )}
-                {[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.ELITE_AMBASSADOR].includes(role) && (
+                {[ROLES.SALES, ROLES.PROCESS, ROLES.MANAGEMENT, ROLES.ELITE_AMBASSADOR].includes(role) && (
                   <NavLink to="/ambassadors-list" className={linkClass(theme)} onClick={closeMenu}>
                     Ambassadors List
                   </NavLink>
                 )}
-                {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                {[ROLES.MANAGEMENT, ROLES.PROCESS, ROLES.SALES, ROLES.EMPLOYEES, ROLES.ELITE_AMBASSADOR, ROLES.AMBASSADOR].includes(role) && (
                   <NavLink to="/certificate" className={linkClass(theme)} onClick={closeMenu}>
                     Certificate
                   </NavLink>
@@ -176,12 +176,12 @@ export default function Layout() {
                     Creative
                   </NavLink>
                 )}
-                {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+                {[ROLES.MANAGEMENT, ROLES.PROCESS, ROLES.SALES, ROLES.EMPLOYEES, ROLES.ELITE_AMBASSADOR, ROLES.AMBASSADOR].includes(role) && (
                   <NavLink to="/visiting-card" className={linkClass(theme)} onClick={closeMenu}>
                     Visiting Card
                   </NavLink>
                 )}
-                {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
+                {[ROLES.ELITE_AMBASSADOR, ROLES.AMBASSADOR, ROLES.MANAGEMENT, ROLES.PROCESS, ROLES.SALES, ROLES.EMPLOYEES].includes(role) && (
                   <NavLink to="/sales-material" className={linkClass(theme)} onClick={closeMenu}>
                     Sales Material
                   </NavLink>
@@ -201,7 +201,7 @@ export default function Layout() {
                     Admin Marketing
                   </NavLink>
                 )}
-                {[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.EMPLOYEES].includes(role) && (
+                {[ROLES.SALES, ROLES.PROCESS, ROLES.MANAGEMENT, ROLES.EMPLOYEES].includes(role) && (
                   <NavLink to="/admin/marketing-material" className={linkClass(theme)} onClick={closeMenu}>
                     Marketing material
                   </NavLink>
@@ -226,23 +226,28 @@ export default function Layout() {
                     Sub Status
                   </NavLink>
                 )}
+                {[ROLES.SALES, ROLES.MANAGEMENT].includes(role) && (
+                  <NavLink to="/leads" className={linkClass(theme)} onClick={closeMenu}>
+                    Leads
+                  </NavLink>
+                )}
               </nav>
               <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-3">
                 <ThemeToggle />
-                
-                {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
+
+                {[ROLES.ELITE_AMBASSADOR, ROLES.AMBASSADOR, ROLES.MANAGEMENT, ROLES.PROCESS, ROLES.SALES, ROLES.EMPLOYEES].includes(role) && (
                   <button onClick={handleCopy} className='cursor-pointer flex text-nowrap items-center gap-1 text-sm bg-slate-800 text-blue-300 py-1 px-3 hover:underline rounded-2xl' title='ECB MSME Link'>
                     ECB MSME Link
                     {textCopied ?
-                      <IconCheckFilled size={14} color={theme === 'dark' ?'#ffffff': "#000000"}/>
+                      <IconCheckFilled size={14} color={theme === 'dark' ? '#ffffff' : "#000000"} />
                       :
-                      <IconLinkFilled size={14} color={theme === 'dark' ?'#ffffff': "#000000"}/>
+                      <IconLinkFilled size={14} color={theme === 'dark' ? '#ffffff' : "#000000"} />
                     }
                   </button>
                 )}
                 <div className="relative inline-block">
                   <button type="button" onClick={() => setProfileOpen((v) => !v)} className='cursor-pointer rounded-full border border-blue-600 p-2 text-sm font-medium hidden lg:block transition-colors'>
-                    <IconUserFilled size={20} className='white'/>
+                    <IconUserFilled size={20} className='white' />
                   </button>
                   {profileOpen && (
                     <>
@@ -254,7 +259,7 @@ export default function Layout() {
                           <span className="w-full text-center">
                             {ROLE_LABELS[role] ?? role}
                           </span>
-                          <button type="button" onClick={() => {closeMenu(),logout()}} className="rounded-lg border border-red-500/50 px-2 py-1 text-white bg-red-500/20 cursor-pointer transition-colors hover:border-slate-500 hover:bg-slate-800">
+                          <button type="button" onClick={() => { closeMenu(), logout() }} className="rounded-lg border border-red-500/50 px-2 py-1 text-white bg-red-500/20 cursor-pointer transition-colors hover:border-slate-500 hover:bg-slate-800">
                             Sign out
                           </button>
                         </div>
@@ -325,12 +330,12 @@ export default function Layout() {
                   Ambassador dashboard
                 </NavLink>
               )}
-               {[ROLES.ELITE_AMBASSADOR].includes(role) && (
+              {[ROLES.ELITE_AMBASSADOR].includes(role) && (
                 <NavLink to="/elite-ambassador-other-leads" className={linkClass(theme)} onClick={closeMenu}>
                   Other leads
                 </NavLink>
               )}
-              {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
+              {[ROLES.MANAGEMENT, ROLES.PROCESS, ROLES.SALES, ROLES.EMPLOYEES].includes(role) && (
                 <NavLink to="/other-leads" className={linkClass(theme)} onClick={closeMenu}>
                   Other leads
                 </NavLink>
@@ -340,12 +345,12 @@ export default function Layout() {
                   Other leads
                 </NavLink>
               )}
-              {[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.ELITE_AMBASSADOR].includes(role) && (
+              {[ROLES.SALES, ROLES.PROCESS, ROLES.MANAGEMENT, ROLES.ELITE_AMBASSADOR].includes(role) && (
                 <NavLink to="/ambassadors-list" className={linkClass(theme)} onClick={closeMenu}>
                   Ambassadors List
                 </NavLink>
               )}
-              {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+              {[ROLES.ELITE_AMBASSADOR, ROLES.AMBASSADOR].includes(role) && (
                 <NavLink to="/certificate" className={linkClass(theme)} onClick={closeMenu}>
                   Certificate
                 </NavLink>
@@ -360,22 +365,22 @@ export default function Layout() {
                   Creative
                 </NavLink>
               )}
-              {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
+              {[ROLES.ELITE_AMBASSADOR, ROLES.AMBASSADOR, ROLES.MANAGEMENT, ROLES.PROCESS, ROLES.SALES, ROLES.EMPLOYEES].includes(role) && (
                 <NavLink to="/sales-material" className={linkClass(theme)} onClick={closeMenu}>
                   Sales Material
                 </NavLink>
               )}
-              {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+              {[ROLES.ELITE_AMBASSADOR, ROLES.AMBASSADOR].includes(role) && (
                 <NavLink to="/visiting-card" className={linkClass(theme)} onClick={closeMenu}>
                   Visiting Card
                 </NavLink>
               )}
-              {[ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES,ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR].includes(role) && (
+              {[ROLES.MANAGEMENT, ROLES.PROCESS, ROLES.SALES, ROLES.EMPLOYEES, ROLES.ELITE_AMBASSADOR, ROLES.AMBASSADOR].includes(role) && (
                 <NavLink to="/visiting-card" className={linkClass(theme)} onClick={closeMenu}>
                   Visiting Card
                 </NavLink>
               )}
-              {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
+              {[ROLES.ELITE_AMBASSADOR, ROLES.AMBASSADOR, ROLES.MANAGEMENT, ROLES.PROCESS, ROLES.SALES, ROLES.EMPLOYEES].includes(role) && (
                 <NavLink to="/sales-material" className={linkClass(theme)} onClick={closeMenu}>
                   Sales Material
                 </NavLink>
@@ -395,7 +400,7 @@ export default function Layout() {
                   Admin Marketing
                 </NavLink>
               )}
-              {[ROLES.SALES,ROLES.PROCESS,ROLES.MANAGEMENT,ROLES.EMPLOYEES].includes(role) && (
+              {[ROLES.SALES, ROLES.PROCESS, ROLES.MANAGEMENT, ROLES.EMPLOYEES].includes(role) && (
                 <NavLink to="/admin/marketing-material" className={linkClass(theme)} onClick={closeMenu}>
                   Marketing material
                 </NavLink>
@@ -420,13 +425,18 @@ export default function Layout() {
                   Sub Status
                 </NavLink>
               )}
-              {[ROLES.ELITE_AMBASSADOR,ROLES.AMBASSADOR,ROLES.MANAGEMENT,ROLES.PROCESS,ROLES.SALES,ROLES.EMPLOYEES].includes(role) && (
+              {[ROLES.SALES, ROLES.MANAGEMENT].includes(role) && (
+                <NavLink to="/leads" className={linkClass(theme)} onClick={closeMenu}>
+                  Leads
+                </NavLink>
+              )}
+              {[ROLES.ELITE_AMBASSADOR, ROLES.AMBASSADOR, ROLES.MANAGEMENT, ROLES.PROCESS, ROLES.SALES, ROLES.EMPLOYEES].includes(role) && (
                 <button onClick={handleCopy} className='cursor-pointer flex justify-center items-center gap-1 text-sm text-center bg-slate-800 text-blue-300 py-2 px-3 hover:underline rounded-2xl' title='ECB MSME Link'>
                   ECB MSME Link
                   {textCopied ?
-                    <IconCheckFilled size={14} color={theme === 'dark' ?'#ffffff': "#000000"}/>
+                    <IconCheckFilled size={14} color={theme === 'dark' ? '#ffffff' : "#000000"} />
                     :
-                    <IconLinkFilled size={14} color={theme === 'dark' ?'#ffffff': "#000000"}/>
+                    <IconLinkFilled size={14} color={theme === 'dark' ? '#ffffff' : "#000000"} />
                   }
                 </button>
               )}

@@ -3,8 +3,11 @@ import { onRequest, HttpsError } from "firebase-functions/v2/https";
 import { getAuth } from "firebase-admin/auth";
 import nodemailer from "nodemailer";
 import { defineSecret } from "firebase-functions/params";
+import { getDatabase } from "firebase-admin/database";
 
 initializeApp()
+
+const db = getDatabase();
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -205,7 +208,7 @@ function escapeHtml(text) {
     .replace(/"/g, "&quot;");
 }
 
-export const updateUserByAdmin = onRequest(async (req,res) => {
+export const updateUserByAdmin = onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.set(corsHeaders)
     res.status(204).send('')
@@ -235,7 +238,7 @@ export const updateUserByAdmin = onRequest(async (req,res) => {
   }
 });
 
-export const deleteUserByAdmin = onRequest(async (req,res) => {
+export const deleteUserByAdmin = onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.set(corsHeaders)
     res.status(204).send('')
@@ -254,7 +257,104 @@ export const deleteUserByAdmin = onRequest(async (req,res) => {
     console.error(err);
 
     res.status(500).json({
-      error: error.message,
+      error: err.message,
     })
   }
 });
+
+export const pushLeads = onRequest({ cors: true }, async (req, res) => {
+  try {
+    if (req.method !== 'POST') {
+      return res.status(405).json({
+        success: false,
+        message: "Method not allowed"
+      });
+    }
+    const { leadId, company_name, client_name, tunover, phone, personal_email, business_email, address, zip_code, cibil, cmr, feedback, others_1, others_2, others_3, others_4, others_5, others_6 } = req.body;
+
+    if (!leadId) {
+      return res.status(400).json({
+        success: false,
+        message: "Lead Id is required",
+      });
+    }
+
+    if (feedback) {
+      if (!feedback) {
+        return res.status(400).json({
+          success: false,
+          message: "Feedback is required",
+        });
+      }
+      const snapshot = await db
+        .ref("extracted_leads")
+        .orderByChild("leadId")
+        .equalTo(leadId)
+        .once("value");
+
+      if (!snapshot.exists()) {
+        return res.status(404).json({
+          success: false,
+          message: "Lead not found",
+        });
+      }
+
+      const updates = {};
+
+      snapshot.forEach((child) => {
+        updates[`extracted_leads/${child.key}/feedback`] = feedback;
+        updates[`extracted_leads/${child.key}/updatedAt`] =
+          new Date().toISOString();
+      });
+
+      await db.ref().update(updates);
+
+      return res.status(200).json({
+        success: true,
+        message: "Feedback submitted successfully",
+      });
+    }
+
+
+    //  Recieve new lead from client provider
+
+    const leadRef = db.ref("extracted_leads").push();
+    const leadData = {
+      id: leadRef.key,
+      leadId: leadId,
+      company_name:company_name,
+      client_name:client_name,
+      tunover:tunover,
+      phone:phone,
+      personal_email: personal_email || "",
+      business_email: business_email || "",
+      address: address,
+      zip_code:zip_code,
+      cibil: cibil,
+      cmr: cmr,
+      feedback: "",
+      others_1:others_1,
+      others_2:others_2,
+      others_3:others_3,
+      others_4:others_4,
+      others_5:others_5,
+      others_6:others_6,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await leadRef.set(leadData);
+
+    return res.status(200).json({
+      success: true,
+      message: "Lead received successfully",
+    });
+  }
+  catch (error) {
+    console.log("Push leads error", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+})

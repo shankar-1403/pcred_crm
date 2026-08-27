@@ -33,6 +33,7 @@ import EliteOtherLeads from './pages/EliteOtherLeads'
 import AmbassadorOtherLeads from './pages/AmbassadorOtherLeads'
 import AdminCategoryStatus from './pages/admin/AdminCategoryStatus'
 import AdminSubStatus from './pages/admin/AdminSubStatus'
+import Leads from './pages/Leads'
 import Form from './pages/Form'
 import { ROLES } from './constants'
 
@@ -293,6 +294,14 @@ export default function App() {
               element={
                 <ProtectedRoute roles={[ROLES.ADMIN]}>
                   <AdminSubStatus />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="leads"
+              element={
+                <ProtectedRoute roles={[ROLES.SALES,ROLES.MANAGEMENT]}>
+                  <Leads />
                 </ProtectedRoute>
               }
             />
