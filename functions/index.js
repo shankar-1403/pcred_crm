@@ -270,7 +270,7 @@ export const pushLeads = onRequest({ cors: true }, async (req, res) => {
         message: "Method not allowed"
       });
     }
-    const { leadId, company_name, client_name, tunover, phone, personal_email, business_email, address, zip_code, cibil, cmr, feedback, others_1, others_2, others_3, others_4, others_5, others_6 } = req.body;
+    const { leadId, company_name, client_name, turnover, phone, personal_email, business_email, address, zip_code, cibil, cmr, others_1, others_2, others_3, others_4, others_5, others_6 } = req.body;
 
     if (!leadId) {
       return res.status(400).json({
@@ -324,7 +324,7 @@ export const pushLeads = onRequest({ cors: true }, async (req, res) => {
       leadId: leadId,
       company_name:company_name,
       client_name:client_name,
-      tunover:tunover,
+      turnover:turnover,
       phone:phone,
       personal_email: personal_email || "",
       business_email: business_email || "",
