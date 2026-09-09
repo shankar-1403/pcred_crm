@@ -29,7 +29,7 @@ function Row({ label, value, isLink = false }) {
 
 function Leads() {
     const { extractedLeads, loading, error } = useExtractedLeads();
-    const [leadForm, setLeadForm] = useState({ leadId:'' , feedback: '' });
+    const [leadForm, setLeadForm] = useState({ leadId: '', feedback: '' });
     const [modalOpen, setModalOpen] = useState(false);
     const [modalFeedbackOpen, setModalFeedbackOpen] = useState(false);
     const [leadDetails, setLeadDetails] = useState(null);
@@ -53,6 +53,30 @@ function Leads() {
         })
         setModalFeedbackOpen(true)
     }
+
+    const feedback = [
+        {value:"Active",label:"Active"},
+        {value:"Ringing/not connected",label:"Ringing/not connected"},
+        {value:"Low cibil",label:"Low cibil"},
+        {value:"Document issue",label:"Document issue"},
+        {value:"Private/Startup Funding",label:"Private/Startup Funding"},
+        {value:"High enquiries",label:"High enquiries"},
+        {value:"Not interested",label:"Not interested"},
+        {value:"Doc list send",label:"Doc list send"},
+        {value:"Location issue",label:"Location issue"},
+        {value:"Logged in",label:"Logged in"},
+        {value:"Not eligible",label:"Not eligible"},
+        {value:"Language barrier",label:"Language barrier"},
+        {value:"Negative profile",label:"Negative profile"},
+        {value:"Docs received",label:"Docs received"},
+        {value:"Duplicate",label:"Duplicate"},
+        {value:"Rejected",label:"Rejected"},
+        {value:"DSA",label:"DSA"},
+        {value:"Meeting done",label:"Meeting done"},
+        {value:"Mandate signed",label:"Mandate signed"},
+        {value:"Switch off",label:"Switch off"},
+        {value:"On hold",label:"On hold"},
+    ]
 
     async function saveLead(e) {
         e.preventDefault()
@@ -237,12 +261,19 @@ function Leads() {
                             <h2 className="text-lg font-semibold text-white">
                                 {editingId ? 'Edit lead' : 'New lead'}
                             </h2>
-                            <ModalCloseButton onClick={()=>setModalFeedbackOpen(false)} />
+                            <ModalCloseButton onClick={() => setModalFeedbackOpen(false)} />
                         </div>
                         <form onSubmit={saveLead} className="mt-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300">Feedback</label>
-                                <input value={leadForm.feedback} onChange={(e) => setLeadForm((f) => ({ ...f, feedback: e.target.value }))}className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"/>
+                                <select value={leadForm.feedback} onChange={(e) => setLeadForm((f) => ({ ...f, feedback: e.target.value }))} className='mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white'>
+                                    <option value="">-- select feedback --</option>
+                                    {feedback.map((item) => (
+                                        <option key={item.value} value={item.value}>
+                                            {item.label}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             {formError && <p className="text-sm text-red-300">{formError}</p>}
                             <div className="flex justify-end gap-2">
