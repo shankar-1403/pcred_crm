@@ -8,8 +8,8 @@ import { useProducts } from '../hooks/useProducts'
 import { useEliteAmbassador } from '../hooks/useEliteAmbassador'
 import { useAmbassador } from '../hooks/useAmbassador'
 import { assignedUids, leadReferredToUser, toAssignedMap, bankUids } from '../lib/leads'
-import {assignableProcessUsers,assignableSalesUsers,labelAssignableProcessUser,assignableManagementUsers} from '../lib/assignees'
-import { labelForLeadStatus, statusLabelMapFromStatuses,} from '../lib/statusLabels'
+import { assignableProcessUsers, assignableSalesUsers, labelAssignableProcessUser, assignableManagementUsers } from '../lib/assignees'
+import { labelForLeadStatus, statusLabelMapFromStatuses, } from '../lib/statusLabels'
 import { downloadCsv, formatAmountForCsv, inDateRange } from '../lib/csv'
 import { resolveEliteAmbassadorName } from '../lib/partnerOrg'
 import LeadDetailsModal from '../components/LeadDetailsModal'
@@ -24,16 +24,16 @@ import { useCategoryStatus } from '../hooks/useCategoryStatus'
 import { useSubStatus } from '../hooks/useSubStatus'
 
 const emptyForm = {
-  lead_source:'',
+  lead_source: '',
   title: '',
   sourceEnabled: false,
-  leadType:'',
+  leadType: '',
   viaName: '',
   eliteAmbassadorId: '',
   ambassadorId: '',
   company: '',
   clientName: '',
-  clientPhoneNo:'',
+  clientPhoneNo: '',
   location: '',
   bankName: '',
   onePagerLink: '',
@@ -51,7 +51,7 @@ const emptyForm = {
 }
 
 export default function SalesBoard() {
-  const { user,profile } = useAuth()
+  const { user, profile } = useAuth()
   const { leads, loading } = useLeads()
   const { users, usersById, processUsers, salesUsers, managementUsers, error: usersError } = useUsers()
   const { products, loading: productsLoading, error: productsError } = useProducts()
@@ -77,17 +77,17 @@ export default function SalesBoard() {
   const [viewLead, setViewLead] = useState(null)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
-  const [selectedEliteAmbassador, setSelectedEliteAmbassador] = useState([])
-  const [selectedAmbassador, setSelectedAmbassador] = useState([])
 
-  const myLeads = useMemo(
-    () =>
-      leads.filter(
-        (l) =>
-          l.createdBy === user?.uid || leadReferredToUser(l, user?.uid),
-      ),
-    [leads, user?.uid],
-  )
+
+  const myLeads = useMemo(() => {
+    if (!user) return []
+    return leads.filter((l) => {
+      const uids = assignedUids(l.salesAssignedTo)
+      return (
+        uids.includes(user.uid) || l.createdBy === user?.uid || leadReferredToUser(l, user.uid)
+      )
+    })
+  }, [leads, user?.uid])
 
   const processAssignees = useMemo(
     () => assignableProcessUsers(processUsers, user?.uid, usersById),
@@ -200,7 +200,7 @@ export default function SalesBoard() {
     value: p.id,
     label: p.name || p.id,
   }))
-  
+
   const ambassadorOptions = ambassador.map((a) => ({
     value: a.id,
     label: a.name || a.id,
@@ -229,7 +229,7 @@ export default function SalesBoard() {
       sourceEnabled: lead.sourceEnabled ?? '',
       eliteAmbassadorId: lead.eliteAmbassadorId ?? '',
       ambassadorId: lead.ambassadorId ?? '',
-      leadType:lead.leadType ?? '',
+      leadType: lead.leadType ?? '',
       viaName: lead.viaName ?? '',
       company: lead.company ?? '',
       clientName: lead.clientName ?? '',
@@ -423,7 +423,7 @@ export default function SalesBoard() {
   function capitalizeWords(str) {
     if (!str) return "";
     return str
-      .replace("_"," ")
+      .replace("_", " ")
       .split(" ")
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
@@ -545,7 +545,7 @@ export default function SalesBoard() {
           <table className="w-max min-w-full text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
               <tr>
-                <th className="px-4 py-2 font-medium whitespace-nowrap">Elite ambassador</th>
+                {/* <th className="px-4 py-2 font-medium whitespace-nowrap">Elite ambassador</th> */}
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Company</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Client name</th>
                 <th className="px-4 py-2 font-medium whitespace-nowrap">Via</th>
@@ -564,19 +564,19 @@ export default function SalesBoard() {
             <tbody className="divide-y divide-slate-800">
               {filteredMyLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={14} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={13} className="px-4 py-10 text-center text-slate-500">
                     You have no leads yet. Click New lead to add one.
                   </td>
                 </tr>
               ) : (
                 tablePageItems.map((lead) => (
                   <tr key={lead.id} className="text-slate-300">
-                    <td className="whitespace-nowrap px-4 py-1 text-slate-400">
+                    {/* <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                       {eliteAmbassadorNameFor(
                         lead.eliteAmbassadorId,
                         lead.eliteAmbassadorName,
                       )}
-                    </td>
+                    </td> */}
                     <td className="whitespace-nowrap px-4 py-1 text-slate-400">
                       {lead.company || '-'}
                     </td>
@@ -657,9 +657,9 @@ export default function SalesBoard() {
           usersById={usersById}
           showPartner={Boolean(
             viewLead.eliteAmbassadorId ||
-              viewLead.eliteAmbassadorName ||
-              viewLead.ambassadorId ||
-              viewLead.ambassadorName,
+            viewLead.eliteAmbassadorName ||
+            viewLead.ambassadorId ||
+            viewLead.ambassadorName,
           )}
           onClose={() => setViewLead(null)}
         />
@@ -688,12 +688,12 @@ export default function SalesBoard() {
                 <label className="block text-sm font-medium text-slate-300">Lead Source</label>
                 <div className="flex items-center gap-6 mt-2">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="lead_source" value="online_lead" checked={form.lead_source === 'online_lead'} defaultChecked  onChange={(e) => setForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500"/>
+                    <input type="radio" name="lead_source" value="online_lead" checked={form.lead_source === 'online_lead'} defaultChecked onChange={(e) => setForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500" />
                     <span className="text-sm font-medium text-slate-300">Online Lead</span>
                   </label>
 
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="lead_source" value="offline_lead" checked={form.lead_source === 'offline_lead'} onChange={(e) => setForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500"/>
+                    <input type="radio" name="lead_source" value="offline_lead" checked={form.lead_source === 'offline_lead'} onChange={(e) => setForm((f) => ({ ...f, lead_source: e.target.value }))} className="h-4 w-4 cursor-pointer border-blue-500 text-blue-500" />
                     <span className="text-sm font-medium text-slate-300">Offline Lead</span>
                   </label>
                 </div>
@@ -726,7 +726,8 @@ export default function SalesBoard() {
                                   setForm((f) => ({
                                     ...f,
                                     leadType: "via",
-                                    ambassadorName: '' }),
+                                    ambassadorName: ''
+                                  }),
                                   )
                                 }
                                 className="rounded border-slate-600 bg-slate-950 text-blue-600"
@@ -744,7 +745,8 @@ export default function SalesBoard() {
                                   setForm((f) => ({
                                     ...f,
                                     leadType: "elite_ambassador",
-                                    viaName: '' }),
+                                    viaName: ''
+                                  }),
                                   )
                                 }
                                 className="rounded border-slate-600 bg-slate-950 text-blue-600"
@@ -762,7 +764,8 @@ export default function SalesBoard() {
                                   setForm((f) => ({
                                     ...f,
                                     leadType: "ambassador",
-                                    viaName: '' }),
+                                    viaName: ''
+                                  }),
                                   )
                                 }
                                 className="rounded border-slate-600 bg-slate-950 text-blue-600"
@@ -771,11 +774,11 @@ export default function SalesBoard() {
                             </label>
                           </div>
                         </div>
-                        
+
                         {form.leadType === "via" && (
                           <>
                             <div>
-                              <label htmlFor="sales-lead-via-name" className="block text-xs font-medium text-slate-400"> 
+                              <label htmlFor="sales-lead-via-name" className="block text-xs font-medium text-slate-400">
                                 Name
                               </label>
                               <input
@@ -795,7 +798,7 @@ export default function SalesBoard() {
                           <div className='grid grid-cols-2'>
                             <div>
                               <label className="block text-xs font-medium text-slate-400">Elite Ambassador</label>
-                              <SearchableDarkDropdown name={"eliteAmbassadorId"} options={eliteAmbassadorOptions} value={form.eliteAmbassadorId} handleChange={(e) => setForm((f) => ({ ...f, eliteAmbassadorId: e.target.value }))}/>
+                              <SearchableDarkDropdown name={"eliteAmbassadorId"} options={eliteAmbassadorOptions} value={form.eliteAmbassadorId} handleChange={(e) => setForm((f) => ({ ...f, eliteAmbassadorId: e.target.value }))} />
                             </div>
                           </div>
                         )}
@@ -803,7 +806,7 @@ export default function SalesBoard() {
                           <div className='grid grid-cols-2'>
                             <div>
                               <label className="block text-xs font-medium text-slate-400">Ambassador</label>
-                              <SearchableDarkDropdown name="ambassadorId" options={ambassadorOptions} value={form.ambassadorId} handleChange={(e)=>setForm((f) => ({ ...f,ambassadorId: e.target.value }))}/>
+                              <SearchableDarkDropdown name="ambassadorId" options={ambassadorOptions} value={form.ambassadorId} handleChange={(e) => setForm((f) => ({ ...f, ambassadorId: e.target.value }))} />
                             </div>
                           </div>
                         )}
@@ -1016,7 +1019,7 @@ export default function SalesBoard() {
                   Revenue Details
                 </h3>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  
+
                   <div>
                     <label className="block text-xs font-medium text-slate-300">
                       Bank Payout Percent (%)
@@ -1142,11 +1145,10 @@ export default function SalesBoard() {
                       setAssignmentMode('process')
                       setSalesAssigneeDropdownOpen(false)
                     }}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      assignmentMode === 'process'
+                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${assignmentMode === 'process'
                         ? 'bg-blue-600 text-white'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     Process
                   </button>
@@ -1156,11 +1158,10 @@ export default function SalesBoard() {
                       setAssignmentMode('sales')
                       setAssigneeDropdownOpen(false)
                     }}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      assignmentMode === 'sales'
+                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${assignmentMode === 'sales'
                         ? 'bg-blue-600 text-white'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     Sales
                   </button>
@@ -1170,11 +1171,10 @@ export default function SalesBoard() {
                       setAssignmentMode('management')
                       setManagementAssigneeDropdownOpen(false)
                     }}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      assignmentMode === 'management'
+                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${assignmentMode === 'management'
                         ? 'bg-blue-600 text-white'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     Management
                   </button>
