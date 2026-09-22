@@ -87,8 +87,8 @@ export default function SalesBoard() {
         uids.includes(user.uid) || l.createdBy === user?.uid || leadReferredToUser(l, user.uid)
       )
     })
-  }, [leads, user?.uid])
-
+  }, [leads, user])
+  
   const processAssignees = useMemo(
     () => assignableProcessUsers(processUsers, user?.uid, usersById),
     [processUsers, user?.uid, usersById],

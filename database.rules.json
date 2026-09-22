@@ -37,6 +37,26 @@
     "creatives": {
       ".read": "auth != null",
       ".write": "auth != null"
+    },
+    "marketing": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "banks": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "category_status": {
+      ".read": true,
+      ".write": "auth != null && root.child('users/' + auth.uid + '/role').val() === 'admin'"
+    },
+    "sub_status": {
+      ".read": true,
+      ".write": "auth != null && root.child('users/' + auth.uid + '/role').val() === 'admin'"
+    },
+    "extracted_leads": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }
