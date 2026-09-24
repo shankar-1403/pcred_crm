@@ -300,7 +300,7 @@ export default function App() {
             <Route
               path="leads"
               element={
-                <ProtectedRoute roles={[ROLES.SALES,ROLES.MANAGEMENT]}>
+                <ProtectedRoute roles={[ROLES.MANAGEMENT]} allowedUids={['OAahN2OiYbRey7FLjw0j3GT8pKJ3','ZL1Nel49vcW1tb381qSDkudcCdi1','WtH1Btj5ErblHyt8EU4uv9LRkKC2']}>
                   <Leads />
                 </ProtectedRoute>
               }

@@ -43,6 +43,15 @@ export default function Layout() {
       setTextCopied("")
     }, 3000)
   }
+
+  const leadsAccessUids = [
+    'OAahN2OiYbRey7FLjw0j3GT8pKJ3',
+    'ZL1Nel49vcW1tb381qSDkudcCdi1',
+    'WtH1Btj5ErblHyt8EU4uv9LRkKC2',
+  ];
+
+  const canAccessLeads = profile?.role === ROLES.MANAGEMENT || leadsAccessUids.includes(profile?.uid);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-800 bg-slate-900/90 backdrop-blur">
@@ -54,7 +63,7 @@ export default function Layout() {
               className="flex items-center text-lg font-semibold tracking-tight text-white"
             >
               <img
-                src={theme === 'dark' ? '/pcred-logo.png' : '/logo.webp'}
+                src={theme === 'dark' ? '/pcred_white_logo.webp' : '/pcred_logo.webp'}
                 alt="Pcred logo"
                 className={`${theme === "dark" ? "h-9" : "h-9"} object-contain`}
               />
@@ -226,7 +235,7 @@ export default function Layout() {
                     Sub Status
                   </NavLink>
                 )}
-                {[ROLES.SALES, ROLES.MANAGEMENT].includes(role) && (
+                {canAccessLeads && (
                   <NavLink to="/leads" className={linkClass(theme)} onClick={closeMenu}>
                     Leads
                   </NavLink>
@@ -425,7 +434,7 @@ export default function Layout() {
                   Sub Status
                 </NavLink>
               )}
-              {[ROLES.SALES, ROLES.MANAGEMENT].includes(role) && (
+              {canAccessLeads && (
                 <NavLink to="/leads" className={linkClass(theme)} onClick={closeMenu}>
                   Leads
                 </NavLink>

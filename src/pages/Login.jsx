@@ -41,7 +41,7 @@ export default function Login() {
       <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/90 p-8 shadow-2xl shadow-black/40">
         <div className="mb-4 flex justify-center">
           <img
-            src={theme === 'dark' ? '/pcred-logo.png': '/logo.webp'}
+            src={theme === 'dark' ? '/pcred_white_logo.webp': '/pcred_logo.webp'}
             alt="Pcred logo"
             className={`h-14 object-contain`}
           />
