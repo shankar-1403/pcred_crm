@@ -265,6 +265,54 @@ export const deleteUserByAdmin = onRequest(async (req, res) => {
 export const pushLeads = onRequest({ cors: true }, async (req, res) => {
   try {
     // =====================================================
+    // GET FEEDBACK - CLIENT
+    // GET /pushLeads?leadId=LEAD001
+    // =====================================================
+
+    if (req.method === "GET") {
+      const leadId = String(req.query.leadId || "").trim();
+
+      if (!leadId) {
+        return res.status(400).json({
+          success: false,
+          message: "Lead Id is required",
+        });
+      }
+
+      // Find existing lead
+      const snapshot = await db
+        .ref("extracted_leads")
+        .orderByChild("leadId")
+        .equalTo(leadId)
+        .once("value");
+
+      if (!snapshot.exists()) {
+        return res.status(404).json({
+          success: false,
+          message: "Lead not found",
+          leadId,
+        });
+      }
+
+      let feedback = "";
+      let updatedAt = null;
+
+      snapshot.forEach((child) => {
+        const lead = child.val();
+
+        feedback = lead.feedback || "";
+        updatedAt = lead.updatedAt || null;
+      });
+
+      return res.status(200).json({
+        success: true,
+        leadId,
+        feedback,
+        updatedAt,
+      });
+    }
+
+    // =====================================================
     // METHOD CHECK
     // =====================================================
 
