@@ -76,6 +76,7 @@ function Leads() {
         {value:"Mandate signed",label:"Mandate signed"},
         {value:"Switch off",label:"Switch off"},
         {value:"On hold",label:"On hold"},
+        {value:"Wrong Number",label:"Wrong Number"},
     ]
 
     async function saveLead(e) {

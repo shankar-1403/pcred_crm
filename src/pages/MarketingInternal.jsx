@@ -12,6 +12,8 @@ function buildDefaultContent(item, profile) {
     profile?.email ||
     'PCRED Venture Pvt. Ltd.'
 
+  const mobile = profile?.phoneNo
+
   return [
     'Dear Sir/Ma’am,',
     '',
@@ -36,6 +38,7 @@ function buildDefaultContent(item, profile) {
     '',
     'Warm Regards,',
     sender,
+    mobile,
     'PCRED Venture Pvt. Ltd.',
   ]
     .filter((line, idx, arr) => !(line === '' && arr[idx - 1] === ''))
