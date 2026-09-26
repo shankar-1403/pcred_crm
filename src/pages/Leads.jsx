@@ -136,6 +136,7 @@ function Leads() {
                         <table className="w-full min-w-[720px] table-auto text-left text-xs sm:text-sm">
                             <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-500">
                                 <tr>
+                                    <th className="px-4 py-3 font-medium whitespace-nowrap">Sr No.</th>
                                     <th className="px-4 py-3 font-medium whitespace-nowrap">LeadId</th>
                                     <th className="px-4 py-3 font-medium whitespace-nowrap">Client Name</th>
                                     <th className="px-4 py-3 font-medium whitespace-nowrap">Company Name</th>
@@ -153,31 +154,33 @@ function Leads() {
                                     <th className="px-4 py-3 font-medium whitespace-nowrap">Others 4</th>
                                     <th className="px-4 py-3 font-medium whitespace-nowrap">Others 5</th>
                                     <th className="px-4 py-3 font-medium whitespace-nowrap">Others 6</th>
+                                    <th className="px-4 py-3 font-medium whitespace-nowrap">Feedback</th>
                                     <th className="px-4 py-3 font-medium whitespace-nowrap">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={18} className="px-4 py-8 text-center text-slate-500">
+                                        <td colSpan={20} className="px-4 py-8 text-center text-slate-500">
                                             Loading leads...
                                         </td>
                                     </tr>
                                 ) : error ? (
                                     <tr>
-                                        <td colSpan={18} className="px-4 py-8 text-center text-slate-500">
+                                        <td colSpan={20} className="px-4 py-8 text-center text-slate-500">
                                             Could not read leads.
                                         </td>
                                     </tr>
                                 ) : extractedLeads.length === 0 ? (
                                     <tr>
-                                        <td colSpan={18} className="px-4 py-8 text-center text-slate-500">
+                                        <td colSpan={20} className="px-4 py-8 text-center text-slate-500">
                                             No leads yet.
                                         </td>
                                     </tr>
                                 ) : (
-                                    tablePageItems.map((p) => (
+                                    tablePageItems.map((p,index) => (
                                         <tr key={p.id} className="text-slate-300">
+                                            <td className="px-4 py-3 text-white">{(tablePage - 1) * tablePageSize + index + 1}</td>
                                             <td className="px-4 py-3 text-white">{p.leadId}</td>
                                             <td className="px-4 py-3 text-white">{p.client_name}</td>
                                             <td className="px-4 py-3 text-white">{p.company_name}</td>
@@ -195,6 +198,7 @@ function Leads() {
                                             <td className="px-4 py-3 text-white">{p.others_4}</td>
                                             <td className="px-4 py-3 text-white">{p.others_5}</td>
                                             <td className="px-4 py-3 text-white">{p.others_6}</td>
+                                            <td className="px-4 py-3 text-white">{p.feedback}</td>
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex gap-3">
                                                     <button type="button" onClick={() => handleDetails(p)} className="rounded-lg border border-red-800/60 px-3 py-1 text-xs text-red-300 hover:bg-red-950/40 disabled:cursor-not-allowed disabled:opacity-50">View Details</button>
